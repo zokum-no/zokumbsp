@@ -45,7 +45,7 @@ page coming soon! This will explain the code. math and algorithms.
 
 ## Usage
 
-'''
+```
 ZokumBSP Version: 1.0.5-rc1 (c) 2016 Kim Roar Foldøy Hauge
 Based on: ZenNode Version 1.2.1 (c) 1994-2004 Marc Rousseau
 
@@ -88,4 +88,4 @@ Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}
  -t                  - Don't write output file (test mode)
 
  level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN
-'''
+```
