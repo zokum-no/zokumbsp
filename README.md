@@ -1,21 +1,32 @@
-# ZokumBSP Version: 1.0.5-rc1 (c) 2016 Kim Roar Foldøy Hauge
+# ZokumBSP Version: 1.0.5-rc1
+
+## Author
+(c) 2016 Kim Roar Foldøy Hauge
+
+## Description
 
 ZokumBSP is an advanced node/blockmap builder for Doom / Doom 2. 
 Based on ZenNode 1.2.0 and available from GitHub.
 
 This is a work in progress and is a very experimental node builder.
 
+## Proeject goals
+
+A node / blockmap / reject builder that allows for larger maps that
+are compatible with the classic Doom dos executables and with the 
+Chocolate Doom project.
+
+## Compability
+
 It can produce compressed blockmaps that are compatible with the 
 original Id Software blockmaps that should ensure 100% demo playback
 compability. It can also produce blockmaps that are compatible with
 ZenNode 1.2.0 and BSP blockmaps, but with a possibly smaller size.
 
-# Vanilla limitations
-
-The Blockmap is in the original 'vanilla' Doom dos executables have
-an upper limit of about 64 kilobyte. Bigger blockmaps would lead to
-the game crashing, putting an upper limit on the complexity and 
-size of the maps one can create.
+The Blockmap in the original 'vanilla' Doom dos executables have an
+upper limit of about 65 kilobyte. Bigger blockmaps would lead to the
+game crashing, putting an upper limit on the complexity and size of
+the maps one can create.
 
 By using better algorithms, some tricks and the added option of 
 brute force testing up to 65k different blockmap offsets one can
@@ -27,12 +38,12 @@ original blockmaps. The quality of compability has been tested
 mostly with multiple compet-n demos of multilevel recordings. 
 Primarily 30nm2039.lmp, 30ns6155.lmp and 30famax2.lmp
 
-# Project web page
+## Project web page
 
 For more information about the webpage, check out the project
 page coming soon! This will explain the code. math and algorithms.
 
-# Usage
+## Usage
 
 ZokumBSP Version: 1.0.5-rc1 (c) 2016 Kim Roar Foldøy Hauge
 Based on: ZenNode Version 1.2.1 (c) 1994-2004 Marc Rousseau
