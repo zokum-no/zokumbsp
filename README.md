@@ -1,4 +1,4 @@
-# ZokumBSP Version: 1.0.5-rc1
+# ZokumBSP 
 
 ## Author
 (c) 2016 Kim Roar Foldøy Hauge
@@ -40,8 +40,7 @@ Primarily 30nm2039.lmp, 30ns6155.lmp and 30famax2.lmp
 
 ## Project web page
 
-For more information about the webpage, check out the project
-page coming soon! This will explain the code. math and algorithms.
+http://www.doom2.net/zokum/zokumbsp/
 
 ## Usage
 
