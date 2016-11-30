@@ -1072,9 +1072,11 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	}
 	level->NewBlockMap ( blockSize, map );
 
+	delete [] blockList;
+	delete blockMap; 
 	delete [] bestLinedefArray;
 
-	bool errors = DeleteBLOCKMAP (blockMap, blockListSize);
+	bool errors = false; // DeleteBLOCKMAP (blockMap, blockListSize);
 
 	if ( errors == true ) {
 		delete [] start;
