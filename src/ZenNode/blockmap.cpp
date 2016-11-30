@@ -1,12 +1,13 @@
 //----------------------------------------------------------------------------
 //
 // File:        blockmap.cpp
-// Date:        14-Jul-1995
-// Programmer:  Marc Rousseau
+// Date:        27.11.2016
+// Programmer:  Kim Roar Foldøy Hauge, Marc Rousseau
 //
 // Description: This module contains the logic for the BLOCKMAP builder.
 //
-// Copyright (c) 1994-2004 Marc Rousseau, All Rights Reserved.
+// Copyright (c) 2016 Kim Roar Foldøy Hauge. All Rights Reserved.
+// Based on Marc Rousseau's ZenNode 1.2.0 blockmap.cpp
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -62,7 +63,7 @@ void AddLineDef ( sBlockList *block, int line ) {
 
 void UpdateLineDefBlocks(sBlockList *block, int blocks, int flags) {
 	if (block->lineDefBlocks > blocks) {
-        	block->lineDefBlocks = blocks;
+		block->lineDefBlocks = blocks;
 	}
 	if (flags & LDBX) {
 		if (block->lineDefBlocksX > blocks) {
@@ -299,10 +300,10 @@ sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int xOffset, int yOffset, sBlock
 
 		if ( startX == endX ) {
 			AddLineDef ( &blockList [ index ], i );
-			
+
 			int lineDefLength = abs(startY - endY) +1 ;
 			UpdateLineDefBlocks( &blockList [ index ], lineDefLength, LDBY);
-			
+
 			if ( startY != endY ) {	// vertical line
 				int dy = (( endY - startY ) > 0 ) ? 1 : -1;
 				do {
@@ -321,7 +322,7 @@ sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int xOffset, int yOffset, sBlock
 				AddLineDef ( &blockList [ index ], i );
 				// bool unique = true;
 				int dx = (( endX - startX ) > 0 ) ? 1 : -1;
-				
+
 				int lineDefLength = abs(startX - endX) +1 ;
 
 				UpdateLineDefBlocks( &blockList [ index ], lineDefLength, LDBX);
@@ -425,7 +426,7 @@ bool DeleteBLOCKMAP (sBlockMap *blockMap, int blockListSize) {
 	wBlockMap *bestMap = ( wBlockMap * ) start;
 	UINT16 *offset = ( UINT16 * ) ( bestMap + 1 );
 
-
+/*
 	for ( int i = 0; i < totalSize; i++ ) {
 		if ( blockList [i].offset > 0xFFFF ) {
 			errors = true;
@@ -433,8 +434,8 @@ bool DeleteBLOCKMAP (sBlockMap *blockMap, int blockListSize) {
 		offset [i] = ( UINT16 ) blockList [i].offset;
 		if ( blockList [i].line ) free ( blockList [i].line );
 	}
+*/
 
-	
 
 	delete [] blockList;
 	delete blockMap;
@@ -466,6 +467,7 @@ int CompareBlocks(sBlockList *blockList, int i, int existingIndex) {
 
 	int count = blockList[i].count;
 	int existingCount = blockList[existingIndex].count;
+	// Older block comparison method, for regression testing.
 #ifdef FALSE
 	const void *mem1 = blockList[i].line;
 	const void *mem2 = blockList[existingIndex].line;
@@ -479,6 +481,8 @@ int CompareBlocks(sBlockList *blockList, int i, int existingIndex) {
 	}
 #endif	
 
+	// Due to this being a a very hot code path I have provided 5 codepaths. One for the generic 
+	// case and 4 others for the 4 most common and smallest blockmap list sizes.
 	if (count == existingCount) {
 		if ((count > 4) && (count == existingCount)) {
 			const void *mem1 = blockList[i].line;
@@ -505,12 +509,15 @@ int CompareBlocks(sBlockList *blockList, int i, int existingIndex) {
 					&& (blockList[i].line[1] == blockList[existingIndex].line[1])) {
 				return 0;
 			}
-		} else if (count == 2) {
+		} else if (count == 1) {
 			if (blockList[i].line[0] == blockList[existingIndex].line[0]) {
 				return 0;
 			}
 		}
 	}
+
+	// This is an older version of the algorith, for regression and compability testing.
+	// It is also used when blocks are of unequal size
 	// int matches = 0;
 	int offset = -1;
 
@@ -533,7 +540,7 @@ int CompareBlocks(sBlockList *blockList, int i, int existingIndex) {
 
 // is the block inside the boundary box
 bool BoundaryBoxCheck(sBlockMap *blockMap, sBlockList *blockList,  int i, int index) {
-	
+
 	int xCheck; //  = blockList[i].lineDefBlocks;
 	int yCheck; // = blockList[i].lineDefBlocks;
 
@@ -543,25 +550,26 @@ bool BoundaryBoxCheck(sBlockMap *blockMap, sBlockList *blockList,  int i, int in
 		if ((blockList[i].lineDefBlocksY != 9999) && blockList[i].lineDefBlocksY)  {
 			return false;
 
-		// Horisontal lines, but no vertical lines. No need to check in Y-direction
+			// Horisontal lines, but no vertical lines. No need to check in Y-direction
 		} else {
 			yCheck = 0;
 		}
 		xCheck = blockList[i].lineDefBlocksX;
-	// Does the block have vertical linedefs. We know it doesn't have horisontal ones
+		// Does the block have vertical linedefs. We know it doesn't have horisontal ones
 	} else if ((blockList[i].lineDefBlocksY != 9999) && blockList[i].lineDefBlocksY) {
 		xCheck = 0;
 		yCheck = blockList[i].lineDefBlocksY;
 
-	// Only diagonal lines, fall back to check area compared from longest linedef.
+		// Only diagonal lines, fall back to check area compared from longest linedef.
 	} else {
 		xCheck = blockList[i].lineDefBlocks;
 		yCheck = blockList[i].lineDefBlocks;
 	}
 
 	if ((abs((i % blockMap->noColumns ) - (index % blockMap->noColumns)) > xCheck)) {
-	// if (abs( (i - index) % blockMap->noColumns) > xCheck) {
+		// if (abs( (i - index) % blockMap->noColumns) > xCheck) {
 		return false;
+		// }
 	}
 
 	if (abs((i / blockMap->noColumns) - (index / blockMap->noColumns)) > yCheck) {
@@ -730,9 +738,9 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 			bool hashCheck;
 
 			if (oldBlockMap 
-				&& (oldBlockMap->noColumns == blockMap->noColumns) 
-				&& (oldBlockMap->noRows == blockMap->noRows)
-			) {
+					&& (oldBlockMap->noColumns == blockMap->noColumns) 
+					&& (oldBlockMap->noRows == blockMap->noRows)
+			   ) {
 				hashCheck = true;
 			} else {
 				hashCheck = false;
@@ -763,7 +771,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 				DeleteBLOCKMAP (blockMap, blockListSize);
 				continue;
 			}
-				
+
 			std::qsort(orderArray2,totalSize,sizeof(orderArray2[0]),compare);
 
 			for (int entry = totalSize - 1; entry > -1; entry--) {
@@ -775,7 +783,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 							int index = orderArray2[entry2][1];
 
 							if (BoundaryBoxCheck(blockMap, blockList, i, index) == false) {
-							        continue;
+								continue;
 							}
 
 							if (squeeze) {
@@ -895,35 +903,67 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 	savings = 0;
 
-
-
 	for ( int n = 0; n < totalSize; n++ ) {
 		int i = bestLinedefArray[totalSize - n - 1];
 
 		sBlockList *block = &blockList [i];
 
+		printf("block %d ,", i);
+
 		if ( block->firstIndex == i ) {
+			printf("new list, ");
 			block->offset = data - ( UINT16 * ) start;
 
+			blockList [i].offset = data - ( UINT16 * ) start;
+			
 			for ( int x = 0; x < block->count; x++ ) {
 				*data++ = ( UINT16 ) block->line [x];
 			}
 			*data++ = ( UINT16 ) -1;
+
 		} else if (block->firstIndex == -1) {
+			printf("zero block, ");
+
+			// printf("%d\n", blockList [ block->firstIndex ].offset);
+
 			block->offset = blockList [ bestLinedefArray[totalSize- 1]].offset + blockList[bestLinedefArray[totalSize- 1] ].count;
+
 			// block->count = 0;
 			savings++;
 		} else {
-			// block->offset = blockList [ block->firstIndex ].offset; 
-			block->offset = blockList [ block->firstIndex ].offset + block->subBlockOffset;
+			printf("reuse compression, ");
+			block->offset = blockList [ block->firstIndex ].offset;
+
+			// printf("%d\n", blockList [ block->firstIndex ].offset);
+
+			// block->offset = blockList [ block->firstIndex ].offset + block->subBlockOffset;
+
 
 			savings = savings + blockList[i].count + 1;
-
-			if (block->offset == 0) {
-				printf("error\n");
-			}
 		}
+		if (block->offset == 0) {
+		        printf("error\n");
+		}
+		printf("offset %d (%d)\n", block->offset);
 	}
+
+	for ( int i = 0; i < totalSize; i++ ) {
+		if ( blockList [i].offset > 0xFFFF ) {
+			// errors = true;
+		}
+		offset [i] = ( UINT16 ) blockList [i].offset;
+		if ( blockList [i].line ) free ( blockList [i].line );
+	}
+
+
+
+
+	for(int k = 0 ; k != blockSize; k++) {
+		printf("%d, ", (signed) start[k]);
+	}
+	printf("\n");
+
+
 	/*
 	   if (squeeze) {
 	   for ( int n = 0; n < totalSize; n++ ) {
@@ -1021,6 +1061,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 				/*if ((j % map->noColumns) == (map->noColumns -1)) {
 				  printf("\n </tr>\n <tr>\n");
+
 				  }*/
 			}
 			printf("\n </tr>\n");
@@ -1029,6 +1070,8 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 		printf("</table>\n");
 		printf("</pre></body></html>\n");
 	}
+	level->NewBlockMap ( blockSize, map );
+
 	delete [] bestLinedefArray;
 
 	bool errors = DeleteBLOCKMAP (blockMap, blockListSize);
@@ -1038,16 +1081,12 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 		return -1;
 	}
 
-	level->NewBlockMap ( blockSize, map );
+	// level->NewBlockMap ( blockSize, map );
 
 	return savings * sizeof ( INT16 );
-	}
+}
 
-	UINT16 * GetDataOffset(UINT16 *oldData, int *saved) {
-		return oldData;
-	}
-
-
-
-
+UINT16 * GetDataOffset(UINT16 *oldData, int *saved) {
+	return oldData;
+}
 
