@@ -908,10 +908,10 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 		sBlockList *block = &blockList [i];
 
-		printf("block %d ,", i);
+		// printf("block %d ,", i);
 
 		if ( block->firstIndex == i ) {
-			printf("new list, ");
+			// printf("new list, ");
 			block->offset = data - ( UINT16 * ) start;
 
 			blockList [i].offset = data - ( UINT16 * ) start;
@@ -922,7 +922,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 			*data++ = ( UINT16 ) -1;
 
 		} else if (block->firstIndex == -1) {
-			printf("zero block, ");
+			// printf("zero block, ");
 
 			// printf("%d\n", blockList [ block->firstIndex ].offset);
 
@@ -931,7 +931,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 			// block->count = 0;
 			savings++;
 		} else {
-			printf("reuse compression, ");
+			// printf("reuse compression, ");
 			block->offset = blockList [ block->firstIndex ].offset;
 
 			// printf("%d\n", blockList [ block->firstIndex ].offset);
@@ -944,7 +944,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 		if (block->offset == 0) {
 		        printf("error\n");
 		}
-		printf("offset %d (%d)\n", block->offset);
+		// printf("offset %d (%d)\n", block->offset);
 	}
 
 	for ( int i = 0; i < totalSize; i++ ) {
@@ -956,13 +956,13 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	}
 
 
-
+/*
 
 	for(int k = 0 ; k != blockSize; k++) {
 		printf("%d, ", (signed) start[k]);
 	}
 	printf("\n");
-
+*/
 
 	/*
 	   if (squeeze) {
