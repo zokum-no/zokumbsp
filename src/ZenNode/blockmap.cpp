@@ -426,15 +426,15 @@ bool DeleteBLOCKMAP (sBlockMap *blockMap, int blockListSize) {
 	wBlockMap *bestMap = ( wBlockMap * ) start;
 	UINT16 *offset = ( UINT16 * ) ( bestMap + 1 );
 
-/*
+
 	for ( int i = 0; i < totalSize; i++ ) {
 		if ( blockList [i].offset > 0xFFFF ) {
 			errors = true;
 		}
-		offset [i] = ( UINT16 ) blockList [i].offset;
+		// offset [i] = ( UINT16 ) blockList [i].offset;
 		if ( blockList [i].line ) free ( blockList [i].line );
 	}
-*/
+
 
 
 	delete [] blockList;
