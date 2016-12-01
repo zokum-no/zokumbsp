@@ -1,0 +1,49 @@
+Changelog for ZokumBSP
+-------------------------------------------------------------------------------
+-- 1.0.6 -- Choose your own offset adventure
+-- 1.0.6-rc1
+* Use -bo=x,y to specify a specific offset, useful for special effects.
+-------------------------------------------------------------------------------
+-- 1.0.5 -- Boundary box discarding
+-- 1.0.5-rc3
+* Fixed several memory leaks.
+-- 1.0.5-rc2
+* Distributed prebuilt windows version is built static. No dlls needed.
+-- 1.0.5-rc1
+* Discards looking blocks farther away than the longest linedef in a block.
+
+-------------------------------------------------------------------------------
+-- 1.0.4 -- Argument cleanup and a bit of heuristics.
+* Added new heuristic approach to reduce brute force solution space.
+* Changed command line arguments to be easier and more foolproof.
+
+-------------------------------------------------------------------------------
+-- 1.0.3 -- Sub block improvement release
+* All non id-compatibe blockmaps are now 2 bytes smaller.
+* No longer assumes 2s flag means a linedef is two-sided.
+
+-------------------------------------------------------------------------------
+-- 1.0.2 -- Speed improvements
+* Sorted blocks allow for quicker generation / comparisons.
+* Minor enhancements. Better sorting algorithm from stdlib.
+* HTML output switch.
+* HTML output is now usable.
+* Massive speed improvements.
+* Reformatted help screen.
+* Fixed a ZenNode bug when an invalid wad file is specified.
+
+-------------------------------------------------------------------------------
+-- 1.0.1 -- Released as closed source for testing
+* Compiles on windows vis MinGW.
+* Id blockmap header now optional
+* Support for 8x8 id offset.
+* Can generate id-compatible smaller blockmaps.
+* Support for tag 999 never blocking lines.
+* Algorithm for finding never blocking lines.
+* Option: Find sub block lists to improve blockmap size.
+
+-------------------------------------------------------------------------------
+-- 1.0.0 -- Initial test release
+* Added brute force 128*128 origin.
+
+
