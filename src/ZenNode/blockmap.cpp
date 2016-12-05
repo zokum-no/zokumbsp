@@ -414,7 +414,7 @@ sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int xOffset, int yOffset, sBlock
 }
 
 bool DeleteBLOCKMAP (sBlockMap *blockMap, int blockListSize) {
-	bool errors = false;
+	// bool errors = false;
 
 	int totalSize = blockMap->noColumns * blockMap->noRows;
 
@@ -428,9 +428,9 @@ bool DeleteBLOCKMAP (sBlockMap *blockMap, int blockListSize) {
 
 
 	for ( int i = 0; i < totalSize; i++ ) {
-		if ( blockList [i].offset > 0xFFFF ) {
+		/*if ( blockList [i].offset > 0xFFFF ) {
 			errors = true;
-		}
+		}*/
 		// offset [i] = ( UINT16 ) blockList [i].offset;
 		if ( blockList [i].line ) free ( blockList [i].line );
 	}
@@ -441,12 +441,14 @@ bool DeleteBLOCKMAP (sBlockMap *blockMap, int blockListSize) {
 	delete blockMap;
 
 	delete [] start;
-
+/*
 	if (errors) {
 		return true;
 	} else {
 		return false;
 	}
+	*/
+	return true;
 }
 
 
@@ -484,7 +486,7 @@ int CompareBlocks(sBlockList *blockList, int i, int existingIndex) {
 	// Due to this being a a very hot code path I have provided 5 codepaths. One for the generic 
 	// case and 4 others for the 4 most common and smallest blockmap list sizes.
 	if (count == existingCount) {
-		if ((count > 4) && (count == existingCount)) {
+		if (count > 4) {
 			const void *mem1 = blockList[i].line;
 			const void *mem2 = blockList[existingIndex].line;
 			if ( memcmp ( mem1, mem2, count * sizeof(int) ) == 0 ) {
@@ -648,9 +650,18 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 		} else {
 			bailout = (xSpan + 1) * (ySpan + 1);
 		}
+	} else if (options.OffsetUser) {
+		offsetXMax = options.OffsetCommandLineX;
+		offsetXMin = options.OffsetCommandLineX;
+
+		offsetYMax = options.OffsetCommandLineY;
+		offsetYMin = options.OffsetCommandLineY;
+
+		offsetIncreaseX = 8;
+		offsetIncreaseY = 8;
 
 	} else if (options.OffsetThirtySix) {
-		offsetXMax= 48;
+		offsetXMax = 48;
 		offsetXMin = 0;
 
 		offsetYMax = 48;
@@ -903,15 +914,14 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 	savings = 0;
 
+	bool errors = false;
+
 	for ( int n = 0; n < totalSize; n++ ) {
 		int i = bestLinedefArray[totalSize - n - 1];
 
 		sBlockList *block = &blockList [i];
 
-		// printf("block %d ,", i);
-
 		if ( block->firstIndex == i ) {
-			// printf("new list, ");
 			block->offset = data - ( UINT16 * ) start;
 
 			blockList [i].offset = data - ( UINT16 * ) start;
@@ -921,32 +931,26 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 			}
 			*data++ = ( UINT16 ) -1;
 
+			if ( blockList [i].offset > 0xFFFF ) {
+			        errors = true;
+			}
+
 		} else if (block->firstIndex == -1) {
-			// printf("zero block, ");
-
-			// printf("%d\n", blockList [ block->firstIndex ].offset);
-
 			block->offset = blockList [ bestLinedefArray[totalSize- 1]].offset + blockList[bestLinedefArray[totalSize- 1] ].count;
-
-			// block->count = 0;
 			savings++;
 		} else {
-			// printf("reuse compression, ");
 			block->offset = blockList [ block->firstIndex ].offset;
-
-			// printf("%d\n", blockList [ block->firstIndex ].offset);
-
-			// block->offset = blockList [ block->firstIndex ].offset + block->subBlockOffset;
-
-
 			savings = savings + blockList[i].count + 1;
 		}
-		if (block->offset == 0) {
-		        printf("error\n");
+		/*if ( blockList [i].offset > 0xFFFF ) {
+			errors = true;
+		}*/
+		offset [i] = ( UINT16 ) blockList [i].offset;
+		if ( blockList [i].line ) {
+			free ( blockList [i].line );
 		}
-		// printf("offset %d (%d)\n", block->offset);
 	}
-
+/*
 	for ( int i = 0; i < totalSize; i++ ) {
 		if ( blockList [i].offset > 0xFFFF ) {
 			// errors = true;
@@ -954,7 +958,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 		offset [i] = ( UINT16 ) blockList [i].offset;
 		if ( blockList [i].line ) free ( blockList [i].line );
 	}
-
+*/
 
 /*
 
@@ -1076,7 +1080,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	delete blockMap; 
 	delete [] bestLinedefArray;
 
-	bool errors = false; // DeleteBLOCKMAP (blockMap, blockListSize);
+	// bool errors = false; // DeleteBLOCKMAP (blockMap, blockListSize);
 
 	if ( errors == true ) {
 		delete [] start;
