@@ -1,11 +1,14 @@
 Changelog for ZokumBSP
 -------------------------------------------------------------------------------
 -- 1.0.6 -- Choose your own offset adventure
+-- 1.0.6-rc2
+* Added support for detecting BOOM generalized linedefs and extended linedefs.
 -- 1.0.6-rc1
 * Use -bo=x,y to specify a specific offset, useful for special effects.
+* LoadHexenInfo in level.cpp now checks if the sscanf matches anything. 
 -------------------------------------------------------------------------------
 -- 1.0.5 -- Boundary box discarding
--- 1.0.5-rc3
+-- 1.0.5-rc3 (Final)
 * Fixed several memory leaks.
 -- 1.0.5-rc2
 * Distributed prebuilt windows version is built static. No dlls needed.

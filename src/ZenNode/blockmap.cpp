@@ -42,6 +42,7 @@
 #include <stdint.h>
 
 #include "bloom.hpp"
+#include "endoom.hpp"
 
 #include <algorithm>
 
@@ -117,8 +118,23 @@ void BlockMapExtraData( DoomLevel *level, sBlockMapExtraData *extraData, const s
 				case 127:
 				case 100:
 				case 7:
+				// BOOM types
+				// stairs
+				case 258:
+				case 256:
+				case 259:
+				case 257:
+				// donuts
+				case 146:
+				case 155:
+				case 191:
+
 					extraData->multiSectorSpecial = true;
 			}
+			// Generalized check
+			if ((lineDef [i].type >= 0x3000) && (lineDef [i].type =< 0x33FF)) {
+				extraData->multiSectorSpecial = true;
+			} else if (
 		}
 
 		for ( int i = 0; i < level->LineDefCount(); i++ ) {
@@ -1088,6 +1104,9 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	}
 
 	// level->NewBlockMap ( blockSize, map );
+
+	// testing, do not use in prod!
+	MakeENDOOMLump();
 
 	return savings * sizeof ( INT16 );
 }
