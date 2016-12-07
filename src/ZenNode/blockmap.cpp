@@ -132,9 +132,9 @@ void BlockMapExtraData( DoomLevel *level, sBlockMapExtraData *extraData, const s
 					extraData->multiSectorSpecial = true;
 			}
 			// Generalized check
-			if ((lineDef [i].type >= 0x3000) && (lineDef [i].type =< 0x33FF)) {
+			if ((lineDef [i].type >= 0x3000) && (lineDef [i].type <= 0x33FF)) {
 				extraData->multiSectorSpecial = true;
-			} else if (
+			} 
 		}
 
 		for ( int i = 0; i < level->LineDefCount(); i++ ) {
@@ -598,8 +598,6 @@ bool BoundaryBoxCheck(sBlockMap *blockMap, sBlockList *blockList,  int i, int in
 
 int compare( const void *aa, const void  *bb);
 
-UINT16 * GetDataOffset(UINT16 *oldData, int *saved);
-
 int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	// Generate the data
 	sBlockMap *blockMap = NULL;
@@ -967,17 +965,6 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 		}
 	}
 /*
-	for ( int i = 0; i < totalSize; i++ ) {
-		if ( blockList [i].offset > 0xFFFF ) {
-			// errors = true;
-		}
-		offset [i] = ( UINT16 ) blockList [i].offset;
-		if ( blockList [i].line ) free ( blockList [i].line );
-	}
-*/
-
-/*
-
 	for(int k = 0 ; k != blockSize; k++) {
 		printf("%d, ", (signed) start[k]);
 	}
@@ -995,100 +982,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 
 	if (options.HTMLOutput) {
-		int grid = map->noColumns * map->noRows * sizeof(UINT16);
-		int lists = blockSize - grid - 8;
-		int idSize = grid + savings + grid * 2 + lists;
-		printf("\n<html><head>");
-		printf("<style>");
-		printf(".count99 {background-color: #000000; color: #fff;}");
-		printf(".count1 {background-color: #000000; color: #060;}");
-		printf(".count2 {background-color: #000000; color: #0a0;}");
-		printf(".count3 {background-color: #000000; color: #0d0;}");
-		printf(".count4 {background-color: #000000; color: #0f0;}");
-		printf(".count5 {background-color: #000000; color: #4f0;}");
-		printf(".count6 {background-color: #000000; color: #8f0;}");
-		printf(".count7 {background-color: #000000; color: #bf0;}");
-		printf(".count8 {background-color: #000000; color: #ff0;}");
-		printf(".count9 {background-color: #000000; color: #fb0;}");
-		printf(".count10 {background-color: #000000; color: #f80;}");
-		printf(".count11 {background-color: #000000; color: #f40;}");
-		printf(".count12 {background-color: #000000; color: #f00;}");
-		printf(".count13 {background-color: #000000; color: #f04;}");
-		printf(".count14 {background-color: #000000; color: #f08;}");
-		printf(".count15 {background-color: #000000; color: #f0b;}");
-		printf(".count16 {background-color: #000000; color: #f0f;}");
-		printf(".count17 {background-color: #000000; color: #80f;}");
-		printf(".count18 {background-color: #000000; color: #40f;}");
-
-
-
-
-		printf("tr,table {border: 0px; border-collapse: collapse; padding: 0px; margin: 0px;} td {border-spacing: 0px; border: 1px solid black; padding: 0px; margin: 0px; width: 33px; height: 33px;}</style></head>");
-		printf("<body><hr><pre><table width=900px;><tr><td colspan=2><h1>Map00</h1></td></tr><tr><td><h2>Size: %d</h2>Header: 8 bytes, grid: %d, lists: %d<br/>IdBSP size: ~%d bytes</td>", blockSize, grid, lists, idSize);
-		printf("<td><h2>Geometry</h2>X-origin: %d. Y-origin: %d.<br/>\nColumns: %d, rows: %d, ratio %1.3f, cells: %d</td></tr></table>\n\n", map->xOrigin, map->yOrigin, map->noColumns, map->noRows, (float) map->noColumns / (float) map->noRows, map->noColumns * map->noRows);
-		// printf("Block grid size: %ld bytes<br/>\n", map->noColumns * map->noRows * sizeof(UINT16));
-
-
-		printf("<table>\n");
-
-		int size = 8;
-		size = size + map->noColumns * map->noRows;
-
-		for (int rows = blockMap->noRows - 1; rows != -1; rows--) {
-			printf(" <tr>\n  ");
-			for (int cols = 0; cols != blockMap->noColumns; cols++) {
-
-				int j = rows * blockMap->noColumns + cols;
-
-				sBlockList *block = &blockList [j];
-
-				val = (data - ( UINT16 * ) start) * 2;
-
-				int styleCount = 0;
-
-				if (block->count == 0) {
-					styleCount = 0;
-				}
-				else if (block->count == 1) { styleCount = 1;}
-				else if (block->count == 2) { styleCount = 2;}
-				else if (block->count == 3) { styleCount = 3;}
-				else if (block->count == 4) { styleCount = 4;}
-				else if (block->count == 5) { styleCount = 5;}
-				else if (block->count <= 7) { styleCount = 6;}
-				else if (block->count <= 10) { styleCount = 7;}
-				else if (block->count <= 13) { styleCount = 8;}
-				else if (block->count <= 16) { styleCount = 9;}
-				else if (block->count <= 20) { styleCount = 10;}
-				else if (block->count <= 25) { styleCount = 11;}
-				else if (block->count <= 30) { styleCount = 12;}
-				else if (block->count <= 35) { styleCount = 13;}
-				else if (block->count <= 45) { styleCount = 14;}
-				else if (block->count <= 55) { styleCount = 15;}
-				else if (block->count <= 68) { styleCount = 16;}
-				else if (block->count <= 80) { styleCount = 17;}
-				else if (block->count <= 100) { styleCount = 18;}
-				else {
-					styleCount = 99;
-				}
-
-				printf("<td class=\"count%d\">", styleCount);
-				if (block->count != 0) {
-					printf("%5x", block->offset * 2);
-				} else {
-					printf("&nbsp;    ");
-				}
-				printf("</td>");
-
-				/*if ((j % map->noColumns) == (map->noColumns -1)) {
-				  printf("\n </tr>\n <tr>\n");
-
-				  }*/
-			}
-			printf("\n </tr>\n");
-			// printf("</tr>\n");
-		}
-		printf("</table>\n");
-		printf("</pre></body></html>\n");
+		HTMLOutput(map, blockMap, blockList, blockSize, savings, totalSize);
 	}
 	level->NewBlockMap ( blockSize, map );
 
@@ -1096,22 +990,117 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	delete blockMap; 
 	delete [] bestLinedefArray;
 
-	// bool errors = false; // DeleteBLOCKMAP (blockMap, blockListSize);
-
 	if ( errors == true ) {
 		delete [] start;
 		return -1;
 	}
 
-	// level->NewBlockMap ( blockSize, map );
-
 	// testing, do not use in prod!
-	MakeENDOOMLump();
+	// MakeENDOOMLump();
 
 	return savings * sizeof ( INT16 );
 }
 
-UINT16 * GetDataOffset(UINT16 *oldData, int *saved) {
-	return oldData;
-}
+void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, int blockSize, int savings, int totalSize) {
+	int grid = map->noColumns * map->noRows * sizeof(UINT16);
+	int lists = blockSize - grid - 8;
+	int idSize = grid + savings + grid * 2 + lists;
+	int val = 0;
+	
+	char *start = new char [ blockSize];
 
+	UINT16 *offset = ( UINT16 * ) ( map + 1 );
+	UINT16 *data   = offset + totalSize;
+
+	printf("\n<html><head>");
+	printf("<style>");
+	printf(".count99 {background-color: #000000; color: #fff;}");
+	printf(".count1 {background-color: #000000; color: #060;}");
+	printf(".count2 {background-color: #000000; color: #0a0;}");
+	printf(".count3 {background-color: #000000; color: #0d0;}");
+	printf(".count4 {background-color: #000000; color: #0f0;}");
+	printf(".count5 {background-color: #000000; color: #4f0;}");
+	printf(".count6 {background-color: #000000; color: #8f0;}");
+	printf(".count7 {background-color: #000000; color: #bf0;}");
+	printf(".count8 {background-color: #000000; color: #ff0;}");
+	printf(".count9 {background-color: #000000; color: #fb0;}");
+	printf(".count10 {background-color: #000000; color: #f80;}");
+	printf(".count11 {background-color: #000000; color: #f40;}");
+	printf(".count12 {background-color: #000000; color: #f00;}");
+	printf(".count13 {background-color: #000000; color: #f04;}");
+	printf(".count14 {background-color: #000000; color: #f08;}");
+	printf(".count15 {background-color: #000000; color: #f0b;}");
+	printf(".count16 {background-color: #000000; color: #f0f;}");
+	printf(".count17 {background-color: #000000; color: #80f;}");
+	printf(".count18 {background-color: #000000; color: #40f;}");
+
+
+
+
+	printf("tr,table {border: 0px; border-collapse: collapse; padding: 0px; margin: 0px;} td {border-spacing: 0px; border: 1px solid black; padding: 0px; margin: 0px; width: 33px; height: 33px;}</style></head>");
+	printf("<body><hr><pre><table width=900px;><tr><td colspan=2><h1>Map00</h1></td></tr><tr><td><h2>Size: %d</h2>Header: 8 bytes, grid: %d, lists: %d<br/>IdBSP size: ~%d bytes</td>", blockSize, grid, lists, idSize);
+	printf("<td><h2>Geometry</h2>X-origin: %d. Y-origin: %d.<br/>\nColumns: %d, rows: %d, ratio %1.3f, cells: %d</td></tr></table>\n\n", map->xOrigin, map->yOrigin, map->noColumns, map->noRows, (float) map->noColumns / (float) map->noRows, map->noColumns * map->noRows);
+	// printf("Block grid size: %ld bytes<br/>\n", map->noColumns * map->noRows * sizeof(UINT16));
+
+
+	printf("<table>\n");
+
+	int size = 8;
+	size = size + map->noColumns * map->noRows;
+
+	for (int rows = blockMap->noRows - 1; rows != -1; rows--) {
+		printf(" <tr>\n  ");
+		for (int cols = 0; cols != blockMap->noColumns; cols++) {
+
+			int j = rows * blockMap->noColumns + cols;
+
+			sBlockList *block = &blockList [j];
+
+			val = (data - ( UINT16 * ) start) * 2;
+
+			int styleCount = 0;
+
+			if (block->count == 0) {
+				styleCount = 0;
+			}
+			else if (block->count == 1) { styleCount = 1;}
+			else if (block->count == 2) { styleCount = 2;}
+			else if (block->count == 3) { styleCount = 3;}
+			else if (block->count == 4) { styleCount = 4;}
+			else if (block->count == 5) { styleCount = 5;}
+			else if (block->count <= 7) { styleCount = 6;}
+			else if (block->count <= 10) { styleCount = 7;}
+			else if (block->count <= 13) { styleCount = 8;}
+			else if (block->count <= 16) { styleCount = 9;}
+			else if (block->count <= 20) { styleCount = 10;}
+			else if (block->count <= 25) { styleCount = 11;}
+			else if (block->count <= 30) { styleCount = 12;}
+			else if (block->count <= 35) { styleCount = 13;}
+			else if (block->count <= 45) { styleCount = 14;}
+			else if (block->count <= 55) { styleCount = 15;}
+			else if (block->count <= 68) { styleCount = 16;}
+			else if (block->count <= 80) { styleCount = 17;}
+			else if (block->count <= 100) { styleCount = 18;}
+			else {
+				styleCount = 99;
+			}
+
+			printf("<td class=\"count%d\">", styleCount);
+			if (block->count != 0) {
+				printf("%5x", block->offset * 2);
+			} else {
+				printf("&nbsp;    ");
+			}
+			printf("</td>");
+
+			/*if ((j % map->noColumns) == (map->noColumns -1)) {
+			  printf("\n </tr>\n <tr>\n");
+
+			  }*/
+		}
+		printf("\n </tr>\n");
+		// printf("</tr>\n");
+	}
+	printf("</table>\n");
+	printf("</pre></body></html>\n");
+}
