@@ -904,7 +904,7 @@ bool DoomLevel::LoadHexenInfo ()
     if ( dir == NULL ) return false;
 
     int level;
-    sscanf ( m_Name, "MAP%02d", &level );
+    int matches = sscanf ( m_Name, "MAP%02d", &level );
 
     UINT32 Size;
     char *buffer = ( char * ) m_Wad->ReadEntry ( dir, &Size, true );
@@ -915,7 +915,8 @@ bool DoomLevel::LoadHexenInfo ()
 
     do {
         if (( ptr = strstr ( ptr, "\nmap " )) == NULL ) break;
-        if ( atoi ( &ptr[5] ) == level ) {
+	// printf("\nSTART%sSTOP (%c) (%d)\n", ptr, ptr[5], level);
+        if ( matches && (atoi ( &ptr[5] ) == level )) {
             while ( *ptr++ != '"' );
             strtok ( ptr, "\"" );
             m_Title = strdup ( ptr );
@@ -1093,6 +1094,7 @@ bool DoomLevel::UpdateWAD ()
     changed |= UpdateEntry ( &m_Reject,      "REJECT",   "SECTORS", false );
     changed |= UpdateEntry ( &m_BlockMap,  "BLOCKMAP",    "REJECT", false );
 
+
     if (( m_IsHexen == true ) && ( m_Behavior.rawData != NULL )) {
         changed |= UpdateEntry ( &m_Behavior,  "BEHAVIOR", "BLOCKMAP", false );
     }
@@ -1195,8 +1197,17 @@ void DoomLevel::NewReject ( int newSize, UINT8 *newData )
     NewEntry ( &m_Reject, newSize, newData );
 }
 
+void DoomLevel::NewBlockMapBig ( int newSize, wBlockMap32 *newData )
+{
+
+	FUNCTION_ENTRY ( this, "DoomLevel::NewBlockMapBig", true );
+	NewEntry ( &m_BlockMap, newSize, newData );
+}
+
+
 void DoomLevel::NewBlockMap ( int newSize, wBlockMap *newData )
 {
+
     FUNCTION_ENTRY ( this, "DoomLevel::NewBlockMap", true );
 
     NewEntry ( &m_BlockMap, newSize, newData );

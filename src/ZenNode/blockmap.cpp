@@ -430,40 +430,15 @@ sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int xOffset, int yOffset, sBlock
 }
 
 bool DeleteBLOCKMAP (sBlockMap *blockMap, int blockListSize) {
-	// bool errors = false;
 
 	int totalSize = blockMap->noColumns * blockMap->noRows;
-
 	sBlockList *blockList = blockMap->data;
 
-	int blockSize = sizeof ( wBlockMap ) + totalSize * sizeof ( INT16 ) + blockListSize * sizeof ( INT16 );
-
-	char *start = new char [ blockSize ];
-	wBlockMap *bestMap = ( wBlockMap * ) start;
-	UINT16 *offset = ( UINT16 * ) ( bestMap + 1 );
-
-
 	for ( int i = 0; i < totalSize; i++ ) {
-		/*if ( blockList [i].offset > 0xFFFF ) {
-			errors = true;
-		}*/
-		// offset [i] = ( UINT16 ) blockList [i].offset;
 		if ( blockList [i].line ) free ( blockList [i].line );
 	}
-
-
-
 	delete [] blockList;
 	delete blockMap;
-
-	delete [] start;
-/*
-	if (errors) {
-		return true;
-	} else {
-		return false;
-	}
-	*/
 	return true;
 }
 
@@ -635,6 +610,8 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	bool eight = options.OffsetEight || options.IdCompatible;
 
 	int bailout = 0;
+
+	bool blockBig = options.blockBig;
 
 	if (eight) {
 		offsetXMax= 8;
@@ -858,7 +835,12 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 				}
 			}
 			// is the new blockmap smaller?
-			blockSize = sizeof ( wBlockMap ) + totalSize * sizeof ( INT16 ) + blockListSize * sizeof ( INT16 );
+			
+			if (blockBig) {
+				blockSize = sizeof ( wBlockMap ) + totalSize * sizeof ( INT32 ) + blockListSize * sizeof ( INT32 );
+			} else {
+				blockSize = sizeof ( wBlockMap ) + totalSize * sizeof ( INT16 ) + blockListSize * sizeof ( INT16 );
+			}
 
 			if (bestBlockSize > blockSize) {
 				earlyExitSize = blockListSize + totalSize;
@@ -909,17 +891,29 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 	Status ( (char *)"Saving BLOCKMAP ... " );
 
-	// blockSize = sizeof ( wBlockMap ) + totalSize * sizeof ( INT16 ) + blockListSize * sizeof ( INT16 );
 	char *start = new char [ blockSize];
+	
 	wBlockMap *map = ( wBlockMap * ) start;
-	map->xOrigin   = ( INT16 ) blockMap->xOrigin;
-	map->yOrigin   = ( INT16 ) blockMap->yOrigin;
-	map->noColumns = ( UINT16 ) blockMap->noColumns;
-	map->noRows    = ( UINT16 ) blockMap->noRows;
+	wBlockMap32 *map32 = ( wBlockMap32 * ) start;
+
+	if (blockBig) {
+		map32->xOrigin   = ( INT32 ) blockMap->xOrigin;
+		map32->yOrigin   = ( INT32 ) blockMap->yOrigin;
+		map32->noColumns = ( UINT32 ) blockMap->noColumns;
+		map32->noRows    = ( UINT32 ) blockMap->noRows;
+	} else {
+		map->xOrigin   = ( INT16 ) blockMap->xOrigin;
+		map->yOrigin   = ( INT16 ) blockMap->yOrigin;
+		map->noColumns = ( UINT16 ) blockMap->noColumns;
+		map->noRows    = ( UINT16 ) blockMap->noRows;
+	}
 
 	// Fill in data & offsets
 	UINT16 *offset = ( UINT16 * ) ( map + 1 );
 	UINT16 *data   = offset + totalSize;
+
+	UINT32 *offset32 = ( UINT32 * ) ( map32 + 1 );
+	UINT32 *data32   = offset32 + totalSize;
 
 	int j = 0;
 	int val = 0;
@@ -936,20 +930,33 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 		sBlockList *block = &blockList [i];
 
 		if ( block->firstIndex == i ) {
-			block->offset = data - ( UINT16 * ) start;
-
-			blockList [i].offset = data - ( UINT16 * ) start;
+			if (blockBig) {
+				block->offset = data32 - ( UINT32 * ) start;
+				blockList [i].offset = data32 - ( UINT32 * ) start;
+			} else {
+				block->offset = data - ( UINT16 * ) start;
+				blockList [i].offset = data - ( UINT16 * ) start;
+			}
 			
 			for ( int x = 0; x < block->count; x++ ) {
-				*data++ = ( UINT16 ) block->line [x];
+				if (blockBig) {
+					*data32++ = ( UINT32 ) block->line [x];
+				} else {
+					*data++ = ( UINT16 ) block->line [x];
+				}
 			}
-			*data++ = ( UINT16 ) -1;
+			if (blockBig) {
+				*data32++ = ( UINT32 ) -1;
+			} else {
+				*data++ = ( UINT16 ) -1;
+			}
 
-			if ( blockList [i].offset > 0xFFFF ) {
+			if (!blockBig && (blockList [i].offset > 0xFFFF )) {
 			        errors = true;
 			}
 
 		} else if (block->firstIndex == -1) {
+				
 			block->offset = blockList [ bestLinedefArray[totalSize- 1]].offset + blockList[bestLinedefArray[totalSize- 1] ].count;
 			savings++;
 		} else {
@@ -959,7 +966,12 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 		/*if ( blockList [i].offset > 0xFFFF ) {
 			errors = true;
 		}*/
-		offset [i] = ( UINT16 ) blockList [i].offset;
+		if (blockBig) {
+			offset [i] = ( UINT32 ) blockList [i].offset;
+		} else {
+			offset [i] = ( UINT16 ) blockList [i].offset;
+		}
+		
 		if ( blockList [i].line ) {
 			free ( blockList [i].line );
 		}
@@ -982,9 +994,13 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 
 	if (options.HTMLOutput) {
-		HTMLOutput(map, blockMap, blockList, blockSize, savings, totalSize);
+		HTMLOutput(map, blockMap, blockList, options, blockSize, savings, totalSize);
 	}
-	level->NewBlockMap ( blockSize, map );
+	if (blockBig) {
+		level->NewBlockMapBig ( blockSize, map32 );
+	} else {
+		level->NewBlockMap ( blockSize, map );
+	}
 
 	delete [] blockList;
 	delete blockMap; 
@@ -997,11 +1013,15 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 	// testing, do not use in prod!
 	// MakeENDOOMLump();
-
-	return savings * sizeof ( INT16 );
+	
+	if (blockBig) {
+		return savings * sizeof ( INT32 );
+	} else {
+		return savings * sizeof ( INT16 );
+	}
 }
 
-void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, int blockSize, int savings, int totalSize) {
+void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, const sBlockMapOptions &options, int blockSize, int savings, int totalSize) {
 	int grid = map->noColumns * map->noRows * sizeof(UINT16);
 	int lists = blockSize - grid - 8;
 	int idSize = grid + savings + grid * 2 + lists;

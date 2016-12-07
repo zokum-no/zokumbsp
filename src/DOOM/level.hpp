@@ -168,6 +168,17 @@ struct wBlockMap {
     UINT16      noRows;
 //    UINT16    data [];
 };
+
+struct wBlockMap32 {
+    INT32       xOrigin;
+    INT32       yOrigin;
+    UINT32      noColumns;
+    UINT32      noRows;
+//    UINT16    data [];
+};
+
+
+
 
 class DoomLevel {
 
@@ -298,6 +309,7 @@ public:
     void NewNodes ( int, wNode * );
     void NewReject ( int, UINT8 * );
     void NewBlockMap ( int, wBlockMap * );
+    void NewBlockMapBig ( int, wBlockMap32 *);
     void NewBehavior ( int, char * );
 
     bool IsValid ( bool, bool = true ) const;

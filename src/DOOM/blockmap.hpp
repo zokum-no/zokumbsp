@@ -10,3 +10,4 @@ struct sBlockMapExtraData {
 };
 
 void BlockMapExtraData(DoomLevel *, sBlockMapExtraData *, const sBlockMapOptions &options);
+void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, int blockSize, int savings, int totalSize);

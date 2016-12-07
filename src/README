@@ -1,22 +1,29 @@
-ZenNode v1.2.0
+ZokumBSP 1.0.5
 ==============
 
-This is directory tree includes the source code necessary to build ZenNode.
-Since I don't have a lot of time to spend maintaining the code and there 
-haven't been too many changes in the past few years, I've decided to release
-the source under the GPL license.  See the file COPYING for details.
+This is the directory tree with all the files needed to build ZokumBSP from
+source. 
 
-Several of the files (i.e. those in the DOOM directory) evolved from earlier
-projects.  They contain functionality that is not used in ZenNode and may not
-have been kept up to date.  I think it all works, but I won't make any
-guarantees.
+The code is a fork of the GPLed ZenNode, and is thus also a GPL project with
+the same license as ZenNode 1.2.0.
 
-There is a makefile included in the ZenNode directory that can be used as is
-under Linux.  To build ZenNode in any other environment, you can use the
-makefile as a guide.  I've built and tested it under Windows using Borland
-and Microsoft compilers.  Older versions have been compiled under OS/2 using
-Borland.  The code should be portable to other compilers, but it has never
-been tested.
+The executables produced are currently slot-in compatible with ZenNode. This
+allows you to replace your ZenNode executable in your current setup to test 
+this setup. The default behaviour is fairly conservative and fairly similar
+to the behaviour an output of ZenNode, but usually producing smaller 
+blockmaps.
 
-Enjoy,
-Marc
+There is a fair bit of cruft and things in need of cleanup in this project.
+This is due to the slightly experimental nature of this project and that the 
+original ZenNode code also has unused and problematic code.
+
+The main focus of this release is to produce a node/blockmap/reject builder
+that alows for the production of big maps that are compatible with the 
+original dos based doom executables and the chocolate doom project.
+
+There might be some features that are handled badly by some Doom ports that
+deviate from the classic behaviour. The output of this code has mainly
+been tested with Chocolate Doom.
+
+For more information about the original project that this fork is based on,
+see the README-ZenNode.

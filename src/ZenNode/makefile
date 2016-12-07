@@ -8,11 +8,12 @@ CFLAGS  += -g -O -fstrength-reduce -fno-rtti
 #WARNINGS = -Wall -Wno-format -Winline
 #CC       = /opt/intel/compiler60/ia32/bin/icc
 #CFLAGS   = -g -O3
-CFLAGS   = -fpermissive -O3 -pipe -march=k8
-#CFLAGS	  = -O0 -g -pipe
+#CFLAGS   = -fpermissive -O3 -pipe -march=k8
+CFLAGS	  = -O0 -g -pipe
+#CFLAG 	  = -O2 -pipe -static
 INCLUDES = -I../DOOM -I../common
-TARGETS  = ZenNode bspdiff bspinfo compare
-LINKFLAGS =
+TARGETS  = ZokumBSP bspdiff bspinfo compare
+LINKFLAGS = 
 
 CFLAGS  += -D__LINUX__
 
@@ -40,7 +41,7 @@ depend: clean
 clean:
 	rm -rf {.,../DOOM/,../common/logger}/{*.o,*~} $(TARGETS)
 
-ZenNode: bloom.o quicksort.o ZenMain.o ZenNode.o ZenReject.o ZenRMB.o blockmap.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
+ZokumBSP: bloom.o quicksort.o ZenMain.o ZenNode.o ZenReject.o ZenRMB.o blockmap.o console.o endoom.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
 bspdiff: bspdiff.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
@@ -96,7 +97,9 @@ blockmap.o: \
 	blockmap.cpp		\
 	../common/common.hpp	\
 	../DOOM/level.hpp	\
-	ZenNode.hpp
+	ZenNode.hpp		\
+	endoom.hpp
+
 
 console.o: \
 	console.cpp		\
@@ -146,3 +149,6 @@ quicksort.o: \
 bloom.o: \
 	bloom.cpp \
 	bloom.hpp 
+endoom.o: \
+	endoom.cpp \
+	endoom.hpp

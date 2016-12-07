@@ -71,7 +71,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.5-rc1"
+#define ZOKVERSION		"1.0.6-rc2"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016 Kim Roar Foldøy Hauge";
 const char BANNER []            = "Based on: ZenNode Version " ZENVERSION " (c) 1994-2004 Marc Rousseau";
@@ -118,13 +118,15 @@ void printHelp () {
     fprintf ( stdout, "                   %c     2 = Best of 36 offset combinations.\n", config.BlockMap.OffsetThirtySix ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     3 = Heuristic method to reduce from 65536 offsets.\n", config.BlockMap.OffsetHeuristic ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     4 = Best of all 65536 offset combinations.\n", config.BlockMap.OffsetBruteForce ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     x,y = Specify specific offsets.\n", config.BlockMap.OffsetUser ? DEFAULT_CHAR : ' ' );
     // fprintf ( stdout, "    m               %c   - Merge block compression BLOCKMAP. Not done!\n", config.BlockMap.BlockMerge ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    r              %c   - Remove non-collidable lines from BLOCKMAP.\n", config.BlockMap.RemoveNonCollidable ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    s              %c   - Subset compress BLOCKMAP.\n", config.BlockMap.SubBlockOptimization ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    z                   - Zero header configuration.\n");
+    fprintf ( stdout, "    z                    - Zero header configuration.\n");
     fprintf ( stdout, "                   %c     0 = No zero header.\n", config.BlockMap.ZeroHeaderNone ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     1 = Conventional zero header.\n", config.BlockMap.ZeroHeaderStart ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     2 = Zero footer.\n", config.BlockMap.ZeroHeaderEnd ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    b              %c   - Build big 32bit BLOCKMAP.\n", config.BlockMap.blockBig ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "\n" );
     fprintf ( stdout, " -n[a=1,2,3|q|u|i] %c - Rebuild NODES\n", config.Nodes.Rebuild ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    a                   - Partition Selection Algorithm\n" );
@@ -172,6 +174,9 @@ bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
 	    case 'I':
 	    	config.BlockMap.IdCompatible = setting;
 		break;
+	    case 'B':
+	    	config.BlockMap.blockBig = setting;
+		break;
 /*	    case 'E':
 	        config.BlockMap.OffsetEight = setting;
 		break;
@@ -200,6 +205,32 @@ bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
 	    }
 	    break;
             case 'O' : 
+	    if (ptr[0] && ptr[1] && ptr[2] && (ptr[2] == ',')) {
+		// We're given offsets, not using inbuilt
+		char *comma = strchr(ptr + 1, ',');
+		
+		if (comma) {
+			comma[0] = '\0';
+			if (strlen(ptr+1) && strlen(comma+1)) {
+				config.BlockMap.OffsetCommandLineX = atoi(ptr+1);
+				config.BlockMap.OffsetCommandLineY = atoi(comma + 1);
+				config.BlockMap.OffsetUser = true;
+				
+				ptr += strlen(ptr+1) +  strlen(comma+1);
+
+				return false;
+			} else {
+				printf("error (bad offsets)");	
+				return true;
+			}
+		} else {
+			printf("error (missing comma)");
+			return true;
+		}
+		
+	    }
+	    
+
 	    if (ptr[0] && ptr[1]) {
 	    		config.BlockMap.OffsetThirtySix = false;
 	    	if (ptr[1] == '0') {
@@ -1029,6 +1060,9 @@ int main ( int argc, const char *argv [] ) {
 	config.BlockMap.OffsetZero  = false;
 	config.BlockMap.OffsetThirtySix = true;
 	config.BlockMap.OffsetBruteForce  = false;
+	config.BlockMap.OffsetCommandLineX = 0;
+	config.BlockMap.OffsetCommandLineY = 0;
+	config.BlockMap.OffsetUser = false;
 	config.BlockMap.OffsetHeuristic = false;
 	config.BlockMap.ZeroHeaderNone = true;
 	config.BlockMap.ZeroHeaderStart = false;
@@ -1037,6 +1071,7 @@ int main ( int argc, const char *argv [] ) {
 	config.BlockMap.SubBlockOptimization = false;
 	config.BlockMap.IdCompatible = false;
 	config.BlockMap.HTMLOutput = false;
+	config.BlockMap.blockBig = false;
 
 	config.Nodes.Rebuild        = true;
 	config.Nodes.Method         = 1;
@@ -1101,6 +1136,10 @@ int main ( int argc, const char *argv [] ) {
 
 			config.Extract = false;
 			argIndex = getOutputFile ( argIndex, argv, wadFileName );
+
+			// bool WAD::WriteEntry ( const char *name, UINT32 newSize, void *newStuff, bool owner, const wadDirEntry *start, const wadDirEntry *end )
+
+			// generate new ENDOOM goes here
 
 			if ( updateCount || config.Extract ) {
 				if ( config.WriteWAD ) {
