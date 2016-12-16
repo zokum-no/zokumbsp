@@ -39,5 +39,13 @@ compet-n demos of multilevel recordings. Primarily 30nm2039.lmp, 30ns6155.lmp
 and 30famax2.lmp
 Project web page
 
-For more information about the webpage, check out the project page coming
-soon! This will explain the code. math and algorithms.
+Changelog
+=========
+
+See changelog.txt for more information.
+
+More information
+================
+
+Project web site: http://doom2.net/zokum/zokumbsp
+Github: https://github.com/zokum-no/zokumbsp
