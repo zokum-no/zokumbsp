@@ -72,7 +72,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.6-rc2"
+#define ZOKVERSION		"1.0.7-rc21
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016 Kim Roar Foldøy Hauge";
 const char BANNER []            = "Based on: ZenNode Version " ZENVERSION " (c) 1994-2004 Marc Rousseau";
