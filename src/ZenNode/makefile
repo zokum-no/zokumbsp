@@ -9,8 +9,8 @@ CFLAGS  += -g -O -fstrength-reduce -fno-rtti
 #CC       = /opt/intel/compiler60/ia32/bin/icc
 #CFLAGS   = -g -O3
 #CFLAGS   = -fpermissive -O3 -pipe -march=k8
-CFLAGS	  = -O0 -g -pipe
-#CFLAG 	  = -O2 -pipe -static
+#CFLAGS	  = -O0 -g -pipe
+CFLAGS 	  = -O2 -pipe -static
 INCLUDES = -I../DOOM -I../common
 TARGETS  = ZokumBSP bspdiff bspinfo compare
 LINKFLAGS = 
