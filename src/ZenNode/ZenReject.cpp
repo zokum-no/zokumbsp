@@ -816,15 +816,15 @@ void PrepareBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options )
 
 
 	// Stuff that works for all blockmaps, no matter what offset.
-	sBlockMapExtraData *extraData = new (sBlockMapExtraData);
+	// sBlockMapExtraData *extraData = new (sBlockMapExtraData);
 	// populate it with data
-	BlockMapExtraData(level, extraData, options);
+	// BlockMapExtraData(level, extraData, options);
 
 	// TODO BROKEN!!!!!
-    	blockMap = GenerateBLOCKMAP ( level, 8, 8, extraData, options);
+    	blockMap = GenerateBLOCKMAP ( level, 8, 8, options);
 
-	delete [] extraData->lineDefsUsed;
-	delete extraData;
+	// delete [] extraData->lineDefsUsed;
+	// delete extraData;
 
     blockMapArray  = new sBlockMapArrayEntry ** [ blockMap->noRows ];
     blockMapBounds = new sBlockMapBounds [ blockMap->noRows ];

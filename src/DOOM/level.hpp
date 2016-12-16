@@ -178,175 +178,191 @@ struct wBlockMap32 {
 };
 
 
+struct sMapExtraData {
+	bool *lineDefsUsed;
+	int rightMostVertex;
+	int leftMostVertex;
+	int bottomVertex;
+	int topVertex;
+	bool multiSectorSpecial;
+	int bruteForceStepsX;
+	int bruteForceStepsY;
+};
+
 
 
 class DoomLevel {
 
-    struct sLevelLump {
-        bool    changed;
-        int     byteOrder;
-        int     elementSize;
-        int     elementCount;
-        UINT32  dataSize;
-        void   *rawData;
+	struct sLevelLump {
+		bool    changed;
+		int     byteOrder;
+		int     elementSize;
+		int     elementCount;
+		UINT32  dataSize;
+		void   *rawData;
 
-        sLevelLump ();
-    };
+		sLevelLump ();
+	};
 
-    WAD        *m_Wad;
-    wLumpName   m_Name;
+	WAD        *m_Wad;
+	wLumpName   m_Name;
 
-    bool        m_IsHexen;
-    const char *m_Title;
-    const char *m_Music;
-    int         m_Cluster;
+	bool        m_IsHexen;
+	const char *m_Title;
+	const char *m_Music;
+	int         m_Cluster;
 
-    wThing     *m_ThingData;
-    wLineDef   *m_LineDefData;
+	wThing     *m_ThingData;
+	wLineDef   *m_LineDefData;
 
-    sLevelLump  m_Map;
-    sLevelLump  m_Thing;
-    sLevelLump  m_LineDef;
-    sLevelLump  m_SideDef;
-    sLevelLump  m_Vertex;
-    sLevelLump  m_Sector;
-    sLevelLump  m_Segs;
-    sLevelLump  m_SubSector;
-    sLevelLump  m_Node;
-    sLevelLump  m_Reject;
-    sLevelLump  m_BlockMap;
-    sLevelLump  m_Behavior;
+	sLevelLump  m_Map;
+	sLevelLump  m_Thing;
+	sLevelLump  m_LineDef;
+	sLevelLump  m_SideDef;
+	sLevelLump  m_Vertex;
+	sLevelLump  m_Sector;
+	sLevelLump  m_Segs;
+	sLevelLump  m_SubSector;
+	sLevelLump  m_Node;
+	sLevelLump  m_Reject;
+	sLevelLump  m_BlockMap;
+	sLevelLump  m_Behavior;
 
-    static void ConvertRaw1ToThing ( int, wThing1 *, wThing * );
-    static void ConvertRaw2ToThing ( int, wThing2 *, wThing * );
-    static void ConvertThingToRaw1 ( int, wThing *, wThing1 * );
-    static void ConvertThingToRaw2 ( int, wThing *, wThing2 * );
+	// PreProcessed information
+	public:
+	sMapExtraData *extraData;
+	private:
 
-    static void ConvertRaw1ToLineDef ( int, wLineDef1 *, wLineDef * );
-    static void ConvertRaw2ToLineDef ( int, wLineDef2 *, wLineDef * );
-    static void ConvertLineDefToRaw1 ( int, wLineDef *, wLineDef1 * );
-    static void ConvertLineDefToRaw2 ( int, wLineDef *, wLineDef2 * );
+	static void ConvertRaw1ToThing ( int, wThing1 *, wThing * );
+	static void ConvertRaw2ToThing ( int, wThing2 *, wThing * );
+	static void ConvertThingToRaw1 ( int, wThing *, wThing1 * );
+	static void ConvertThingToRaw2 ( int, wThing *, wThing2 * );
 
-    void ReplaceVertices ( int *, wVertex *, int );
+	static void ConvertRaw1ToLineDef ( int, wLineDef1 *, wLineDef * );
+	static void ConvertRaw2ToLineDef ( int, wLineDef2 *, wLineDef * );
+	static void ConvertLineDefToRaw1 ( int, wLineDef *, wLineDef1 * );
+	static void ConvertLineDefToRaw2 ( int, wLineDef *, wLineDef2 * );
 
-    void DetermineType ();
+	void ReplaceVertices ( int *, wVertex *, int );
 
-    bool Load ();
-    bool LoadHexenInfo ();
+	void DetermineType ();
 
-    bool LoadThings ( bool );
-    bool LoadLineDefs ( bool );
+	bool Load ();
+	bool LoadHexenInfo ();
 
-    void StoreThings ();
-    void StoreLineDefs ();
+	bool LoadThings ( bool );
+	bool LoadLineDefs ( bool );
 
-    void NewEntry ( sLevelLump *, int, void * );
+	void StoreThings ();
+	void StoreLineDefs ();
 
-    bool ReadEntry ( sLevelLump *, const char *, const wadDirEntry *, const wadDirEntry *, bool );
-    bool UpdateEntry ( sLevelLump *, const char *, const char *, bool );
+	void NewEntry ( sLevelLump *, int, void * );
 
-    void AdjustByteOrderMap ( int );
-    void AdjustByteOrderThing ( int );
-    void AdjustByteOrderLineDef ( int );
-    void AdjustByteOrderSideDef ( int );
-    void AdjustByteOrderVertex ( int );
-    void AdjustByteOrderSector ( int );
-    void AdjustByteOrderSegs ( int );
-    void AdjustByteOrderSubSector ( int );
-    void AdjustByteOrderNode ( int );
-    void AdjustByteOrderReject ( int );
-    void AdjustByteOrderBlockMap ( int );
-    void AdjustByteOrderBehavior ( int );
+	bool ReadEntry ( sLevelLump *, const char *, const wadDirEntry *, const wadDirEntry *, bool );
+	bool UpdateEntry ( sLevelLump *, const char *, const char *, bool );
 
-    void AdjustByteOrder ( int );
+	void AdjustByteOrderMap ( int );
+	void AdjustByteOrderThing ( int );
+	void AdjustByteOrderLineDef ( int );
+	void AdjustByteOrderSideDef ( int );
+	void AdjustByteOrderVertex ( int );
+	void AdjustByteOrderSector ( int );
+	void AdjustByteOrderSegs ( int );
+	void AdjustByteOrderSubSector ( int );
+	void AdjustByteOrderNode ( int );
+	void AdjustByteOrderReject ( int );
+	void AdjustByteOrderBlockMap ( int );
+	void AdjustByteOrderBehavior ( int );
 
-    void CleanUpEntry ( sLevelLump * );
-    void CleanUp ();
+	void AdjustByteOrder ( int );
 
-public:
+	void CleanUpEntry ( sLevelLump * );
+	void CleanUp ();
 
-    DoomLevel ( const char *, WAD *, bool = true );
-    ~DoomLevel ();
+	public:
 
-    const WAD *GetWAD () const                  { return m_Wad; }
+	DoomLevel ( const char *, WAD *, bool = true );
+	~DoomLevel ();
 
-    const char *Name () const                   { return m_Name; }
-    const char *Title () const                  { return m_Title ? m_Title : m_Name; }
-    const char *Music () const                  { return m_Music ? m_Music : NULL; }
-    int MapCluster () const                     { return m_Cluster; }
+	const WAD *GetWAD () const                  { return m_Wad; }
 
-    int ThingCount () const                     { return m_Thing.elementCount; }
-    int LineDefCount () const                   { return m_LineDef.elementCount; }
-    int SideDefCount () const                   { return m_SideDef.elementCount; }
-    int VertexCount () const                    { return m_Vertex.elementCount; }
-    int SectorCount () const                    { return m_Sector.elementCount; }
-    int SegCount () const                       { return m_Segs.elementCount; }
-    int SubSectorCount () const                 { return m_SubSector.elementCount; }
-    int NodeCount () const                      { return m_Node.elementCount; }
-    int RejectSize () const                     { return m_Reject.dataSize; }
-    int BlockMapSize () const                   { return m_BlockMap.dataSize; }
-    int BehaviorSize () const                   { return m_Behavior.dataSize; }
+	const char *Name () const                   { return m_Name; }
+	const char *Title () const                  { return m_Title ? m_Title : m_Name; }
+	const char *Music () const                  { return m_Music ? m_Music : NULL; }
+	int MapCluster () const                     { return m_Cluster; }
 
-    const wThing    *GetThings () const         { return m_ThingData; }
-    const wLineDef  *GetLineDefs () const       { return m_LineDefData; }
-    const wSideDef  *GetSideDefs () const       { return ( wSideDef * ) m_SideDef.rawData; }
-    const wVertex   *GetVertices () const       { return ( wVertex * ) m_Vertex.rawData; }
-    const wSector   *GetSectors () const        { return ( wSector * ) m_Sector.rawData; }
-    const wSegs     *GetSegs () const           { return ( wSegs * ) m_Segs.rawData; }
-    const wSSector  *GetSubSectors () const     { return ( wSSector * ) m_SubSector.rawData; }
-    const wNode     *GetNodes () const          { return ( wNode * ) m_Node.rawData; }
-    const wReject   *GetReject () const         { return ( wReject * ) m_Reject.rawData; }
-    const wBlockMap *GetBlockMap () const       { return ( wBlockMap * ) m_BlockMap.rawData; }
-    const UINT8     *GetBehavior () const       { return ( UINT8 * ) m_Behavior.rawData; }
+	int ThingCount () const                     { return m_Thing.elementCount; }
+	int LineDefCount () const                   { return m_LineDef.elementCount; }
+	int SideDefCount () const                   { return m_SideDef.elementCount; }
+	int VertexCount () const                    { return m_Vertex.elementCount; }
+	int SectorCount () const                    { return m_Sector.elementCount; }
+	int SegCount () const                       { return m_Segs.elementCount; }
+	int SubSectorCount () const                 { return m_SubSector.elementCount; }
+	int NodeCount () const                      { return m_Node.elementCount; }
+	int RejectSize () const                     { return m_Reject.dataSize; }
+	int BlockMapSize () const                   { return m_BlockMap.dataSize; }
+	int BehaviorSize () const                   { return m_Behavior.dataSize; }
 
-    void NewThings ( int, wThing * );
-    void NewLineDefs ( int, wLineDef * );
-    void NewSideDefs ( int, wSideDef * );
-    void NewVertices ( int, wVertex * );
-    void NewSectors ( int, wSector * );
-    void NewSegs ( int, wSegs * );
-    void NewSubSectors ( int, wSSector * );
-    void NewNodes ( int, wNode * );
-    void NewReject ( int, UINT8 * );
-    void NewBlockMap ( int, wBlockMap * );
-    void NewBlockMapBig ( int, wBlockMap32 *);
-    void NewBehavior ( int, char * );
+	const wThing    *GetThings () const         { return m_ThingData; }
+	const wLineDef  *GetLineDefs () const       { return m_LineDefData; }
+	const wSideDef  *GetSideDefs () const       { return ( wSideDef * ) m_SideDef.rawData; }
+	const wVertex   *GetVertices () const       { return ( wVertex * ) m_Vertex.rawData; }
+	const wSector   *GetSectors () const        { return ( wSector * ) m_Sector.rawData; }
+	const wSegs     *GetSegs () const           { return ( wSegs * ) m_Segs.rawData; }
+	const wSSector  *GetSubSectors () const     { return ( wSSector * ) m_SubSector.rawData; }
+	const wNode     *GetNodes () const          { return ( wNode * ) m_Node.rawData; }
+	const wReject   *GetReject () const         { return ( wReject * ) m_Reject.rawData; }
+	const wBlockMap *GetBlockMap () const       { return ( wBlockMap * ) m_BlockMap.rawData; }
+	const UINT8     *GetBehavior () const       { return ( UINT8 * ) m_Behavior.rawData; }
 
-    bool IsValid ( bool, bool = true ) const;
-    bool IsDirty () const;
+	void NewThings ( int, wThing * );
+	void NewLineDefs ( int, wLineDef * );
+	void NewSideDefs ( int, wSideDef * );
+	void NewVertices ( int, wVertex * );
+	void NewSectors ( int, wSector * );
+	void NewSegs ( int, wSegs * );
+	void NewSubSectors ( int, wSSector * );
+	void NewNodes ( int, wNode * );
+	void NewReject ( int, UINT8 * );
+	void NewBlockMap ( int, wBlockMap * );
+	void NewBlockMapBig ( int, wBlockMap32 *);
+	void NewBehavior ( int, char * );
 
-    void TrimVertices ();
-    void PackVertices ();
+	bool IsValid ( bool, bool = true ) const;
+	bool IsDirty () const;
 
-    void PackSideDefs ();
-    void UnPackSideDefs ();
+	void TrimVertices ();
+	void PackVertices ();
 
-    bool UpdateWAD ();
-    void AddToWAD ( WAD *wad );
+	void PackSideDefs ();
+	void UnPackSideDefs ();
 
-    sThingDesc *FindThing ( int type );
-    static sLineDefDesc *FindLineDef ( int type );
+	bool UpdateWAD ();
+	void AddToWAD ( WAD *wad );
 
-    sThingDesc *GetThing ( int index );
-    static sLineDefDesc *GetLineDef ( int index );
+	sThingDesc *FindThing ( int type );
+	static sLineDefDesc *FindLineDef ( int type );
+
+	sThingDesc *GetThing ( int index );
+	static sLineDefDesc *GetLineDef ( int index );
 };
 
 #if ( BYTE_ORDER == LITTLE_ENDIAN )
 
-    inline void DoomLevel::AdjustByteOrderMap ( int )       {}
-    inline void DoomLevel::AdjustByteOrderThing ( int )     {}
-    inline void DoomLevel::AdjustByteOrderLineDef ( int )   {}
-    inline void DoomLevel::AdjustByteOrderSideDef ( int )   {}
-    inline void DoomLevel::AdjustByteOrderVertex ( int )    {}
-    inline void DoomLevel::AdjustByteOrderSector ( int )    {}
-    inline void DoomLevel::AdjustByteOrderSegs ( int )      {}
-    inline void DoomLevel::AdjustByteOrderSubSector ( int ) {}
-    inline void DoomLevel::AdjustByteOrderNode ( int )      {}
-    inline void DoomLevel::AdjustByteOrderReject ( int )    {}
-    inline void DoomLevel::AdjustByteOrderBlockMap ( int )  {}
-    inline void DoomLevel::AdjustByteOrderBehavior ( int )  {}
+inline void DoomLevel::AdjustByteOrderMap ( int )       {}
+inline void DoomLevel::AdjustByteOrderThing ( int )     {}
+inline void DoomLevel::AdjustByteOrderLineDef ( int )   {}
+inline void DoomLevel::AdjustByteOrderSideDef ( int )   {}
+inline void DoomLevel::AdjustByteOrderVertex ( int )    {}
+inline void DoomLevel::AdjustByteOrderSector ( int )    {}
+inline void DoomLevel::AdjustByteOrderSegs ( int )      {}
+inline void DoomLevel::AdjustByteOrderSubSector ( int ) {}
+inline void DoomLevel::AdjustByteOrderNode ( int )      {}
+inline void DoomLevel::AdjustByteOrderReject ( int )    {}
+inline void DoomLevel::AdjustByteOrderBlockMap ( int )  {}
+inline void DoomLevel::AdjustByteOrderBehavior ( int )  {}
 
-    inline void DoomLevel::AdjustByteOrder ( int )          {}
+inline void DoomLevel::AdjustByteOrder ( int )          {}
 
 #endif
 

@@ -41,7 +41,7 @@ depend: clean
 clean:
 	rm -rf {.,../DOOM/,../common/logger}/{*.o,*~} $(TARGETS)
 
-ZokumBSP: quicksort.o ZenMain.o ZenNode.o ZenReject.o ZenRMB.o blockmap.o console.o endoom.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
+ZokumBSP: preprocess.o quicksort.o ZenMain.o ZenNode.o ZenReject.o ZenRMB.o blockmap.o console.o endoom.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
 bspdiff: bspdiff.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
@@ -149,3 +149,7 @@ quicksort.o: \
 endoom.o: \
 	endoom.cpp \
 	endoom.hpp
+
+preprocess.o: \
+	preprocess.cpp \
+	preprocess.hpp 

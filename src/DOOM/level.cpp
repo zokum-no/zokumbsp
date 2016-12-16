@@ -298,6 +298,9 @@ void DoomLevel::CleanUp ()
     delete [] m_ThingData;
     delete [] m_LineDefData;
 
+	delete [] this->extraData->lineDefsUsed;
+	delete this->extraData;
+
     m_ThingData   = NULL;
     m_LineDefData = NULL;
 }
@@ -1092,8 +1095,10 @@ bool DoomLevel::UpdateWAD ()
     changed |= UpdateEntry ( &m_Node,         "NODES",  "SSECTORS", false );
     changed |= UpdateEntry ( &m_Sector,     "SECTORS",     "NODES", false );
     changed |= UpdateEntry ( &m_Reject,      "REJECT",   "SECTORS", false );
+    
     changed |= UpdateEntry ( &m_BlockMap,  "BLOCKMAP",    "REJECT", false );
 
+    changed |= UpdateEntry ( &m_BlockMap,  "BLOCKBIG",    "REJECT", false );
 
     if (( m_IsHexen == true ) && ( m_Behavior.rawData != NULL )) {
         changed |= UpdateEntry ( &m_Behavior,  "BEHAVIOR", "BLOCKMAP", false );

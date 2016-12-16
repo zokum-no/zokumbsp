@@ -41,90 +41,95 @@ struct sBlockRemap{
 };
 
 struct sBlockMapOptions {
-    bool  Rebuild;
-    bool  Compress;
-    bool  IdCompatible;
-    bool  OffsetEight;
-    bool  OffsetZero;
-    bool  OffsetThirtySix;
-    bool  OffsetHeuristic;
-    bool  OffsetBruteForce;
-    bool  ZeroHeaderStart;
-    bool  ZeroHeaderEnd;
-    bool  ZeroHeaderNone;
-    bool  SubBlockOptimization;
-    bool  BlockMerge;
-    bool  RemoveNonCollidable;
-    bool  HTMLOutput;
+	bool  Rebuild;
+	bool  Compress;
+	bool  IdCompatible;
+	bool  OffsetEight;
+	bool  OffsetZero;
+	bool  OffsetThirtySix;
+	bool  OffsetHeuristic;
+	bool  OffsetBruteForce;
+	int   OffsetCommandLineX;
+	int   OffsetCommandLineY;
+	bool  OffsetUser;
+	bool  ZeroHeaderStart;
+	bool  ZeroHeaderEnd;
+	bool  ZeroHeaderNone;
+	bool  SubBlockOptimization;
+	bool  BlockMerge;
+	bool  RemoveNonCollidable;
+	bool  HTMLOutput;
+	bool  blockBig;
 };
 
 struct sNodeOptions {
-    bool  Rebuild;
-    int   Method;
-    bool  Quiet;
-    bool  Unique;
-    bool  ReduceLineDefs;
+	bool  Rebuild;
+	int   Method;
+	bool  Quiet;
+	bool  Unique;
+	bool  ReduceLineDefs;
 };
 
+
 struct sBlockList {
-    int     firstIndex;			// Index of 1st blockList element matching this one
-    int     offset;
-    int     count;
-    int    *line;
-    int     subBlockOffset;		// add this to the final address to speed up when using subBlockCompression
-    int     uniqueLinedefs;
-    int     sharedLinedefs;
-    int     hash;                       // simple hash of the block, for comparisons
-    int	    lineDefBlocks; 		// The smallest amount of blocks one of the linedefs exist in, 1 or higher
-    int     lineDefBlocksX;		// same, but X only
-    int     lineDefBlocksY;		// y only
+	int     firstIndex;			// Index of 1st blockList element matching this one
+	int     offset;
+	int     count;
+	int    *line;
+	int     subBlockOffset;		// add this to the final address to speed up when using subBlockCompression
+	int     uniqueLinedefs;
+	int     sharedLinedefs;
+	int     hash;                       // simple hash of the block, for comparisons
+	int	    lineDefBlocks; 		// The smallest amount of blocks one of the linedefs exist in, 1 or higher
+	int     lineDefBlocksX;		// same, but X only
+	int     lineDefBlocksY;		// y only
 };
 
 struct sBlockMap {
-    int         xOrigin;
-    int         yOrigin;
-    int         noColumns;
-    int         noRows;
-    sBlockList *data;
+	int         xOrigin;
+	int         yOrigin;
+	int         noColumns;
+	int         noRows;
+	sBlockList *data;
 };
 
 typedef unsigned short BAM;
 typedef long double REAL;		// Must have at least 50 significant bits
 
 struct sVertex {
-    double x;
-    double y;
-    double l;
+	double x;
+	double y;
+	double l;
 };
 
 struct SEG {
-    wSegs           Data;
-    const wLineDef *LineDef;
-    int             Sector;
-    int             Side;
-    int             AliasFlip;
-    bool            Split;
-    bool            DontSplit;
-    bool            final;
-    sVertex         start;
-    sVertex         end;
+	wSegs           Data;
+	const wLineDef *LineDef;
+	int             Sector;
+	int             Side;
+	int             AliasFlip;
+	bool            Split;
+	bool            DontSplit;
+	bool            final;
+	sVertex         start;
+	sVertex         end;
 };
 
 struct sBSPOptions {
-    int       algorithm;
-    bool      showProgress;
-    bool      reduceLineDefs;		// global flag for invisible linedefs
-    bool     *ignoreLineDef;		// linedefs that can be left out
-    bool     *dontSplit;		// linedefs that can't be split
-    bool     *keepUnique;		// unique sector requirements
+	int       algorithm;
+	bool      showProgress;
+	bool      reduceLineDefs;		// global flag for invisible linedefs
+	bool     *ignoreLineDef;		// linedefs that can be left out
+	bool     *dontSplit;		// linedefs that can't be split
+	bool     *keepUnique;		// unique sector requirements
 };
 
 struct sScoreInfo {
-    int       index;
-    long      metric1;
-    long      metric2;
-    int       invalid;
-    int       total;
+	int       index;
+	long      metric1;
+	long      metric2;
+	int       invalid;
+	int       total;
 };
 
 #define sgn(a)		((0<(a))-((a)<0))
@@ -152,31 +157,31 @@ struct sScoreInfo {
 // ---- ZenReject structures to support RMB options ----
 
 enum REJECT_OPTION_E {
-    OPTION_UNKNOWN,
-    OPTION_MAP_1,
-    OPTION_MAP_2,
-    OPTION_BAND,
-    OPTION_BLIND,
-    OPTION_BLOCK,
-    OPTION_DISTANCE,
-    OPTION_DOOR,
-    OPTION_EXCLUDE,
-    OPTION_GROUP,
-    OPTION_INCLUDE,
-    OPTION_LEFT,
-    OPTION_LENGTH,
-    OPTION_LINE,
-    OPTION_NODOOR,
-    OPTION_NOMAP,
-    OPTION_NOPROCESS,
-    OPTION_ONE,
-    OPTION_PERFECT,
-    OPTION_PREPROCESS,
-    OPTION_PROCESS,
-    OPTION_REPORT,
-    OPTION_RIGHT,
-    OPTION_SAFE,
-    OPTION_TRACE
+	OPTION_UNKNOWN,
+	OPTION_MAP_1,
+	OPTION_MAP_2,
+	OPTION_BAND,
+	OPTION_BLIND,
+	OPTION_BLOCK,
+	OPTION_DISTANCE,
+	OPTION_DOOR,
+	OPTION_EXCLUDE,
+	OPTION_GROUP,
+	OPTION_INCLUDE,
+	OPTION_LEFT,
+	OPTION_LENGTH,
+	OPTION_LINE,
+	OPTION_NODOOR,
+	OPTION_NOMAP,
+	OPTION_NOPROCESS,
+	OPTION_ONE,
+	OPTION_PERFECT,
+	OPTION_PREPROCESS,
+	OPTION_PROCESS,
+	OPTION_REPORT,
+	OPTION_RIGHT,
+	OPTION_SAFE,
+	OPTION_TRACE
 };
 
 struct sRejectOptionRMB;
@@ -185,28 +190,28 @@ struct sOptionTableInfo;
 typedef bool (*PARSE_FUNCTION) ( char *, const sOptionTableInfo &, sRejectOptionRMB * );
 
 struct sOptionTableInfo {
-    const char              *Name;
-    const char              *Syntax;
-    REJECT_OPTION_E          Type;
-    PARSE_FUNCTION           ParseFunction;
+	const char              *Name;
+	const char              *Syntax;
+	REJECT_OPTION_E          Type;
+	PARSE_FUNCTION           ParseFunction;
 };
 
 struct sRejectOptionRMB {
-    const sOptionTableInfo  *Info;
-    bool                     Inverted;
-    bool                     Banded;
-    int                      Data [2];
-    int                     *List [2];
+	const sOptionTableInfo  *Info;
+	bool                     Inverted;
+	bool                     Banded;
+	int                      Data [2];
+	int                     *List [2];
 };
 
 struct sRejectOptions {
-    bool                     Rebuild;
-    bool                     Empty;
-    bool                     Force;
-    bool                     FindChildren;
-    bool                     UseGraphs;
-    bool                     UseRMB;
-    const sRejectOptionRMB  *rmb;
+	bool                     Rebuild;
+	bool                     Empty;
+	bool                     Force;
+	bool                     FindChildren;
+	bool                     UseGraphs;
+	bool                     UseRMB;
+	const sRejectOptionRMB  *rmb;
 };
 
 bool ParseOptionRMB ( int, const char *, sRejectOptionRMB * );
@@ -217,46 +222,54 @@ bool ParseOptionRMB ( int, const char *, sRejectOptionRMB * );
 
 #if defined ( X86 )
 
-    __inline long lrint ( double flt )
-    {
-        int intgr;
+__inline long lrint ( double flt )
+{
+	int intgr;
 
-        __asm__ __volatile__ ("fistpl %0" : "=m" (intgr) : "t" (flt) : "st");
+	__asm__ __volatile__ ("fistpl %0" : "=m" (intgr) : "t" (flt) : "st");
 
-        return intgr;
-    }
+	return intgr;
+}
 
 #else
-    __inline long lrint ( double flt )
-    {
-      //        return ( long ) ( flt + 0.5 * sgn ( flt ));
-        return ( long ) ( flt + 0.5 );
-    }
+__inline long lrint ( double flt )
+{
+	//        return ( long ) ( flt + 0.5 * sgn ( flt ));
+	return ( long ) ( flt + 0.5 );
+}
 
 #endif
 
 #elif defined ( _MSC_VER )
 
-    __inline long lrint ( double flt )
-    {
-        int intgr;
+__inline long lrint ( double flt )
+{
+	int intgr;
 
-        _asm
-        {
-            fld   flt
-            fistp intgr
-        };
+	_asm
+	{
+		fld   flt
+			fistp intgr
+	};
 
-        return intgr;
-    }
+	return intgr;
+}
 
 #endif
 
+struct sOptions {
+	sBlockMapOptions BlockMap;
+	sNodeOptions     Nodes;
+	sRejectOptions   Reject;
+	bool             WriteWAD;
+	bool             Extract;
+};
+
 struct sBlockMapExtraData;
 struct sBlockMapOptions;
-extern sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int, int, sBlockMapExtraData *, const sBlockMapOptions &options );
+extern sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int, int, const sBlockMapOptions &options );
 extern int  CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options );
 extern void CreateNODES ( DoomLevel *level, sBSPOptions *options );
 extern bool CreateREJECT ( DoomLevel *level, const sRejectOptions &options, const sBlockMapOptions &blockMapOptions );
-
+extern void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, const sBlockMapOptions &options, int blockSize, int savings, int totalSize);
 #endif

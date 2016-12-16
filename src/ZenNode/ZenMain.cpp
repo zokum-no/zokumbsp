@@ -67,6 +67,7 @@
 #include "console.hpp"
 #include "ZenNode.hpp"
 #include "blockmap.hpp"
+#include "preprocess.hpp"
 
 DBG_REGISTER ( __FILE__ );
 
@@ -81,7 +82,7 @@ const int  MAX_OPTIONS          = 256;
 const int  MAX_WADS             = 32;
 
 char HammingTable [ 256 ];
-
+/*
 struct sOptions {
     sBlockMapOptions BlockMap;
     sNodeOptions     Nodes;
@@ -89,6 +90,9 @@ struct sOptions {
     bool             WriteWAD;
     bool             Extract;
 } config;
+*/
+
+sOptions config;
 
 struct sOptionsRMB {
     const char         *wadName;
@@ -817,12 +821,12 @@ void PrintTime ( UINT32 time ) {
 	cprintf ( "%3ld.%03ld sec%s", time / 1000, time % 1000, ( time == 1000 ) ? "" : "s" );
 }
 
-bool ProcessLevel ( char *name, wadList *myList, UINT32 *ellapsed ) {
+bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	FUNCTION_ENTRY ( NULL, "ProcessLevel", true );
 
 	UINT32 dummyX = 0;
 
-	*ellapsed = 0;
+	*elapsed = 0;
 
 	cprintf ( "\r  %-*.*s: ", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
 	GetXY ( &startX, &startY );
@@ -838,6 +842,20 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *ellapsed ) {
 
 	int rows = 0;
 
+	// sMapExtraData *extraData = new sMapExtraData;
+
+	if ( config.BlockMap.Rebuild || config.Nodes.Rebuild || config.Reject.Rebuild ) {
+		UINT32 preTime = CurrentTime ();
+		
+		MapExtraData(curLevel, &config);
+		*elapsed += preTime = CurrentTime () - preTime;
+		Status ( (char *) "" );
+		GotoXY ( startX, startY );
+		cprintf ( "PREPROCESS - ");
+		cprintf ( "\r\n" );
+		GetXY ( &dummyX, &startY );
+
+	}
 	if ( config.BlockMap.Rebuild ) {
 
 		rows++;
@@ -845,7 +863,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *ellapsed ) {
 		int oldSize = curLevel->BlockMapSize ();
 		UINT32 blockTime = CurrentTime ();
 		int saved = CreateBLOCKMAP ( curLevel, config.BlockMap );
-		*ellapsed += blockTime = CurrentTime () - blockTime;
+		*elapsed += blockTime = CurrentTime () - blockTime;
 		int newSize = curLevel->BlockMapSize ();
 
 		Status ( (char *) "" );
@@ -889,7 +907,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *ellapsed ) {
 
 		UINT32 nodeTime = CurrentTime ();
 		CreateNODES ( curLevel, &options );
-		*ellapsed += nodeTime = CurrentTime () - nodeTime;
+		*elapsed += nodeTime = CurrentTime () - nodeTime;
 
 		if ( options.ignoreLineDef ) delete [] options.ignoreLineDef;
 		if ( options.dontSplit ) delete [] options.dontSplit;
@@ -919,7 +937,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *ellapsed ) {
 
 		UINT32 rejectTime = CurrentTime ();
 		bool special = CreateREJECT ( curLevel, config.Reject, config.BlockMap );
-		*ellapsed += rejectTime = CurrentTime () - rejectTime;
+		*elapsed += rejectTime = CurrentTime () - rejectTime;
 
 		int newEfficiency = CheckREJECT ( curLevel );
 
@@ -957,7 +975,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *ellapsed ) {
 	if (( curLevel->RejectSize () != rejectSize ) && ( config.Reject.Rebuild == false )) {
 		fprintf ( stderr, "WARNING: The REJECT structure for %s is the wrong size - try using -r\n", name );
 	}
-
+	// delete [] curLevel->extraData->lineDefsUsed;
+	// delete curLevel->extraData;
 	delete curLevel;
 
 	return changed;
@@ -1127,9 +1146,9 @@ int main ( int argc, const char *argv [] ) {
 
 			do {
 
-				UINT32 ellapsedTime;
-				if ( ProcessLevel ( levelNames [noLevels++], myList, &ellapsedTime )) updateCount++;
-				totalTime += ellapsedTime;
+				UINT32 elapsedTime;
+				if ( ProcessLevel ( levelNames [noLevels++], myList, &elapsedTime )) updateCount++;
+				totalTime += elapsedTime;
 				if ( KeyPressed () && ( GetKey () == 0x1B )) break;
 
 			} while ( levelNames [noLevels][0] );
