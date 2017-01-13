@@ -33,8 +33,11 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#ifdef _WIN32
+#include <string.h> 
+#else
 #include <strings.h>
+#endif
 #include <sys/stat.h>
 #include "common.hpp"
 #include "wad.hpp"
@@ -671,7 +674,11 @@ bool WAD::SaveFile ( const char *newName )
     if ( stricmp ( wadPath, newPath ) == 0 ) {
         if ( HasChanged () == false ) return true;
         sprintf ( tmpPath, "%s.XXXXXX", newPath );
-        int tmp = mkstemp ( tmpPath );
+#ifdef _WIN32
+        int tmp = _mktemp_s( tmpPath );
+#elif
+		int tmp = mkstemp(tmpPath);
+#endif
         if ( tmp == -1 ) {
             fprintf ( stderr, "\nERROR: WAD::SaveFile - Error creating temporary file." );
             return false;
@@ -1088,7 +1095,11 @@ bool wadList::Save ( const char *newName )
 
         if ( stricmp ( wadPath, newPath ) == 0 ) {
             sprintf ( tmpPath, "%s.XXXXXX", newPath );
-            int tmp = mkstemp ( tmpPath );
+#ifdef _WIN32
+			int tmp = _mktemp_s(tmpPath);
+#elif
+			int tmp = mkstemp(tmpPath);
+#endif
             if ( tmp == -1 ) {
                 fprintf ( stderr, "\nERROR: wadList::SaveFile - Error creating temporary file." );
                 return false;
