@@ -675,7 +675,7 @@ bool WAD::SaveFile ( const char *newName )
         sprintf ( tmpPath, "%s.XXXXXX", newPath );
 #ifdef _WIN32
         int tmp = _mktemp_s( tmpPath );
-#elif
+#else
 		int tmp = mkstemp(tmpPath);
 #endif
         if ( tmp == -1 ) {
@@ -1096,7 +1096,7 @@ bool wadList::Save ( const char *newName )
             sprintf ( tmpPath, "%s.XXXXXX", newPath );
 #ifdef _WIN32
 			int tmp = _mktemp_s(tmpPath);
-#elif
+#else
 			int tmp = mkstemp(tmpPath);
 #endif
             if ( tmp == -1 ) {
