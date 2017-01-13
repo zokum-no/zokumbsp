@@ -11,7 +11,7 @@
 #include "console.hpp"
 */
 
-#include "bits/stdc++.h"
+// #include "bits/stdc++.h"
 using namespace std;
 int compare( const void *aa, const void  *bb)
 {
@@ -25,7 +25,7 @@ int compare( const void *aa, const void  *bb)
 		return 1;
 
 }
-
+/*
 void insertionSort(int array[], int array2[], int firstIndex, int lastIndex) {
 	int n, c, d, t, t2;
 
@@ -103,6 +103,7 @@ void quickSort(int array[], int array2[], int firstIndex, int lastIndex) {
 		}
 	}
 }
+*/
 
 /*
    int main()
