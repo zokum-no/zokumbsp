@@ -567,9 +567,14 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 			int i = -1;
 			int minEntrySize = 0;
-
+#ifdef _WIN32
+			// TEMPORARY HACK TO GET THIS WORKING ON MSVC, NEED TO FIX
+			bool blockHasList[65535];
+			int orderArray2[65535][2];
+#else
 			bool blockHasList[totalSize];
 			int orderArray2 [totalSize][2];
+#endif
 
 			int hashDifferences = 0;
 

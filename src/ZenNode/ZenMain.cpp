@@ -37,8 +37,11 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#ifdef _WIN32
+#include <string.h> 
+#else
 #include <strings.h>
+#endif
 
 #if defined ( __OS2__ )
     #include <conio.h>
