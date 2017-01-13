@@ -41,12 +41,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "bloom.hpp"
 #include "endoom.hpp"
 
 #include <algorithm>
 
-void bloomInsert(int ele, int *table);
 
 void AddLineDef ( sBlockList *block, int line ) {
 	if (( block->count % 64 ) == 0 ) {
@@ -54,8 +52,6 @@ void AddLineDef ( sBlockList *block, int line ) {
 		block->line = ( int * ) realloc ( block->line, size );
 	}
 	block->line [ block->count++ ] = line;
-
-	// bloomInsert(line, block->bloomFilter);
 
 }
 
