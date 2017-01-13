@@ -31,10 +31,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-#include <string.h> 
-#else
-#include <strings.h>
+#ifndef _WIN32
+	#include <strings.h>
 #endif
 #include "common.hpp"
 #include "logger.hpp"
