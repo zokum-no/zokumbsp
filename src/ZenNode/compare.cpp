@@ -29,10 +29,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef _WIN32
-#include <string.h> 
-#else
-#include <strings.h>
+#include <string.h>
+#ifndef _WIN32
+	#include <strings.h>
 #endif
 
 #if defined ( __OS2__ )
