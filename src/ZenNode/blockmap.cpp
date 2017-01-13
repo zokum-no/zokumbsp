@@ -44,6 +44,7 @@
 #include "endoom.hpp"
 
 #include <algorithm>
+#include "quicksort.hpp"
 
 
 void AddLineDef ( sBlockList *block, int line ) {
