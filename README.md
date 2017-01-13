@@ -1,8 +1,7 @@
 # ZokumBSP 
 
 ## Author
-(c) 2016-2017 Kim Roar Foldøy Hauge
-(c) 1994-2004 Marc Rousseau
+(c) 2016-2017 Kim Roar Foldøy Hauge, (c) 1994-2004 Marc Rousseau
 
 ## Description
 
