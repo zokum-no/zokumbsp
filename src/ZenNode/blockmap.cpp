@@ -608,20 +608,17 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 								return false;
 
 								// Horizontal lines, but no vertical lines. No need to check in Y-direction
-							}
-							else {
+							} else {
 								yCheck = 0;
 							}
 							xCheck = blockList[i].lineDefBlocksX;
 							// Does the block have vertical linedefs. We know it doesn't have horisontal ones
-						}
-						else if ((blockList[i].lineDefBlocksY != 9999) && blockList[i].lineDefBlocksY) {
+						} else if ((blockList[i].lineDefBlocksY != 9999) && blockList[i].lineDefBlocksY) {
 							xCheck = 0;
 							yCheck = blockList[i].lineDefBlocksY;
 
 							// Only diagonal lines, fall back to check area compared from longest linedef.
-						}
-						else {
+						} else {
 							xCheck = blockList[i].lineDefBlocks;
 							yCheck = blockList[i].lineDefBlocks;
 						}
