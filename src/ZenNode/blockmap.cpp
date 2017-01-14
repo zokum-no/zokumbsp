@@ -366,7 +366,7 @@ int CompareBlocks(sBlockList *blockList, int i, int existingIndex) {
 }
 
 // is the block inside the boundary box
-bool BoundaryBoxCheck(sBlockMap *blockMap, int i, int index, int xCheck, int yCheck) {
+inline bool BoundaryBoxCheck(sBlockMap *blockMap, int i, int index, int xCheck, int yCheck) {
 	/*
 	int xCheck; //  = blockList[i].lineDefBlocks;
 	int yCheck; // = blockList[i].lineDefBlocks;
