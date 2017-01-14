@@ -369,9 +369,7 @@ int CompareBlocks(sBlockList *blockList, int i, int existingIndex) {
 inline bool BoundaryBoxCheck(sBlockMap *blockMap, int i, int index, int xCheck, int yCheck) {
 	// several if statements for xcheck/ycheck moved out of this function outside loop in createblockmap
 	if ((abs((i % blockMap->noColumns ) - (index % blockMap->noColumns)) > xCheck)) {
-		// if (abs( (i - index) % blockMap->noColumns) > xCheck) {
 		return false;
-		// }
 	}
 
 	if (abs((i / blockMap->noColumns) - (index / blockMap->noColumns)) > yCheck) {
