@@ -366,8 +366,8 @@ int CompareBlocks(sBlockList *blockList, int i, int existingIndex) {
 }
 
 // is the block inside the boundary box
-bool BoundaryBoxCheck(sBlockMap *blockMap, int i, int index, int xCheck, int yCheck) {
-	/*
+bool BoundaryBoxCheck(sBlockMap *blockMap, sBlockList *blockList,  int i, int index) {
+
 	int xCheck; //  = blockList[i].lineDefBlocks;
 	int yCheck; // = blockList[i].lineDefBlocks;
 
@@ -392,7 +392,6 @@ bool BoundaryBoxCheck(sBlockMap *blockMap, int i, int index, int xCheck, int yCh
 		xCheck = blockList[i].lineDefBlocks;
 		yCheck = blockList[i].lineDefBlocks;
 	}
-	*/
 
 	if ((abs((i % blockMap->noColumns ) - (index % blockMap->noColumns)) > xCheck)) {
 		// if (abs( (i - index) % blockMap->noColumns) > xCheck) {
@@ -623,39 +622,10 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 				if ((blockList [i].uniqueLinedefs == 0) && compress) {
 					if (blockList [i].count) {
 						bool newBlock = true;
-
-						int xCheck; //  = blockList[i].lineDefBlocks;
-						int yCheck; // = blockList[i].lineDefBlocks;
-
-									// Des the block have horisontal linedefs
-						if ((blockList[i].lineDefBlocksX != 9999) && blockList[i].lineDefBlocksX) {
-							// Does it also have vertical lines, if so no other blocks can match it.
-							if ((blockList[i].lineDefBlocksY != 9999) && blockList[i].lineDefBlocksY) {
-								return false;
-
-								// Horisontal lines, but no vertical lines. No need to check in Y-direction
-							}
-							else {
-								yCheck = 0;
-							}
-							xCheck = blockList[i].lineDefBlocksX;
-							// Does the block have vertical linedefs. We know it doesn't have horisontal ones
-						}
-						else if ((blockList[i].lineDefBlocksY != 9999) && blockList[i].lineDefBlocksY) {
-							xCheck = 0;
-							yCheck = blockList[i].lineDefBlocksY;
-
-							// Only diagonal lines, fall back to check area compared from longest linedef.
-						}
-						else {
-							xCheck = blockList[i].lineDefBlocks;
-							yCheck = blockList[i].lineDefBlocks;
-						}
-
 						for (int entry2 = totalSize - 1; entry2 > entry; entry2--) {
 							int index = orderArray2[entry2][1];
 
-							if (BoundaryBoxCheck(blockMap, i, index, xCheck, yCheck) == false) {
+							if (BoundaryBoxCheck(blockMap, blockList, i, index) == false) {
 								continue;
 							}
 
