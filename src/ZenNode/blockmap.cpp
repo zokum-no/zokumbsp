@@ -395,9 +395,7 @@ inline bool BoundaryBoxCheck(sBlockMap *blockMap, int i, int index, int xCheck, 
 	*/
 
 	if ((abs((i % blockMap->noColumns ) - (index % blockMap->noColumns)) > xCheck)) {
-		// if (abs( (i - index) % blockMap->noColumns) > xCheck) {
 		return false;
-		// }
 	}
 
 	if (abs((i / blockMap->noColumns) - (index / blockMap->noColumns)) > yCheck) {

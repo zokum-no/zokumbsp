@@ -1,7 +1,15 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.8-rc1
+- Anotak found a nice optimization, moved checks out of a core loop. This 
+  gives a 33% speedup.
+
+ZokumBSP 1.0.7-rc2
+- Many minor cleanups of the Git repo.
+- Anotak added Visual Studio tweaks to make it compile.
+
 ZokumBSP 1.0.7-rc1
-- Preprocessing is now done in a seperate step, and data can be sued by reject
+- Preprocessing is now done in a seperate step, and data can be used by reject
   and nodes structures if needed.
 - New format for the changelog.txt, should be easier to read.
 
@@ -22,7 +30,7 @@ ZokumBSP 1.0.5 (Boundary box discarding)
 ZokumBSP 1.0.5-rc3
 - Fixed several memory leaks.
 
-ZokumBSP -- 1.0.5-rc2
+ZokumBSP 1.0.5-rc2
 - Distributed prebuilt windows version is built static. No dlls needed.
 
 ZokumBSP 1.0.5-rc1
