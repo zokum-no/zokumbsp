@@ -1,5 +1,10 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.8-rc2
+- Using 64bit uints in reject cde to stop it crashing on large maps. This
+  fixed building a reject table on a 2k sector map. Bigger maps still crash
+  in a different location.
+
 ZokumBSP 1.0.8-rc1
 - Anotak found a nice optimization, moved checks out of a core loop. This 
   gives a 33% speedup.
