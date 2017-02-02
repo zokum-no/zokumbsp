@@ -74,9 +74,9 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.8-rc1"
+#define ZOKVERSION		"1.0.8-rc2"
 
-const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016 Kim Roar Foldøy Hauge";
+const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2017 Kim Roar Foldøy Hauge";
 const char BANNER []            = "Based on: ZenNode Version " ZENVERSION " (c) 1994-2004 Marc Rousseau";
 const char CONFIG_FILENAME []   = "ZenNode.cfg";
 const int  MAX_LEVELS           = 99;
