@@ -17,16 +17,23 @@
 #include <algorithm>
 
 //void BlockMapExtraData( DoomLevel *level, sMapExtraData *extraData, // const sBlockMapOptions &options) {
+
+// int CrossProduct(
+
+
 void MapExtraData( DoomLevel *level, const sOptions *config) {
 	const sBlockMapOptions options = config->BlockMap; //  sOptions
 	
+	char zokoutput[256];
+
 	level->extraData = new sMapExtraData;
 	sMapExtraData *extraData = level->extraData;
 
 	const wSideDef *sideDef = level->GetSideDefs ();
 	const wSector *sectors = level->GetSectors();
 
-	const wLineDef *lineDef = level->GetLineDefs();
+	// no longer const, since we change it
+	wLineDef *lineDef = level->GetLineDefs();
 	const wVertex *vertex   = level->GetVertices();
 
 	int numberOfLineDefs = level->LineDefCount();
@@ -38,16 +45,207 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 
 
 	// For simplicity we set them all to true, then to false if needed :)
-	extraData->lineDefsUsed= new bool [numberOfLineDefs];
+	extraData->lineDefsCollidable = new bool [numberOfLineDefs];
+	extraData->lineDefsRendered = new bool [numberOfLineDefs];
+
+	int pairs = 0;
+	int orglines = level->LineDefCount();
+
+	sprintf(zokoutput, "GEOMETRY - Locating '998'-tag non-render lines.");
+	Status( (char *) zokoutput);
 
 	for ( int i = 0; i < level->LineDefCount(); i++ ) {
-		extraData->lineDefsUsed[i] = true;
+		extraData->lineDefsCollidable[i] = true;
+		
+		if (lineDef [i].tag == 998) {
+			extraData->lineDefsRendered[i] = false;
+		} else {
+			extraData->lineDefsRendered[i] = true;
+		}
+		
 	}
+	char lines[128];
+	sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
+
+	sprintf(zokoutput, "GEOMETRY - %11s lines      Reduced to: %3.2f%%",
+	lines,
+	100.0 * (float) ((orglines - pairs) / (float) orglines));
+	Status( (char *) zokoutput);
+
+
 
 	// Check all linedefs and flag them as false if we don't
 	// need to check for collisions.
 
 	bool removenoncollidable = !options.IdCompatible && options.RemoveNonCollidable;
+
+
+	if (options.GeometrySimplification) { // && (config->OutputWad || !config->WriteWAD )) {
+		for ( int i = 0; i < level->LineDefCount(); i++ ) {
+			sprintf(zokoutput, "GEOMETRY - Simplifying geometry %d of %d lines, found %d pairs.",
+			i,
+			level->LineDefCount(),
+			pairs
+			);
+			Status( (char *) zokoutput);
+
+			if (extraData->lineDefsCollidable [i] == false) {
+				continue;
+			}
+
+			for ( int inner = i + 1; inner < level->LineDefCount(); inner++ ) {
+
+				if (!(
+							(lineDef[i].end == lineDef[inner].start)
+							|| (lineDef[i].end == lineDef[inner].end)
+							|| (lineDef[i].start == lineDef[inner].start)
+							|| (lineDef[i].start == lineDef[inner].end)
+				     )) {
+					continue;
+				}
+				
+				if (extraData->lineDefsCollidable [inner] == false) {
+				        continue;
+				}
+
+				// Reduced form of cross product of two vectors in 3d.
+
+				// A x B = (a2b3  -   a3b2,     a3b1   -   a1b3,     a1b2   -   a2b1) 
+
+				int a1 = vertex [ lineDef[i].start].x - vertex [ lineDef[i].end].x;
+				int a2 = vertex [ lineDef[i].start].y - vertex [ lineDef[i].end].y;
+
+				int b1 = vertex [ lineDef[inner].start].x - vertex [ lineDef[inner].end].x;
+				int b2 = vertex [ lineDef[inner].start].y - vertex [ lineDef[inner].end].y;
+
+				if (((a1 * b2) - (a2 * b1)) != 0) {
+					continue;
+				}
+
+	
+				// Basic check to see if the lines have same amount of sides.
+
+				if ((lineDef [i].sideDef[LEFT_SIDEDEF] != 65535) && (lineDef [inner].sideDef[LEFT_SIDEDEF] == 65535)) {
+					continue;
+				}
+				if ((lineDef [i].sideDef[LEFT_SIDEDEF] == 65535) && (lineDef [inner].sideDef[LEFT_SIDEDEF] != 65535)) {
+					continue;
+				}
+				if ((lineDef [i].sideDef[RIGHT_SIDEDEF] != 65535) && (lineDef [inner].sideDef[RIGHT_SIDEDEF] == 65535)) {
+					continue;
+				}
+				if ((lineDef [i].sideDef[RIGHT_SIDEDEF] == 65535) && (lineDef [inner].sideDef[RIGHT_SIDEDEF] != 65535)) {
+					continue;
+				}
+
+				// printf("\n %d %d\n", lineDef [i].sideDef[LEFT_SIDEDEF], lineDef [inner].sideDef[LEFT_SIDEDEF]);
+
+				// if 2 sided, check if they belong to the same sectors
+				//
+
+				int geoLevel = options.GeometrySimplification;
+
+				if (geoLevel == 1) {
+					// In this level, must point to same sector
+
+					if ((lineDef [i].sideDef[LEFT_SIDEDEF] != 65535) && (lineDef [inner].sideDef[LEFT_SIDEDEF] != 65535)) {
+
+						int iSector = sideDef [lineDef [i].sideDef[LEFT_SIDEDEF]].sector;
+						int innerSector = sideDef [lineDef [inner].sideDef[LEFT_SIDEDEF]].sector;
+
+						if (iSector != innerSector) {
+							continue;
+						}
+
+					}
+					// same as prev, other side
+					if ((lineDef [i].sideDef[RIGHT_SIDEDEF] != 65535) && (lineDef [inner].sideDef[RIGHT_SIDEDEF] != 65535)) {
+
+						int iSector = sideDef [lineDef [i].sideDef[RIGHT_SIDEDEF]].sector;
+						int innerSector = sideDef [lineDef [inner].sideDef[RIGHT_SIDEDEF]].sector;
+
+						if (iSector != innerSector) {
+							continue;
+						}
+					}
+				} else if (geoLevel == 2) {
+					// we know they have the same sidedness, 1 or 2, not a mix
+					// if they are both 1-sided, let's merge!
+					
+					if (!((lineDef [i].sideDef[RIGHT_SIDEDEF] == 65535) || (lineDef [i].sideDef[LEFT_SIDEDEF] == 65535))) {
+						continue;
+					}
+
+				}
+
+				// we have two lindefs where one extends the other, add a new blockmap only linedef.			
+
+				level->AddLineDef();
+				pairs++;
+
+				// This list has changed, we need the new one.
+				lineDef = level->GetLineDefs();
+
+				int latestLine = level->LineDefCount() - 1;
+
+				// printf("new def: %d\n", latestLine);
+
+				if (lineDef[i].start == lineDef[inner].end) {
+					lineDef[latestLine].start = lineDef[inner].start;
+					lineDef[latestLine].end = lineDef[i].end;
+				} else {
+					lineDef[latestLine].start = lineDef[i].start;
+					lineDef[latestLine].end = lineDef[inner].end;
+				}
+
+				lineDef [latestLine].sideDef[RIGHT_SIDEDEF] = lineDef [i].sideDef[RIGHT_SIDEDEF];
+				lineDef [latestLine].sideDef[LEFT_SIDEDEF] = lineDef [i].sideDef[LEFT_SIDEDEF];
+				lineDef [latestLine].flags = lineDef [i].flags;
+				lineDef [latestLine].type = lineDef [i].type;
+				lineDef [latestLine].tag = lineDef [i].tag;
+
+				extraData->lineDefsCollidable[latestLine] = true;
+				extraData->lineDefsRendered[latestLine] = false;
+
+				extraData->lineDefsCollidable[i] = false;
+				extraData->lineDefsCollidable[inner] = false;
+				/*
+				   printf("Extending: LD %d and LD %d from %d(%d %d) to %d(%d %d) with new LD %d\n", 
+				   i, 
+				   inner, 
+
+				   lineDef[latestLine].start, 
+				   vertex [ lineDef[latestLine].start].x, 
+				   vertex [ lineDef[latestLine].start].y, 
+
+				   lineDef[latestLine].end, 
+				   vertex [ lineDef[latestLine].end].x, 
+				   vertex [ lineDef[latestLine].end].y,
+				   latestLine 
+				   );
+				   */
+
+
+				// add new virtual linedef 
+				//
+				// sleep(2);
+				break;
+			}
+		}
+		level->TrimLineDefs();
+		
+		sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
+
+		sprintf(zokoutput, "GEOMETRY - %11s lines      Reduced to: %3.2f%%",
+		lines,
+		100.0 * (float) ((orglines - pairs) / (float) orglines));
+		Status( (char *) zokoutput);
+
+	}
+
+	// level->TrimLineDefs();
+
+	// printf("Lines %d\n", level->LineDefCount());
 
 	if (removenoncollidable) {
 		// first we look for raising stairs and donuts
@@ -58,13 +256,13 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 				case 127:
 				case 100:
 				case 7:
-				// BOOM types
-				// stairs
+					// BOOM types
+					// stairs
 				case 258:
 				case 256:
 				case 259:
 				case 257:
-				// donuts
+					// donuts
 				case 146:
 				case 155:
 				case 191:
@@ -79,7 +277,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 
 		for ( int i = 0; i < level->LineDefCount(); i++ ) {
 			if ((lineDef [i].tag) == 999) {
-				extraData->lineDefsUsed[i] = false;
+				extraData->lineDefsCollidable[i] = false;
 			} else if ((lineDef [i].flags & LDF_TWO_SIDED) 
 					&& !(lineDef [i].flags & LDF_IMPASSABLE)  
 					&& !(lineDef [i].flags & LDF_BLOCK_MONSTERS)
@@ -92,7 +290,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 				// map01 n doom2.wad has a linedef that partions a sector into two parts, but serves NO purpose
 				if (sectorR == sectorL) {
 					// printf("Linedef %d\n", i);
-					extraData->lineDefsUsed[i] = false;
+					extraData->lineDefsCollidable[i] = false;
 				} else if (extraData->multiSectorSpecial == false) {
 
 					// two sided linedef, without any action, same floor and ceiling
@@ -108,7 +306,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 
 					{
 						// printf("linedef optimization\n");
-						extraData->lineDefsUsed[i] = false;
+						extraData->lineDefsCollidable[i] = false;
 					} 
 				} 
 			} 
@@ -154,7 +352,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 					for ( int j = 0; j < level->LineDefCount(); j++ ) {
 						if ((sideDef [lineDef [j].sideDef[RIGHT_SIDEDEF]].sector == i) 
 								&& !(lineDef[j].flags & LDF_TWO_SIDED))  {
-							extraData->lineDefsUsed[j] = false;
+							extraData->lineDefsCollidable[j] = false;
 							// printf("   found sky-sector linedef %d\n",j);
 						}
 					}
@@ -162,9 +360,9 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 			}
 		}
 	}
-	// Loop through all linedefs, look at the starting vertex
+	// Loop through all linedefs, look at the starting vertex to find the left most and bottom
 	for ( int i = 0; i < level->LineDefCount(); i++ ) {
-		if ( (extraData->lineDefsUsed[i] == false)) {
+		if ( (extraData->lineDefsCollidable[i] == false)) {
 			// we use all blocking linedefs to make the block grid, not all vertexes.
 			continue;
 		}
@@ -182,5 +380,5 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 			extraData->topVertex = vertex [ lineDef[i].start].y;
 		}
 	}
-}
+	}
 

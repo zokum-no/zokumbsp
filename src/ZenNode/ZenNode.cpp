@@ -176,6 +176,16 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
 
         if (( dx == 0 ) && ( dy == 0 )) continue;
 
+	if (level->extraData->lineDefsRendered[i] == false) {
+		continue;
+	}
+
+	/*
+	if (lineDef->tag == 998) {
+		continue;
+	}
+	*/
+
         int rSide = lineDef->sideDef [0];
         int lSide = lineDef->sideDef [1];
         const wSideDef *sideRight = ( rSide == NO_SIDEDEF ) ? ( const wSideDef * ) NULL : &sideDef [ rSide ];

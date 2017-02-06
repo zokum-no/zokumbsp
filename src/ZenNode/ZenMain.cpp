@@ -38,9 +38,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef _WIN32
-	#include <strings.h>
-#endif
+
+#include <strings.h>
 
 #if defined ( __OS2__ )
     #include <conio.h>
@@ -74,7 +73,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.8-rc2"
+#define ZOKVERSION		"1.0.9-rc1"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2017 Kim Roar Foldøy Hauge";
 const char BANNER []            = "Based on: ZenNode Version " ZENVERSION " (c) 1994-2004 Marc Rousseau";
@@ -114,13 +113,13 @@ void printHelp () {
     fprintf ( stdout, "\n" );
     fprintf ( stdout, " -x+ turn on option   -x- turn off option  %c = default\n", DEFAULT_CHAR );
     fprintf ( stdout, "\n" );
-    fprintf ( stdout, " -b[chio=0,1,2,3rsz=0,1,2]       %c - Rebuild BLOCKMAP\n", config.BlockMap.Rebuild ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    c              %c   - Compress BLOCKMAP\n", config.BlockMap.Compress ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, " -b[chio=0,1,2,3rsz=0,1,2g=0,1,2]       %c - Rebuild BLOCKMAP\n", config.BlockMap.Rebuild ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    c              %c   - Compress BLOCKMAP.\n", config.BlockMap.Compress ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    h              %c   - Output BLOCKMAP data as HTML.\n", config.BlockMap.HTMLOutput ?  DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    i              %c   - Id compatible BLOCKMAP. Sets 'o=1n=2' and 'c-s-r-'\n", config.BlockMap.IdCompatible ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    o                  - Offset configuration.\n");
     fprintf ( stdout, "                   %c     0 = ZenNode 0,0 offset BLOCKMAP.\n", config.BlockMap.OffsetZero ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     1 = IdBSP / BSP 8,8 offset BLOCKMAP.\n", config.BlockMap.OffsetEight ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     1 = DooMBSP / BSP 8,8 offset BLOCKMAP.\n", config.BlockMap.OffsetEight ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     2 = Best of 36 offset combinations.\n", config.BlockMap.OffsetThirtySix ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     3 = Heuristic method to reduce from 65536 offsets.\n", config.BlockMap.OffsetHeuristic ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     4 = Best of all 65536 offset combinations.\n", config.BlockMap.OffsetBruteForce ? DEFAULT_CHAR : ' ' );
@@ -129,9 +128,13 @@ void printHelp () {
     fprintf ( stdout, "    r              %c   - Remove non-collidable lines from BLOCKMAP.\n", config.BlockMap.RemoveNonCollidable ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    s              %c   - Subset compress BLOCKMAP.\n", config.BlockMap.SubBlockOptimization ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    z                    - Zero header configuration.\n");
-    fprintf ( stdout, "                   %c     0 = No zero header.\n", config.BlockMap.ZeroHeaderNone ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     1 = Conventional zero header.\n", config.BlockMap.ZeroHeaderStart ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     2 = Zero footer.\n", config.BlockMap.ZeroHeaderEnd ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     0 = No zero header.\n", (config.BlockMap.ZeroHeader == 0) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     1 = Conventional zero header.\n", (config.BlockMap.ZeroHeader == 1) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     2 = Zero footer.\n", (config.BlockMap.ZeroHeader == 2) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    g                  - Geometry simplification.\n");
+    fprintf ( stdout, "                   %c     0 = No simplification.\n", (config.BlockMap.GeometrySimplification == 0) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     1 = Only if same sector.\n", (config.BlockMap.GeometrySimplification == 1) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     2 = Also 1-sided lines in different sectors.\n", (config.BlockMap.GeometrySimplification == 2) ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    b              %c   - Build big 32bit BLOCKMAP.\n", config.BlockMap.blockBig ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "\n" );
     fprintf ( stdout, " -n[a=1,2,3|q|u|i] %c - Rebuild NODES\n", config.Nodes.Rebuild ? DEFAULT_CHAR : ' ' );
@@ -174,8 +177,8 @@ bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
 	    case 'S' :
 	    	config.BlockMap.SubBlockOptimization = setting;
 		break;
-/*	    case 'B' :
-	    	config.BlockMap.OffsetBruteForce = setting;
+/*	    case 'G' :
+	    	config.BlockMap.GeometrySimplification = setting;
 		break;*/
 	    case 'I':
 	    	config.BlockMap.IdCompatible = setting;
@@ -183,12 +186,6 @@ bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
 	    case 'B':
 	    	config.BlockMap.blockBig = setting;
 		break;
-/*	    case 'E':
-	        config.BlockMap.OffsetEight = setting;
-		break;
-	    case 'Z':
-	        config.BlockMap.ZeroHeaderStart = setting;
-                break; */
             case 'M':
 	        config.BlockMap.BlockMerge = setting;
 	    case 'H':
@@ -196,491 +193,507 @@ bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
 		break;
             case 'Z' : 
 	    if (ptr[0] && ptr[1]) {
-	    		config.BlockMap.ZeroHeaderNone = false;
 	    	if (ptr[1] == '0') {
-			config.BlockMap.ZeroHeaderNone = true;
+			config.BlockMap.ZeroHeader = 0;
 		} else if (ptr[1] == '1') {
-			config.BlockMap.ZeroHeaderStart = true;
+			config.BlockMap.ZeroHeader = 1;
 		} else if (ptr[1] == '2') {
-			config.BlockMap.ZeroHeaderEnd = true;
+			config.BlockMap.ZeroHeader = 2;
 		} else {
 			printf("error");
 			return true;
 		}
 		ptr += 2;
 	    }
-	    break;
-            case 'O' : 
-	    if (ptr[0] && ptr[1] && ptr[2] && (ptr[2] == ',')) {
-		// We're given offsets, not using inbuilt
-		char *comma = strchr(ptr + 1, ',');
-		
-		if (comma) {
-			comma[0] = '\0';
-			if (strlen(ptr+1) && strlen(comma+1)) {
-				config.BlockMap.OffsetCommandLineX = atoi(ptr+1);
-				config.BlockMap.OffsetCommandLineY = atoi(comma + 1);
-				config.BlockMap.OffsetUser = true;
-				
-				ptr += strlen(ptr+1) +  strlen(comma+1);
+	    case 'G' :
+	    if (ptr[0] && ptr[1]) {
 
-				return false;
-			} else {
-				printf("error (bad offsets)");	
-				return true;
-			}
-		} else {
-			printf("error (missing comma)");
-			return true;
-		}
-		
+		    if (ptr[1] == '0') {
+			    config.BlockMap.GeometrySimplification = 0;
+		    } else if (ptr[1] == '1') {
+			    config.BlockMap.GeometrySimplification = 1;
+		    } else if (ptr[1] == '2') {
+			    config.BlockMap.GeometrySimplification = 2;
+		    } else {
+			    printf("error");
+			    return true;
+		    }
+		    ptr += 2;
 	    }
-	    
+
+
+	    break;
+	    case 'O' : 
+	    if (ptr[0] && ptr[1] && ptr[2] && (ptr[2] == ',')) {
+		    // We're given offsets, not using inbuilt
+		    char *comma = strchr(ptr + 1, ',');
+
+		    if (comma) {
+			    comma[0] = '\0';
+			    if (strlen(ptr+1) && strlen(comma+1)) {
+				    config.BlockMap.OffsetCommandLineX = atoi(ptr+1);
+				    config.BlockMap.OffsetCommandLineY = atoi(comma + 1);
+				    config.BlockMap.OffsetUser = true;
+
+				    ptr += strlen(ptr+1) +  strlen(comma+1);
+
+				    return false;
+			    } else {
+				    printf("error (bad offsets)");	
+				    return true;
+			    }
+		    } else {
+			    printf("error (missing comma)");
+			    return true;
+		    }
+
+	    }
+
 
 	    if (ptr[0] && ptr[1]) {
-	    		config.BlockMap.OffsetThirtySix = false;
-	    	if (ptr[1] == '0') {
-			config.BlockMap.OffsetZero = true;
-		} else if (ptr[1] == '1') {
-			config.BlockMap.OffsetEight = true;
-		} else if (ptr[1] == '2') {
-			config.BlockMap.OffsetThirtySix = true;
-		} else if (ptr[1] == '3') {
-			config.BlockMap.OffsetHeuristic = true;
-		} else if (ptr[1] == '4') {
-			config.BlockMap.OffsetBruteForce = true;			
-		} else {
-			printf("error");
-			return true;
-		}
-		ptr += 2;
+		    config.BlockMap.OffsetThirtySix = false;
+		    if (ptr[1] == '0') {
+			    config.BlockMap.OffsetZero = true;
+		    } else if (ptr[1] == '1') {
+			    config.BlockMap.OffsetEight = true;
+		    } else if (ptr[1] == '2') {
+			    config.BlockMap.OffsetThirtySix = true;
+		    } else if (ptr[1] == '3') {
+			    config.BlockMap.OffsetHeuristic = true;
+		    } else if (ptr[1] == '4') {
+			    config.BlockMap.OffsetBruteForce = true;			
+		    } else {
+			    printf("error");
+			    return true;
+		    }
+		    ptr += 2;
 	    }
 	    break;
 
-            default  : return true;
-        }
-        config.BlockMap.Rebuild = true;
+	    default  : return true;
+	}
+	config.BlockMap.Rebuild = true;
     }
     return false;
 }
 
 bool parseNODESArgs ( char *&ptr, bool setting )
 {
-    FUNCTION_ENTRY ( NULL, "parseNODESArgs", true );
+	FUNCTION_ENTRY ( NULL, "parseNODESArgs", true );
 
-    config.Nodes.Rebuild = setting;
-    while ( *ptr ) {
-        int option = *ptr++;
-        bool setting = true;
-        if (( *ptr == '+' ) || ( *ptr == '-' )) {
-            setting = ( *ptr++ == '+' ) ? true : false;
-        }
-        switch ( option ) {
-            case '1' : config.Nodes.Method = 1;                 break;
-            case '2' : config.Nodes.Method = 2;                 break;
-            case '3' : config.Nodes.Method = 3;                 break;
-            case 'Q' : config.Nodes.Quiet = setting;            break;
-            case 'U' : config.Nodes.Unique = setting;           break;
-            case 'I' : config.Nodes.ReduceLineDefs = setting;   break;
-            default  : return true;
-        }
-        config.Nodes.Rebuild = true;
-    }
-    return false;
+	config.Nodes.Rebuild = setting;
+	while ( *ptr ) {
+		int option = *ptr++;
+		bool setting = true;
+		if (( *ptr == '+' ) || ( *ptr == '-' )) {
+			setting = ( *ptr++ == '+' ) ? true : false;
+		}
+		switch ( option ) {
+			case '1' : config.Nodes.Method = 1;                 break;
+			case '2' : config.Nodes.Method = 2;                 break;
+			case '3' : config.Nodes.Method = 3;                 break;
+			case 'Q' : config.Nodes.Quiet = setting;            break;
+			case 'U' : config.Nodes.Unique = setting;           break;
+			case 'I' : config.Nodes.ReduceLineDefs = setting;   break;
+			default  : return true;
+		}
+		config.Nodes.Rebuild = true;
+	}
+	return false;
 }
 
 bool parseREJECTArgs ( char *&ptr, bool setting )
 {
-    FUNCTION_ENTRY ( NULL, "parseREJECTArgs", true );
+	FUNCTION_ENTRY ( NULL, "parseREJECTArgs", true );
 
-    config.Reject.Rebuild = setting;
-    while ( *ptr ) {
-        int option = *ptr++;
-        bool setting = true;
-        if (( *ptr == '+' ) || ( *ptr == '-' )) {
-            setting = ( *ptr++ == '+' ) ? true : false;
-        }
-        switch ( option ) {
-            case 'Z' : config.Reject.Empty = setting;           break;
-            case 'F' : config.Reject.Force = setting;           break;
-            case 'G' : config.Reject.UseGraphs = setting;       break;
-	    case 'M' : if (( ptr [-1] == 'M' ) && ( *ptr == 'B' )) {
-                           ptr++;
-                           if (( *ptr == '+' ) || ( *ptr == '-' )) {
-                               setting = ( *ptr++ == '+' ) ? true : false;
-                           }
-                       }
-                       config.Reject.UseRMB = setting;	
-                       break;
-            default  : return true;
-        }
-        config.Reject.Rebuild = true;
-    }
-    return false;
+	config.Reject.Rebuild = setting;
+	while ( *ptr ) {
+		int option = *ptr++;
+		bool setting = true;
+		if (( *ptr == '+' ) || ( *ptr == '-' )) {
+			setting = ( *ptr++ == '+' ) ? true : false;
+		}
+		switch ( option ) {
+			case 'Z' : config.Reject.Empty = setting;           break;
+			case 'F' : config.Reject.Force = setting;           break;
+			case 'G' : config.Reject.UseGraphs = setting;       break;
+			case 'M' : if (( ptr [-1] == 'M' ) && ( *ptr == 'B' )) {
+					   ptr++;
+					   if (( *ptr == '+' ) || ( *ptr == '-' )) {
+						   setting = ( *ptr++ == '+' ) ? true : false;
+					   }
+				   }
+				   config.Reject.UseRMB = setting;	
+				   break;
+			default  : return true;
+		}
+		config.Reject.Rebuild = true;
+	}
+	return false;
 }
 
 int parseArgs ( int index, const char *argv [] )
 {
-    FUNCTION_ENTRY ( NULL, "parseArgs", true );
+	FUNCTION_ENTRY ( NULL, "parseArgs", true );
 
-    bool errors = false;
-    while ( argv [ index ] ) {
+	bool errors = false;
+	while ( argv [ index ] ) {
 
-        if ( argv [index][0] != '-' ) break;
+		if ( argv [index][0] != '-' ) break;
 
-        char *localCopy = strdup ( argv [ index ]);
-        char *ptr = localCopy + 1;
-        strupr ( localCopy );
+		char *localCopy = strdup ( argv [ index ]);
+		char *ptr = localCopy + 1;
+		strupr ( localCopy );
 
-        bool localError = false;
-        while ( *ptr && ( localError == false )) {
-            int option = *ptr++;
-            bool setting = true;
-            if (( *ptr == '+' ) || ( *ptr == '-' )) {
-                setting = ( *ptr == '-' ) ? false : true;
-                ptr++;
-            }
-            switch ( option ) {
-                case 'B' : localError = parseBLOCKMAPArgs ( ptr, setting );     break;
-                case 'N' : localError = parseNODESArgs ( ptr, setting );        break;
-                case 'R' : localError = parseREJECTArgs ( ptr, setting );       break;
-                case 'T' : config.WriteWAD = ! setting;                         break;
-                default  : localError = true;
-            }
-        }
-        if ( localError ) {
-            errors = true;
-            int offset = ptr - localCopy - 1;
-            size_t width = strlen ( ptr ) + 1;
-            fprintf ( stderr, "Unrecognized parameter '%*.*s'\n", (int) width, (int)width, argv [index] + offset );
-        }
-        free ( localCopy );
-        index++;
-    }
+		bool localError = false;
+		while ( *ptr && ( localError == false )) {
+			int option = *ptr++;
+			bool setting = true;
+			if (( *ptr == '+' ) || ( *ptr == '-' )) {
+				setting = ( *ptr == '-' ) ? false : true;
+				ptr++;
+			}
+			switch ( option ) {
+				case 'B' : localError = parseBLOCKMAPArgs ( ptr, setting );     break;
+				case 'N' : localError = parseNODESArgs ( ptr, setting );        break;
+				case 'R' : localError = parseREJECTArgs ( ptr, setting );       break;
+				case 'T' : config.WriteWAD = ! setting;                         break;
+				default  : localError = true;
+			}
+		}
+		if ( localError ) {
+			errors = true;
+			int offset = ptr - localCopy - 1;
+			size_t width = strlen ( ptr ) + 1;
+			fprintf ( stderr, "Unrecognized parameter '%*.*s'\n", (int) width, (int)width, argv [index] + offset );
+		}
+		free ( localCopy );
+		index++;
+	}
 
-    if ( errors ) fprintf ( stderr, "\n" );
+	if ( errors ) fprintf ( stderr, "\n" );
 
-    return index;
+	return index;
 }
 
 void ReadConfigFile ( const char *argv [] )
 {
-    FUNCTION_ENTRY ( NULL, "ReadConfigFile", true );
+	FUNCTION_ENTRY ( NULL, "ReadConfigFile", true );
 
-    FILE *configFile = fopen ( CONFIG_FILENAME, "rt" );
-    if ( configFile == NULL ) {
-        char fileName [ 256 ];
-        strcpy ( fileName, argv [0] );
-        char *ptr = &fileName [ strlen ( fileName )];
-        while (( --ptr >= fileName ) && ( *ptr != SEPERATOR ));
-        *++ptr = '\0';
-        strcat ( ptr, CONFIG_FILENAME );
-        configFile = fopen ( fileName, "rt" );
-    }
-    if ( configFile == NULL ) return;
-
-    char ch = ( char ) fgetc ( configFile );
-    bool errors = false;
-    while ( ! feof ( configFile )) {
-        ungetc ( ch, configFile );
-
-        char lineBuffer [ 256 ];
-        if (fgets ( lineBuffer, sizeof ( lineBuffer ), configFile ) == NULL) {
-		fprintf(stderr, "Input error\n");
+	FILE *configFile = fopen ( CONFIG_FILENAME, "rt" );
+	if ( configFile == NULL ) {
+		char fileName [ 256 ];
+		strcpy ( fileName, argv [0] );
+		char *ptr = &fileName [ strlen ( fileName )];
+		while (( --ptr >= fileName ) && ( *ptr != SEPERATOR ));
+		*++ptr = '\0';
+		strcat ( ptr, CONFIG_FILENAME );
+		configFile = fopen ( fileName, "rt" );
 	}
-        char *basePtr = strupr ( lineBuffer );
-        while ( *basePtr == ' ' ) basePtr++;
-        basePtr = strtok ( basePtr, "\n\x1A" );
+	if ( configFile == NULL ) return;
 
-        if ( basePtr ) {
-            char *ptr = basePtr;
-            bool localError = false;
-            while ( *ptr && ( localError == false )) {
-                int option = *ptr++;
-                bool setting = true;
-                if (( *ptr == '+' ) || ( *ptr == '-' )) {
-                    setting = ( *ptr++ == '-' ) ? false : true;
-                }
-                switch ( option ) {
-                    case 'B' : localError = parseBLOCKMAPArgs ( ptr, setting );     break;
-                    case 'N' : localError = parseNODESArgs ( ptr, setting );        break;
-                    case 'R' : localError = parseREJECTArgs ( ptr, setting );       break;
-                    case 'T' : config.WriteWAD = ! setting;                         break;
-                    default  : localError = true;
-                }
-            }
-            if ( localError ) {
-                errors = true;
-                int offset = basePtr - lineBuffer - 1;
-                size_t width = strlen ( basePtr ) + 1;
-                fprintf ( stderr, "Unrecognized configuration option '%*.*s'\n", (int) width, (int) width, lineBuffer + offset );
-            }
-        }
-        ch = ( char ) fgetc ( configFile );
-    }
-    fclose ( configFile );
-    if ( errors ) fprintf ( stderr, "\n" );
+	char ch = ( char ) fgetc ( configFile );
+	bool errors = false;
+	while ( ! feof ( configFile )) {
+		ungetc ( ch, configFile );
+
+		char lineBuffer [ 256 ];
+		if (fgets ( lineBuffer, sizeof ( lineBuffer ), configFile ) == NULL) {
+			fprintf(stderr, "Input error\n");
+		}
+		char *basePtr = strupr ( lineBuffer );
+		while ( *basePtr == ' ' ) basePtr++;
+		basePtr = strtok ( basePtr, "\n\x1A" );
+
+		if ( basePtr ) {
+			char *ptr = basePtr;
+			bool localError = false;
+			while ( *ptr && ( localError == false )) {
+				int option = *ptr++;
+				bool setting = true;
+				if (( *ptr == '+' ) || ( *ptr == '-' )) {
+					setting = ( *ptr++ == '-' ) ? false : true;
+				}
+				switch ( option ) {
+					case 'B' : localError = parseBLOCKMAPArgs ( ptr, setting );     break;
+					case 'N' : localError = parseNODESArgs ( ptr, setting );        break;
+					case 'R' : localError = parseREJECTArgs ( ptr, setting );       break;
+					case 'T' : config.WriteWAD = ! setting;                         break;
+					default  : localError = true;
+				}
+			}
+			if ( localError ) {
+				errors = true;
+				int offset = basePtr - lineBuffer - 1;
+				size_t width = strlen ( basePtr ) + 1;
+				fprintf ( stderr, "Unrecognized configuration option '%*.*s'\n", (int) width, (int) width, lineBuffer + offset );
+			}
+		}
+		ch = ( char ) fgetc ( configFile );
+	}
+	fclose ( configFile );
+	if ( errors ) fprintf ( stderr, "\n" );
 }
 
 int getLevels ( int argIndex, const char *argv [], char names [][MAX_LUMP_NAME], wadList *list ) {
-    FUNCTION_ENTRY ( NULL, "getLevels", true );
+	FUNCTION_ENTRY ( NULL, "getLevels", true );
 
-    int index = 0, errors = 0;
+	int index = 0, errors = 0;
 
-    char buffer [2048];
-    buffer [0] = '\0';
-    if ( argv [argIndex] ) {
-        strcpy ( buffer, argv [argIndex] );
-        strupr ( buffer );
-    }
-    char *ptr = strtok ( buffer, "+" );
+	char buffer [2048];
+	buffer [0] = '\0';
+	if ( argv [argIndex] ) {
+		strcpy ( buffer, argv [argIndex] );
+		strupr ( buffer );
+	}
+	char *ptr = strtok ( buffer, "+" );
 
-    // See if the user requested specific levels
-    if ( WAD::IsMap ( ptr )) {
-        argIndex++;
-        while ( ptr ) {
-            if ( WAD::IsMap ( ptr )) {
-                if ( list->FindWAD ( ptr )) {
-                    strcpy ( names [index++], ptr );
-                } else {
-                    fprintf ( stderr, "  Could not find %s\n", ptr, errors++ );
-                }
-            } else {
-                fprintf ( stderr, "  %s is not a valid name for a level\n", ptr, errors++ );
-            }
-            ptr = strtok ( NULL, "+" );
-        }
-    } else {
-        int size = list->DirSize ();
-        const wadListDirEntry *dir = list->GetDir ( 0 );
-        for ( int i = 0; i < size; i++ ) {
-            if ( dir->wad->IsMap ( dir->entry->name )) {
-                // Make sure it's really a level
-                if ( strcmp ( dir[1].entry->name, "THINGS" ) == 0 ) {
-                    if ( index == MAX_LEVELS ) {
-                        fprintf ( stderr, "ERROR: Too many levels in WAD - ignoring %s!\n", dir->entry->name, errors++ );
-                    } else {
-                        memcpy ( names [index++], dir->entry->name, MAX_LUMP_NAME );
-                    }
-                }
-            }
-            dir++;
-        }
-    }
-    memset ( names [index], 0, MAX_LUMP_NAME );
+	// See if the user requested specific levels
+	if ( WAD::IsMap ( ptr )) {
+		argIndex++;
+		while ( ptr ) {
+			if ( WAD::IsMap ( ptr )) {
+				if ( list->FindWAD ( ptr )) {
+					strcpy ( names [index++], ptr );
+				} else {
+					fprintf ( stderr, "  Could not find %s\n", ptr, errors++ );
+				}
+			} else {
+				fprintf ( stderr, "  %s is not a valid name for a level\n", ptr, errors++ );
+			}
+			ptr = strtok ( NULL, "+" );
+		}
+	} else {
+		int size = list->DirSize ();
+		const wadListDirEntry *dir = list->GetDir ( 0 );
+		for ( int i = 0; i < size; i++ ) {
+			if ( dir->wad->IsMap ( dir->entry->name )) {
+				// Make sure it's really a level
+				if ( strcmp ( dir[1].entry->name, "THINGS" ) == 0 ) {
+					if ( index == MAX_LEVELS ) {
+						fprintf ( stderr, "ERROR: Too many levels in WAD - ignoring %s!\n", dir->entry->name, errors++ );
+					} else {
+						memcpy ( names [index++], dir->entry->name, MAX_LUMP_NAME );
+					}
+				}
+			}
+			dir++;
+		}
+	}
+	memset ( names [index], 0, MAX_LUMP_NAME );
 
-    if ( errors ) fprintf ( stderr, "\n" );
+	if ( errors ) fprintf ( stderr, "\n" );
 
-    return argIndex;
+	return argIndex;
 }
 
 bool ReadOptionsRMB ( const char *wadName, sOptionsRMB *options ) {
-    FUNCTION_ENTRY ( NULL, "ReadOptionsRMB", true );
+	FUNCTION_ENTRY ( NULL, "ReadOptionsRMB", true );
 
-    char fileName [ 256 ];
-    strcpy ( fileName, wadName );
-    char *ptr = &fileName [ strlen ( fileName )];
-    while ( *--ptr != '.' );
-    *++ptr = '\0';
-    strcat ( ptr, "rej" );
-    while (( ptr > fileName ) && ( *ptr != SEPERATOR )) ptr--;
-    if (( ptr < fileName ) || ( *ptr == SEPERATOR )) ptr++;
-    FILE *optionFile = fopen ( ptr, "rt" );
-    if ( optionFile == NULL ) {
-        optionFile = fopen ( fileName, "rt" );
-        if ( optionFile == NULL ) return false;
-    }
+	char fileName [ 256 ];
+	strcpy ( fileName, wadName );
+	char *ptr = &fileName [ strlen ( fileName )];
+	while ( *--ptr != '.' );
+	*++ptr = '\0';
+	strcat ( ptr, "rej" );
+	while (( ptr > fileName ) && ( *ptr != SEPERATOR )) ptr--;
+	if (( ptr < fileName ) || ( *ptr == SEPERATOR )) ptr++;
+	FILE *optionFile = fopen ( ptr, "rt" );
+	if ( optionFile == NULL ) {
+		optionFile = fopen ( fileName, "rt" );
+		if ( optionFile == NULL ) return false;
+	}
 
-    memset ( options, 0, sizeof ( sOptionsRMB ));
+	memset ( options, 0, sizeof ( sOptionsRMB ));
 
-    options->wadName = strdup ( wadName );
+	options->wadName = strdup ( wadName );
 
-    fprintf ( stdout, "Parsing RMB option file %s", fileName );
+	fprintf ( stdout, "Parsing RMB option file %s", fileName );
 
-    int line = 0, index = 0;
-    char buffer [512];
+	int line = 0, index = 0;
+	char buffer [512];
 
-    while ( fgets ( buffer, sizeof ( buffer ) - 1, optionFile ) != NULL ) {
-        if ( index >= MAX_OPTIONS ) {
-            fprintf ( stderr, " - Too many RMB options\n" );
-            break;
-        }
-        sRejectOptionRMB tempOption;
-        if ( ParseOptionRMB ( ++line, buffer, &tempOption ) == true ) {
-            options->option [index]  = new sRejectOptionRMB;
-            *options->option [index] = tempOption;
-            index++;
-        }
-    }
+	while ( fgets ( buffer, sizeof ( buffer ) - 1, optionFile ) != NULL ) {
+		if ( index >= MAX_OPTIONS ) {
+			fprintf ( stderr, " - Too many RMB options\n" );
+			break;
+		}
+		sRejectOptionRMB tempOption;
+		if ( ParseOptionRMB ( ++line, buffer, &tempOption ) == true ) {
+			options->option [index]  = new sRejectOptionRMB;
+			*options->option [index] = tempOption;
+			index++;
+		}
+	}
 
-    fclose ( optionFile );
+	fclose ( optionFile );
 
-    if ( index != 0 ) {
-        fprintf ( stdout, " - %d valid RMB options detected\n", index );
-        return true;
-    }
+	if ( index != 0 ) {
+		fprintf ( stdout, " - %d valid RMB options detected\n", index );
+		return true;
+	}
 
-    return false;
+	return false;
 }
 
 void EnsureExtension ( char *fileName, const char *ext ) {
-    FUNCTION_ENTRY ( NULL, "EnsureExtension", true );
+	FUNCTION_ENTRY ( NULL, "EnsureExtension", true );
 
-    // See if the file exists first
-    FILE *file = fopen ( fileName, "rb" );
-    if ( file != NULL ) {
-        fclose ( file );
-        return;
-    }
+	// See if the file exists first
+	FILE *file = fopen ( fileName, "rb" );
+	if ( file != NULL ) {
+		fclose ( file );
+		return;
+	}
 
-    size_t length = strlen ( fileName );
-    if ( stricmp ( &fileName [length-4], ext ) != 0 ) {
-        strcat ( fileName, ext );
-    }
+	size_t length = strlen ( fileName );
+	if ( stricmp ( &fileName [length-4], ext ) != 0 ) {
+		strcat ( fileName, ext );
+	}
 }
 
 const char *TypeName ( eWadType type )
 {
-    FUNCTION_ENTRY ( NULL, "TypeName", true );
+	FUNCTION_ENTRY ( NULL, "TypeName", true );
 
-    const char *name = NULL;
-    switch ( type ) {
-        case wt_DOOM    : name = "DOOM";        break;
-        case wt_DOOM2   : name = "DOOM2";       break;
-        case wt_HERETIC : name = "Heretic";     break;
-        case wt_HEXEN   : name = "Hexen";       break;
-        default         : name = "<Unknown>";   break;
-    }
-    return name;
+	const char *name = NULL;
+	switch ( type ) {
+		case wt_DOOM    : name = "DOOM";        break;
+		case wt_DOOM2   : name = "DOOM2";       break;
+		case wt_HERETIC : name = "Heretic";     break;
+		case wt_HEXEN   : name = "Hexen";       break;
+		default         : name = "<Unknown>";   break;
+	}
+	return name;
 }
 
 wadList *getInputFiles ( const char *cmdLine, char *wadFileName )
 {
-    FUNCTION_ENTRY ( NULL, "getInputFiles", true );
+	FUNCTION_ENTRY ( NULL, "getInputFiles", true );
 
-    char *listNames = wadFileName;
-    wadList *myList = new wadList;
+	char *listNames = wadFileName;
+	wadList *myList = new wadList;
 
-    if ( cmdLine == NULL ) return myList;
+	if ( cmdLine == NULL ) return myList;
 
-    char temp [ 256 ];
-    strcpy ( temp, cmdLine );
-    char *ptr = strtok ( temp, "+" );
+	char temp [ 256 ];
+	strcpy ( temp, cmdLine );
+	char *ptr = strtok ( temp, "+" );
 
-    int errors = 0;
-    int index  = 0;
+	int errors = 0;
+	int index  = 0;
 
- 	bool wadOk = true;
+	bool wadOk = true;
 
-    while ( ptr && *ptr ) {
-        char wadName [ 256 ];
-        strcpy ( wadName, ptr );
-        EnsureExtension ( wadName, ".wad" );
+	while ( ptr && *ptr ) {
+		char wadName [ 256 ];
+		strcpy ( wadName, ptr );
+		EnsureExtension ( wadName, ".wad" );
 
-        WAD *wad = new WAD ( wadName );
-        if ( wad->Status () != ws_OK ) {
-            const char *msg;
-	    wadOk = false;
-            switch ( wad->Status ()) {
-                case ws_INVALID_FILE : 
-			msg = "The file %s does not exist\n";             
-			break;
-                case ws_CANT_READ    : 
-			msg = "Can't open the file %s for read access\n"; 
-			break;
-                case ws_INVALID_WAD  : 
-			msg = "%s is not a valid WAD file\n";             
-			break;
-                default              : 
-			msg = "** Unexpected Error opening %s **\n";      
-			break;
-            }
-            fprintf ( stderr, msg, wadName );
-            delete wad;
-        } else {
-            if ( ! myList->IsEmpty ()) {
-                cprintf ( "Merging: %s with %s\r\n", wadName, listNames );
-                *wadFileName++ = '+';
-            }
-            if ( myList->Add ( wad ) == false ) {
-                errors++;
-                if ( myList->Type () != wt_UNKNOWN ) {
-                    fprintf ( stderr, "ERROR: %s is not a %s PWAD.\n", wadName, TypeName ( myList->Type ()));
-                } else {
-                    fprintf ( stderr, "ERROR: %s is not the same type.\n", wadName );
-                }
-                delete wad;
-            } else {
-                if (( config.Reject.UseRMB == true ) && ( index < MAX_WADS )) {
-                    if ( ReadOptionsRMB ( wadName, &rmbOptionTable [index] ) == true ) index++;
-                } else if ( index == MAX_WADS ) {
-                    fprintf ( stderr, "WARNING: Too many wads specified - RMB options ignored" );
-                    index++;
-                }
-                char *end = wadName + strlen ( wadName ) - 1;
-                while (( end > wadName ) && ( *end != SEPERATOR )) end--;
-                if ( *end == SEPERATOR ) end++;
-                wadFileName += sprintf ( wadFileName, "%s", end );
-            }
-        }
-        ptr = strtok ( NULL, "+" );
-    }
-    
-    if ( wadOk && (wadFileName [-1] == '+') ) wadFileName [-1] = '\0';
-    if ( myList->wadCount () > 1 ) cprintf ( "\r\n" );
-    if ( errors ) fprintf ( stderr, "\n" );
-    if ( index != 0 ) fprintf ( stdout, "\n" );
+		WAD *wad = new WAD ( wadName );
+		if ( wad->Status () != ws_OK ) {
+			const char *msg;
+			wadOk = false;
+			switch ( wad->Status ()) {
+				case ws_INVALID_FILE : 
+					msg = "The file %s does not exist\n";             
+					break;
+				case ws_CANT_READ    : 
+					msg = "Can't open the file %s for read access\n"; 
+					break;
+				case ws_INVALID_WAD  : 
+					msg = "%s is not a valid WAD file\n";             
+					break;
+				default              : 
+					msg = "** Unexpected Error opening %s **\n";      
+					break;
+			}
+			fprintf ( stderr, msg, wadName );
+			delete wad;
+		} else {
+			if ( ! myList->IsEmpty ()) {
+				cprintf ( "Merging: %s with %s\r\n", wadName, listNames );
+				*wadFileName++ = '+';
+			}
+			if ( myList->Add ( wad ) == false ) {
+				errors++;
+				if ( myList->Type () != wt_UNKNOWN ) {
+					fprintf ( stderr, "ERROR: %s is not a %s PWAD.\n", wadName, TypeName ( myList->Type ()));
+				} else {
+					fprintf ( stderr, "ERROR: %s is not the same type.\n", wadName );
+				}
+				delete wad;
+			} else {
+				if (( config.Reject.UseRMB == true ) && ( index < MAX_WADS )) {
+					if ( ReadOptionsRMB ( wadName, &rmbOptionTable [index] ) == true ) index++;
+				} else if ( index == MAX_WADS ) {
+					fprintf ( stderr, "WARNING: Too many wads specified - RMB options ignored" );
+					index++;
+				}
+				char *end = wadName + strlen ( wadName ) - 1;
+				while (( end > wadName ) && ( *end != SEPERATOR )) end--;
+				if ( *end == SEPERATOR ) end++;
+				wadFileName += sprintf ( wadFileName, "%s", end );
+			}
+		}
+		ptr = strtok ( NULL, "+" );
+	}
 
-    return myList;
+	if ( wadOk && (wadFileName [-1] == '+') ) wadFileName [-1] = '\0';
+	if ( myList->wadCount () > 1 ) cprintf ( "\r\n" );
+	if ( errors ) fprintf ( stderr, "\n" );
+	if ( index != 0 ) fprintf ( stdout, "\n" );
+
+	return myList;
 }
 
 void ReadSection ( FILE *file, int max, bool *array ) {
-    FUNCTION_ENTRY ( NULL, "ReadSection", true );
+	FUNCTION_ENTRY ( NULL, "ReadSection", true );
 
-    char ch = ( char ) fgetc ( file );
-    while (( ch != '[' ) && ! feof ( file )) {
-        ungetc ( ch, file );
-	char lineBuffer [ 256 ];
+	char ch = ( char ) fgetc ( file );
+	while (( ch != '[' ) && ! feof ( file )) {
+		ungetc ( ch, file );
+		char lineBuffer [ 256 ];
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-result"
 
-	fgets ( lineBuffer, sizeof ( lineBuffer ), file );
+		fgets ( lineBuffer, sizeof ( lineBuffer ), file );
 
 #pragma GCC diagnostic pop
 
-	strtok ( lineBuffer, "\n\x1A" );
-	char *ptr = lineBuffer;
-	while ( *ptr == ' ' ) ptr++;
+		strtok ( lineBuffer, "\n\x1A" );
+		char *ptr = lineBuffer;
+		while ( *ptr == ' ' ) ptr++;
 
-	bool value = true;
-	if ( *ptr == '!' ) {
-		value = false;
-		ptr++;
-	}
-	ptr = strtok ( ptr, "," );
-	while ( ptr ) {
-		int low = -1, high = 0, count = 0;
-		if ( stricmp ( ptr, "all" ) == 0 ) {
-			memset ( array, value, sizeof ( bool ) * max );
-		} else {
-			count = sscanf ( ptr, "%d-%d", &low, &high );
+		bool value = true;
+		if ( *ptr == '!' ) {
+			value = false;
+			ptr++;
 		}
-		ptr = strtok ( NULL, "," );
-		if (( low < 0 ) || ( low >= max )) continue;
-		switch ( count ) {
-			case 1 : array [low] = value;
-				 break;
-			case 2 : if ( high >= max ) high = max - 1;
-					 for ( int i = low; i <= high; i++ ) {
-						 array [i] = value;
-					 }
-				 break;
+		ptr = strtok ( ptr, "," );
+		while ( ptr ) {
+			int low = -1, high = 0, count = 0;
+			if ( stricmp ( ptr, "all" ) == 0 ) {
+				memset ( array, value, sizeof ( bool ) * max );
+			} else {
+				count = sscanf ( ptr, "%d-%d", &low, &high );
+			}
+			ptr = strtok ( NULL, "," );
+			if (( low < 0 ) || ( low >= max )) continue;
+			switch ( count ) {
+				case 1 : array [low] = value;
+					 break;
+				case 2 : if ( high >= max ) high = max - 1;
+						 for ( int i = low; i <= high; i++ ) {
+							 array [i] = value;
+						 }
+					 break;
+			}
+			if ( count == 0 ) break;
 		}
-		if ( count == 0 ) break;
+		ch = ( char ) fgetc ( file );
 	}
-	ch = ( char ) fgetc ( file );
-    }
-    ungetc ( ch, file );
+	ungetc ( ch, file );
 }
 
 void ReadCustomFile ( DoomLevel *curLevel, wadList *myList, sBSPOptions *options )
@@ -848,12 +861,13 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 	if ( config.BlockMap.Rebuild || config.Nodes.Rebuild || config.Reject.Rebuild ) {
 		UINT32 preTime = CurrentTime ();
-		
+
 		MapExtraData(curLevel, &config);
 		*elapsed += preTime = CurrentTime () - preTime;
-		Status ( (char *) "" );
-		GotoXY ( startX, startY );
-		cprintf ( "PREPROCESS - ");
+		// Status ( (char *) "" );
+		// GotoXY ( startX, startY );
+		//cprintf ( "PREPROCESS - ");
+		PrintTime (preTime);
 		cprintf ( "\r\n" );
 		GetXY ( &dummyX, &startY );
 
@@ -1035,7 +1049,11 @@ int getOutputFile ( int index, const char *argv [], char *wadFileName )
 				ptr = argv [ index++ ];
 			}
 			if ( ptr ) strcpy ( wadFileName, ptr );
-			if ( ch == 'X' ) config.Extract = true;
+			if ( ch == 'X' ) {
+				config.Extract = true;
+			} else {
+				config.OutputWad = true;
+			}
 		}
 	}
 
@@ -1085,11 +1103,10 @@ int main ( int argc, const char *argv [] ) {
 	config.BlockMap.OffsetCommandLineY = 0;
 	config.BlockMap.OffsetUser = false;
 	config.BlockMap.OffsetHeuristic = false;
-	config.BlockMap.ZeroHeaderNone = true;
-	config.BlockMap.ZeroHeaderStart = false;
-	config.BlockMap.ZeroHeaderEnd = false;
+	config.BlockMap.ZeroHeader = 1;
 	config.BlockMap.BlockMerge  = false;
 	config.BlockMap.SubBlockOptimization = false;
+	config.BlockMap.GeometrySimplification = 0;
 	config.BlockMap.IdCompatible = false;
 	config.BlockMap.HTMLOutput = false;
 	config.BlockMap.blockBig = false;
@@ -1107,6 +1124,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Reject.UseRMB        = false;
 
 	config.WriteWAD             = true;
+	config.OutputWad            = false;
 
 	if ( argc == 1 ) {
 		printHelp ();
