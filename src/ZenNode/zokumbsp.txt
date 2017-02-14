@@ -8,15 +8,15 @@ Description
 ===========
 
 ZokumBSP is an advanced node/blockmap/reject builder for Id tech 1 games such
-as Doom, Doom 2, Final Doom, Heretic, Hexen, Strife, Hacx. I is bsed on
+as Doom, Doom 2, Final Doom, Heretic, Hexen, Strife, Hacx. It is based on
 ZenNode 1.2.0 and available from Git Hub and as a binary release for select
 operating systems.
 
-This is an experimental Doom tool, expect the occasional bug. It has features
-that allow for the construction of bigger and more complex maps than ZenNode
-and many other similar tools.
+This is an experimental Doom tool, expect the occasional bug when using new
+features. The tool allows for the construction of bigger and more complex maps
+than ZenNode and many other similar tools.
 
-It has BOOM-specific handling, but the main development is for vanilla 1.9
+It has port-specific handling, but the main development is for vanilla 1.9
 executables and Chocolate Doom.
 
 Index
@@ -175,7 +175,7 @@ reduced amount of linedef the engine has to check in an area.
 By setting the tag to 998 on a linedef, this line will not be rendered by the
 Doom engine. More specifically, this will not create a seg out of that
 linedef. This can be used to add impassible lines and manually simplified
-geometry. See the sun section on that.
+geometry. See the next section for more information.
 
 * Manually simplified geometry *
 
@@ -183,7 +183,7 @@ By using a combination of blockmap only lines and rendering only geometry the
 size of the blockmap can be reduced. If one has a rounded corner that consists
 of 16 linedefs, one could surround that corner, possibly reuse vertices to
 only 4 collissionable linedefs. Another good example would be simplifying
-geometry on is never near into simpler shapes, and flag the more complicated
+geometry one is never near into simpler shapes, and flag the more complicated
 geoemtry just behind as non-collidable. This will ensure that stray projctiles
 and shots are still colliding, but not at the exact location of the rendered
 geometry.
@@ -194,7 +194,7 @@ Section 05: Geometry pass
 The geometry pass is a pass one the level done before the blockmap, nodes and
 reject maps are done. It will find the basic dimensions of the map and will
 also apply some geometry changes used by later steps like the blockmap, nodes
-and reject steps.
+and reject steps to produce a smaller blockmap and better node tree etc.
 
 Currently the only geometry change possible is the collission geometry step,
 which is outlined in the blockmap builder chapter.
@@ -211,7 +211,7 @@ something like -bo=1s=0g=2.
 The blockmap is rebuilt by default, to turn this off, invoke ZokumBSP with the
 paramter "-b-".
 
-The blockmap consists of a small header that gives the dimensionsons and
+The blockmap consists of a small header that gives the dimensionns and
 coordinate system of the map, a set of 2-byte values that represent a grid of
 128 by 128 game units with the values being addresses of a list of linedefs
 that exist in that specific block.
@@ -252,33 +252,182 @@ Ultimate Doom: e4m7.
 Doom 2: No maps.
 Final Doom TNT.wad: All maps.
 Final Doom Plutonia.wad: All maps.
+
+The following pwad is built with DoomBSP:
 id Map01 idmap01.wad: map01
 
 'o' -Offset configuration.
 
+The 128x128 grid offset can start at any arbitrary location, but due to the
+size, anything more than 127 game units more than the leftmost or bottom most
+vertice, will lead to the same grid as a different offset, but with more grid
+data. The smallest possible offset, 0,0 is what ZenNode has at its basic
+offset. DoomBSP from Id is set to 8,8. This minor safety margin is not needed.
+It should be noted that due to bugs in the collission detection algorithms in
+Doom, collissions are aparently slightly different when a line is exactly on
+the edge of a grid. This is seen in the near-exit jump on Doom 2 map14 which
+is a jump that is longer than expected.
 
+Different offsets can line up the data in blockmap grids in different ways,
+allowing for smaller or bigger total size. You can specify how many or which
+offsets to use.
 
-                         0 = ZenNode 0,0 offset BLOCKMAP.
-                         1 = DooMBSP / BSP 8,8 offset BLOCKMAP.
-                   *     2 = Best of 36 offset combinations.
-                         3 = Heuristic method to reduce from 65536 offsets.
-                         4 = Best of all 65536 offset combinations.
-                         x,y = Specify specific offsets.
-    r              *   - Remove non-collidable lines from BLOCKMAP.
-    s                  - Subset compress BLOCKMAP.
-    z                    - Zero header configuration.
-                         0 = No zero header.
-                   *     1 = Conventional zero header.
-                         2 = Zero footer.
-    g                  - Geometry simplification.
-                   *     0 = No simplification.
-                         1 = Only if same sector.
-                         2 = Also 1-sided lines in different sectors.
-    b                  - Build big 32bit BLOCKMAP.
+o=0 - ZenNode 0,0 offset BLOCKMAP.
 
+This is the same offset configuration that ZenNode and probably many other
+node builders use. Use this if you want a quickly built blockmap.
 
-Section 07: Nodes builder
-=========================
+o=1 - DooMBSP / BSP 8,8 offset BLOCKMAP.
+
+An offset of 8,8 is used by DoomBSP. This has a slightly higher chance than
+0,0 to build bigger blockmaps due to an increased risk of a bigger grid. 
+
+o=2 - Best of 36 offset combinations.
+
+This is the default configuration for ZokumBSP. 36 offsets will be tested,
+from 0 to 48 along both axises,in increments of 8. It will test (0,0), (0,8),
+(0,16) ... (0,40), (8,0), (8,8), (8,16) ... (40,40)
+
+This is a reasonable compromise between speed and thoroughness of offset
+variations that will yield a smaller total result for most maps than a single
+offset.
+
+o=3 - Heuristic method to reduce from 65536 offsets.
+
+In this confiuration, a lot more offsets will be tested, all the way from 0 to
+127 for both X and Y. The Heuristic to decrease the time spent is to avoid
+computing blockmaps if a combination of X and Y yields both an extra row of
+grid and an extra column. Testing on av.wad and doom2.wad showed that this
+yielded the same results as the complete range, at reduced run time. There
+were plenty of examples of blockmaps with an added column or row still
+producing the best result.
+
+o=4 - Best of all 65536 offset combinations.
+
+This is the same algorithm as approach as o=3, except without the heuristic. It
+is possible, but highly unlikely, that this can give a better result than the
+approach using the heuristic.
+
+o=x,y - Specify specific offsets.
+
+This setting allows you to select a custom set of offsets. This can be useful
+if you are creating a map where a specific jump or some other blockmap related
+artifact requires a specific setting. Aparently the collission detection
+algorithm performs differently when lindefs are on the exact edge of a grid in
+the blockmap.
+
+r - Remove non-collidable lines from BLOCKMAP.
+
+This option will try to remove some lines from the blockmap that one cannot
+interact with. These are typically the outer edge of zero-height sectors which
+are often used on the edges to create the illusion of a sky horizon. This
+option can reduce the amount of lines and the size of the grid due to the
+removal of the outermost lines in sky-sectors. Other lines that will be
+dropped are two-sided lines where both sides of the line belong to the same
+sector and the line is not a special line.
+
+Unline the similar algorithm found in the nodes code that removes segs,
+textures do not matter.
+
+s - Subset compress BLOCKMAP.
+
+This option will reuse a list in the blockmap if the list is a sub set of
+another bigger list. This can save a nice amount of space in the list
+defintions of the blockmap. The downside is that there is a risk of errors in
+the collission detection when the player moves slowly. This is due to the
+engine using a fautly algorithm when the player moves slowly. This is a fairly
+rare occurance, and rarely noticable during normal play. The original engine
+and IWAD data already has a faulty line 0 in all the lists, and this is not
+considered a big problem in normal gaemplay.
+
+z - Zero header configuration.
+
+Id's DoomBSP would originally add a small 00 header in each list. This is a
+bug. The engine does not parse this correctly, and sees it as a reference to
+linedef 0. It will also increase the size of the blockmap. Additional linedefs
+not present in the block can in some rare cases lead to faulty collission
+detection. This option tells ZokumBSP if this header is to be added.
+
+The approach taken in MBF, to skip this redundant header, was a bad fix. The
+fix should instead have been done in the node builders. Due to the fact that
+skipping this header is needed for demo compatibility, many ports have this as
+a togglable option in the code anyway.
+
+z=0 - No zero header.
+
+This option produces a smaller blockmap. This works flawlessly, in fact
+better, when maps are played in the original engine and Chocolate Doom. There
+is however a known bug in some ports, like MBF, and those based on this port
+where a poor optimization will skip this header without actually checking that
+it is a zero-header. Such ports will have very faulty collission detection in
+every area in the map. If one is aiming for newer ports where this has been
+fixed, classic Doom or Chocolate Doom, this option is generally safe. There is
+a fix for this header in Eternity Engine. GZdoom generally ignores the
+blockmap, and should work fine with or without this option.
+
+z=1 - Conventional zero header.
+
+This is the current default option due to the many ports with a faulty header
+optimization. This adds about 2 bytes of overhead per list in the blockmap. It
+is also needed for demo compatibility if one is using this to compress
+blockmaps to make a map take up less space and use marginally less memory at
+runetime.
+
+z=2 - Zero footer.
+
+This is an experimental feature used in testing. It will add the 00 as the
+last entry in the linedef list. Doing this causes demos to desync. This is
+proof that not only the entries, but also the order is important. This
+parameter serves no other use.
+
+g - Geometry simplification.
+
+This is an umbrella term for several optimizations that will alter the level
+geometry by combining and changing the linedefs in a map in such a manner that
+the resulting blockmap is smaller or more efficient runtime. These changes
+will alter the level, and are not reversible with ZokumBSP. Manually fixing
+these changes in an editor is possible, but may take some time. When using
+this option at anything but level 0, tured off, it is recommended one
+specifies a seperate output file or has a bckup of the original map.
+
+This option can add linedefs to a map, increasing the size, in order to lower
+the size of the usually more size constrained blockmap. Although possible, it
+is highly unlikely that this will add too many linedefs to a map. There is
+currently no check for this limit in the code as of version 1.0.9.
+
+g=0 - No simplification.
+
+This is the default setting. This will not change the level geometry at all.
+
+g=1 - Only if same sector.
+
+This is a basic level of optimization. This will try to combine linedefs that
+have the same sidedef sector data into longer linedefs that span the length of
+two or more linedefs. This not only leads to smaller maps, there is also fewer
+lines that need to be checked run time, resulting in a marginally higher frame
+rate.
+
+g=2 - Also 1-sided lines in different sectors.
+
+This will add another level of optimization, it will try to combine one-sided
+walls in a similar fashion even if they belong to different sectors.
+Geometrically a one-sided wall can be seen as inifinitely tall. This has not
+been extensively tested, but should be a fairly safe optimization.
+
+b - Build big 32bit BLOCKMAP.
+
+This is experimental code, and is not fully functional. The plan is to make
+this entry have a different name than the current name, BLOCKMAP in order to
+allow for bigger blockmaps that will support bigger maps. 
+
+Using this will override the check for a too big blockmap, allowing for a big
+blockmap to be constructed. This option will only produce playable maps in
+ports where the blockmap is ignored. Sine the specifications are not final,
+nor the output correct, one cannot at this time expect any port to support
+this option.
+
+Section 07: Node builder
+========================
 
 Nothing has changed from the node code found in ZenNode.
 
@@ -296,6 +445,11 @@ Section 09: Other options
 Section 10: Compatibility
 =========================
 
+* BOOM compatibility *
+
+Generic raising stairs and similar specials will be autodetected, disabling
+the removal of some seemingly unneeded collision lines in the blockmap.
+
 * 32 and 64 bit *
 
 ZokumBSP was developed on a 64bit system, and has not been tested on 32bit
@@ -306,6 +460,7 @@ The reject pass of the tool utilizes a 64bit integer in a non-time-sensitive
 part of the code to avoid an overflow found in ZenNode.
 
 * Operation systems *
+
 Linux:
 
 ZokumBSP was primarily developed on Linux, using gcc, and should hopefully
