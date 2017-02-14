@@ -120,18 +120,18 @@ TODO: Fix max-linedefs limit crash bug!
 * Segs *
 
 Segs are linedef segments and are used by the rendering part of the engine.
-The limit is on these are also 32768 segs. At least one seg is created for
-every linedef, two for a two-sided linedef etc. Additional segs are also
-created as part of the node building process, this happens when the node
-builder splits a sector into smaller subsectors, creating a new seg where a
-line is split. Different partitioning algorithms can change the amount of segs
-in a map. For more information about segs-count manipulation, see the special
-effects chapter of the manual.
+The limit is a 32768 segs. At least one seg is created for every linedef, two
+for a two-sided linedef etc. Additional segs are also created as part of the
+node building process, this happens when the node builder splits a sector into
+smaller subsectors, creating a new seg where a line is split. Different
+partitioning algorithms can change the amount of segs in a map. For more
+information about segs-count manipulation, see the special effects chapter of
+the manual.
 
 * Vertices *
 
 The limit for vertices is the same as many other structures, 32678. It should
-be noted that a node builder will add verices to a map when it splits a seg
+be noted that a node builder will add vertices to a map when it splits a seg
 into several segs as part of the node building process. All node builders do
 this. It is theoretically possible to create a map with more vertices than
 segs or linedefs, but in practice this is very rare. This is most easily done
@@ -201,6 +201,10 @@ which is outlined in the blockmap builder chapter.
 
 Section 06: Blockmap builder
 ============================
+
+The blockmpa is a data structure that is part of the map format. It is a
+lookup table where the engine can quickly see which lines are in a given area
+when performaing collission detection.
 
 The blockmap builder has gone through a very substantial update of the old
 ZenNode base. There are a lot of new options available. 
@@ -285,7 +289,7 @@ An offset of 8,8 is used by DoomBSP. This has a slightly higher chance than
 o=2 - Best of 36 offset combinations.
 
 This is the default configuration for ZokumBSP. 36 offsets will be tested,
-from 0 to 48 along both axises,in increments of 8. It will test (0,0), (0,8),
+from 0 to 40 along both axises,in increments of 8. It will test (0,0), (0,8),
 (0,16) ... (0,40), (8,0), (8,8), (8,16) ... (40,40)
 
 This is a reasonable compromise between speed and thoroughness of offset
