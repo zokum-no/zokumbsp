@@ -130,7 +130,7 @@ the manual.
 
 * Vertices *
 
-The limit for vertices is the same as many other structures, 32678. It should
+The limit for vertices is the same as many other structures, 32768. It should
 be noted that a node builder will add vertices to a map when it splits a seg
 into several segs as part of the node building process. All node builders do
 this. It is theoretically possible to create a map with more vertices than
@@ -330,7 +330,7 @@ removal of the outermost lines in sky-sectors. Other lines that will be
 dropped are two-sided lines where both sides of the line belong to the same
 sector and the line is not a special line.
 
-Unline the similar algorithm found in the nodes code that removes segs,
+Unlike the similar algorithm found in the nodes code that removes segs,
 textures do not matter.
 
 s - Subset compress BLOCKMAP.
@@ -346,16 +346,22 @@ considered a big problem in normal gaemplay.
 
 z - Zero header configuration.
 
-Id's DoomBSP would originally add a small 00 header in each list. This is a
+Id's DoomBSP would originally added a small 00 header in each list. This is a
 bug. The engine does not parse this correctly, and sees it as a reference to
-linedef 0. It will also increase the size of the blockmap. Additional linedefs
-not present in the block can in some rare cases lead to faulty collission
-detection. This option tells ZokumBSP if this header is to be added.
+linedef 0. This increases the size of the blockmap and slows down the run time
+speed. Additional linedefs not present in the block can in some rare cases
+lead to faulty collission detection. This option controls whether blockmap
+lists should have this header in some ports which will skip the first entry in
+a blockmap list regardless of it being a 0-header or not.
 
 The approach taken in MBF, to skip this redundant header, was a bad fix. The
 fix should instead have been done in the node builders. Due to the fact that
 skipping this header is needed for demo compatibility, many ports have this as
 a togglable option in the code anyway.
+
+Hopefully, ports will include a fix for this bug, but due to demo
+compatibility, older versions will have to emulate this behaviour to properly
+play back demos recorded with this bad optimization in place.
 
 z=0 - No zero header.
 
@@ -366,8 +372,9 @@ where a poor optimization will skip this header without actually checking that
 it is a zero-header. Such ports will have very faulty collission detection in
 every area in the map. If one is aiming for newer ports where this has been
 fixed, classic Doom or Chocolate Doom, this option is generally safe. There is
-a fix for this header in Eternity Engine. GZdoom generally ignores the
-blockmap, and should work fine with or without this option.
+a fix for this header in newer versions of the Eternity Engine. GZdoom
+generally ignores the blockmap, and should work fine with or without this
+option.
 
 z=1 - Conventional zero header.
 
@@ -375,7 +382,7 @@ This is the current default option due to the many ports with a faulty header
 optimization. This adds about 2 bytes of overhead per list in the blockmap. It
 is also needed for demo compatibility if one is using this to compress
 blockmaps to make a map take up less space and use marginally less memory at
-runetime.
+runtime.
 
 z=2 - Zero footer.
 
@@ -387,17 +394,24 @@ parameter serves no other use.
 g - Geometry simplification.
 
 This is an umbrella term for several optimizations that will alter the level
-geometry by combining and changing the linedefs in a map in such a manner that
-the resulting blockmap is smaller or more efficient runtime. These changes
-will alter the level, and are not reversible with ZokumBSP. Manually fixing
-these changes in an editor is possible, but may take some time. When using
-this option at anything but level 0, tured off, it is recommended one
-specifies a seperate output file or has a bckup of the original map.
+geometry by adding linedefs that only sohw up in collision detection and
+flagging linedefs as rendering only, no collision detection.
 
-This option can add linedefs to a map, increasing the size, in order to lower
-the size of the usually more size constrained blockmap. Although possible, it
-is highly unlikely that this will add too many linedefs to a map. There is
-currently no check for this limit in the code as of version 1.0.9.
+Combining and changing the linedefs in a map in such a manner can result in a
+blockmap that is smaller and possibly more efficient when playing the game,
+due to fewer line collission detections required. 
+
+These change will alter the level, and are not reversible with ZokumBSP.
+Manually fixing these changes in an editor is possible, but may take some
+time. When using this option at anything but level 0, turned off, it is
+recommended that one specifies a seperate output file or has a backup of the
+original map if further editing is planned.
+
+This option can add linedefs to a map, increasing the size of this data
+structure, with the goal of lowering the size of the usually more size
+constrained blockmap. Although possible, it is highly unlikely that this will
+add too many linedefs to a map. There is currently no check for this limit in
+the code as of version 1.0.9.
 
 g=0 - No simplification.
 
@@ -407,16 +421,18 @@ g=1 - Only if same sector.
 
 This is a basic level of optimization. This will try to combine linedefs that
 have the same sidedef sector data into longer linedefs that span the length of
-two or more linedefs. This not only leads to smaller maps, there is also fewer
-lines that need to be checked run time, resulting in a marginally higher frame
-rate.
+two or more linedefs. This not only leads to smaller blockmaps, there are also
+fewer lines that need to be checked during game play, resulting in a
+marginally higher frame rate.
 
 g=2 - Also 1-sided lines in different sectors.
 
-This will add another level of optimization, it will try to combine one-sided
-walls in a similar fashion even if they belong to different sectors.
-Geometrically a one-sided wall can be seen as inifinitely tall. This has not
-been extensively tested, but should be a fairly safe optimization.
+This will add another level of optimization. I tries to find one-side walls in
+a similar fashion even if they belong to different sectors. Geometrically a
+one-sided wall can be seen as inifinitely tall, and which sector it belongs to
+has no importance for the purpose of collission detection.
+
+This has not been extensively tested, but should be a fairly safe optimization.
 
 b - Build big 32bit BLOCKMAP.
 
@@ -433,7 +449,53 @@ this option.
 Section 07: Node builder
 ========================
 
-Nothing has changed from the node code found in ZenNode.
+Nothing has not changed much from the node code found in ZenNode. The changes
+are related to the concept of having collission geometry seperate from the
+rendered geometry though the use of 998 and 999.
+
+a - Partition Selection Algorithm
+
+ZokumBSP offers the same 3 algoritms as ZenNode does.
+
+a=1 - Minimize splits
+
+This is the simplest and most basic algorithm. Although it is stated to
+attempt to minimize splits, it may produce more segs than the other
+algorithms. 
+
+a=2 - Minimize BSP depth
+
+This is the most complex of the two main algorithms, and will attempt to
+produce a BSP tree that is not as deep as the ones made with the first
+algorithm. Anecdotal evidence suggest that this algorithm can in fact produce
+fewer splits for bigger maps. Try both if a reduced seg count is required.
+
+a=3 - Minimize time
+
+This lagorithm uses the same approach as algorithm 2, except it doesn't check
+for as many combinations as a=2. It will pick the best out of 30. This makes
+the nodes build much faster. The downside is that the better splits may not be
+found every time, leading to a worse performing tree.
+
+q - Don't display progress bar
+
+This hides all the updates indicating the progress and depth of the BSP tree.
+If one does not pay attention to the tool output, use this option to speed up
+the node building process slightly.
+
+u - Ensure all sub-sectors contain only 1 sector
+
+This will try to make sure that sub sectors only contain one sector. A sub
+sector is a convex area that are used to construct a convex sector out of
+concave sub sectors. This property is important when designing a 3d engine
+since it allows for much faster rendering if all of the areas are convex.
+
+i - Ignore non-visible lineDefs
+
+This option is similar to a blockmap option that removes non-collidable lines
+from the level geometry. It does however check for the presence of a middle
+texture, since those need to be rendered even if a linedef has sidefs
+belonging to the same sector.
 
 Section 08: Reject builder
 ==========================
@@ -441,7 +503,35 @@ Section 08: Reject builder
 Only one thing has been changed from the reject builder code found in ZenNode.
 A overflow was fixed by using a bigger integer type of variable, allowing
 reject maps to be built for very big levels. It has been tested for reject
-maps with over ten thousand sectors.
+maps with over ten thousand sectors. When building reject maps this big, one
+might have to use big blockmap support in order to compute the reject table.
+
+z -Insert empty REJECT resource.
+
+This will insert a REJECT table where all the lookup values are zero. This
+means the engine has to do all the checks during regular gameplay. This is a
+very fast way to build a compliant reject lump for a map, but the performance
+will be low if there are monsters or other things that perform line of sight
+calculations. This is mostly used for testing a map in the game without having
+to wait for a long time due to building a reject table.
+
+f - Rebuild even if REJECT effects are detected.
+
+This forces ZokumBSP to build a reject table even if the old one seems to
+contain special effects. Reject special effects usually involve setting
+certain entries to 1 instead of 0 to make monsters appear blind or fail to
+attack from certain areas when the player is in a certain area.
+
+g - Use graphs to reduce LOS calculations.
+
+Use this for a quicker built reject table. The idea is that if a sector A
+cannot see into sector B at all, then any sector where the line of sight has
+to go through sector B will also not see into sector A.
+
+m{b} - Process RMB option file (.rej)
+
+This allows ZokumBSP to use the same kind of .rej files that RMB supports in
+order to have similar special effects applied.
 
 Section 09: Other options
 =========================
@@ -494,9 +584,9 @@ been any changes to the code base that would make this an impossible feat.
 Section 11: Usage together with other tools
 ===========================================
 
-* Command line *
-
 * GZ Doom Builder *
+
+
 
 Section 12: Other resources
 ===========================
