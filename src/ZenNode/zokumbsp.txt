@@ -606,15 +606,16 @@ The changelog is kept in a seperate file, 'changelog.txt'.
 Section 14: Acknowledgements
 ============================
 
-Marc Roussaeu - ZenNode
-Brad Specer - Web site layout and feedback
-Dew - Feedback and bug testing
-Anders Johnsen - Feedback and suggestions
-Linquica - Feedback and information
-Eternity Engine - Adding compatibility fixes and testing
-#nightmare - Feedback and support
-#d**** - Feedback and information
-#notetern... - Feedback and inforamtion
+Marc Roussaeu            - ZenNode
+Brad Specer              - Web site layout and feedback
+Dew                      - Feedback and bug testing
+Anders Johnsen           - Feedback and suggestions
+Andrew 'Linguica' Stine  - Feedback and information
+x38_ViTa_38              - Spell checking
+Eternity Engine          - Adding compatibility fixes and testing
+#nightmare               - Feedback and support
+#d****                   - Feedback and information
+#noteternityenginere...  - Feedback and inforamtion
 
 Section 15: Other node builders
 ===============================
