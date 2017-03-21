@@ -52,10 +52,9 @@ struct sBlockMapOptions {
 	int   OffsetCommandLineX;
 	int   OffsetCommandLineY;
 	bool  OffsetUser;
-	bool  ZeroHeaderStart;
-	bool  ZeroHeaderEnd;
-	bool  ZeroHeaderNone;
+	int   ZeroHeader;
 	bool  SubBlockOptimization;
+	int  GeometrySimplification;
 	bool  BlockMerge;
 	bool  RemoveNonCollidable;
 	bool  HTMLOutput;
@@ -80,7 +79,7 @@ struct sBlockList {
 	int     uniqueLinedefs;
 	int     sharedLinedefs;
 	int     hash;                       // simple hash of the block, for comparisons
-	int	    lineDefBlocks; 		// The smallest amount of blocks one of the linedefs exist in, 1 or higher
+	int	lineDefBlocks; 		// The smallest amount of blocks one of the linedefs exist in, 1 or higher
 	int     lineDefBlocksX;		// same, but X only
 	int     lineDefBlocksY;		// y only
 };
@@ -263,6 +262,7 @@ struct sOptions {
 	sRejectOptions   Reject;
 	bool             WriteWAD;
 	bool             Extract;
+	bool		 OutputWad;
 };
 
 struct sBlockMapExtraData;

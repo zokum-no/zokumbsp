@@ -1,5 +1,21 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.9-rc1
+- Added geometry simplification blockmap compression. Also speeds up the
+  DOOM engine due to less calculations runtime.
+- Added more aggressive simplification of one sided walls in different
+  sectors, set with level g=2.
+- Made 00 headers default due to bad optimizations in many ports.
+- Added a method to add new linedefs.
+- Added trimming of linedef list to reduce unneeded linedefs.
+- Linedefs with tag 998 will not be added to BSP tree, ie not rendered.
+- Renamed PREPROCESS TO GEOMETRY. Added statistics, progress and run time.
+
+ZokumBSP 1.0.8-rc2
+- Using 64bit uints in reject code to stop it crashing on large maps. This
+  fixed building a reject table on a 2k sector map. Bigger maps still crash
+  in a different location.
+
 ZokumBSP 1.0.8-rc1
 - Anotak found a nice optimization, moved checks out of a core loop. This 
   gives a 33% speedup.

@@ -179,7 +179,8 @@ struct wBlockMap32 {
 
 
 struct sMapExtraData {
-	bool *lineDefsUsed;
+	bool *lineDefsCollidable;
+	bool *lineDefsRendered;
 	int rightMostVertex;
 	int leftMostVertex;
 	int bottomVertex;
@@ -213,7 +214,9 @@ class DoomLevel {
 	int         m_Cluster;
 
 	wThing     *m_ThingData;
+	public:
 	wLineDef   *m_LineDefData;
+	private:
 
 	sLevelLump  m_Map;
 	sLevelLump  m_Thing;
@@ -304,7 +307,8 @@ class DoomLevel {
 	int BehaviorSize () const                   { return m_Behavior.dataSize; }
 
 	const wThing    *GetThings () const         { return m_ThingData; }
-	const wLineDef  *GetLineDefs () const       { return m_LineDefData; }
+	// no longer const
+	wLineDef  *GetLineDefs () const       { return m_LineDefData; }
 	const wSideDef  *GetSideDefs () const       { return ( wSideDef * ) m_SideDef.rawData; }
 	const wVertex   *GetVertices () const       { return ( wVertex * ) m_Vertex.rawData; }
 	const wSector   *GetSectors () const        { return ( wSector * ) m_Sector.rawData; }
@@ -345,6 +349,9 @@ class DoomLevel {
 
 	sThingDesc *GetThing ( int index );
 	static sLineDefDesc *GetLineDef ( int index );
+// Zokum 2017 additions:
+	void AddLineDef(void);
+	void TrimLineDefs(void);
 };
 
 #if ( BYTE_ORDER == LITTLE_ENDIAN )

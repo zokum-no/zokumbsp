@@ -45,46 +45,11 @@ http://www.doom2.net/zokum/zokumbsp/
 ## Usage
 
 ```
-ZokumBSP Version: 1.0.5-rc1 (c) 2016 Kim Roar Foldøy Hauge
+ZokumBSP Version: 1.0.x branch (c) 2016-2015 Kim Roar Foldøy Hauge
 Based on: ZenNode Version 1.2.1 (c) 1994-2004 Marc Rousseau
 
 Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}
 
- -x+ turn on option   -x- turn off option  * = default
+See the documentation file zokumbsp.txt for more information.
 
- -b[chio=0,1,2,3rsz=0,1,2]       * - Rebuild BLOCKMAP
-    c              *   - Compress BLOCKMAP
-    h                  - Output BLOCKMAP data as HTML.
-    i                  - Id compatible BLOCKMAP. Sets 'o=1n=2' and 'c-s-r-'
-    o                  - Offset configuration.
-                         0 = ZenNode 0,0 offset BLOCKMAP.
-                         1 = IdBSP / BSP 8,8 offset BLOCKMAP.
-                   *     2 = Best of 36 offset combinations.
-                         3 = Heuristic method to reduce from 65536 offsets.
-                         4 = Best of all 65536 offset combinations.
-    r              *   - Remove non-collidable lines from BLOCKMAP.
-    s                  - Subset compress BLOCKMAP.
-    z                   - Zero header configuration.
-                   *     0 = No zero header.
-                         1 = Conventional zero header.
-                         2 = Zero footer.
-
- -n[a=1,2,3|q|u|i] * - Rebuild NODES
-    a                   - Partition Selection Algorithm
-                   *     1 = Minimize splits
-                         2 = Minimize BSP depth
-                         3 = Minimize time
-    q                  - Don't display progress bar
-    u                  - Ensure all sub-sectors contain only 1 sector
-    i                  - Ignore non-visible lineDefs
-
- -r[zfgm]          * - Rebuild REJECT resource
-    z                  - Insert empty REJECT resource
-    f                  - Rebuild even if REJECT effects are detected
-    g              *   - Use graphs to reduce LOS calculations
-    m{b}               - Process RMB option file (.rej)
-
- -t                  - Don't write output file (test mode)
-
- level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN
 ```
