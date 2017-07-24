@@ -80,6 +80,8 @@ sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int xOffset, int yOffset, const 
 
 	sBlockMap *blockMap = new sBlockMap;
 
+	bool zeroHeader = options.IdCompatible || options.ZeroHeaderEnd;
+
 	const wVertex *vertex   = level->GetVertices();
 	const wLineDef *lineDef = level->GetLineDefs();
 
@@ -109,15 +111,15 @@ sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int xOffset, int yOffset, const 
 		blockList [i].lineDefBlocksY = 9999;
 	}
 
-	int startLinedef = 0;
-/*
+	int startLinedef;
+
 	if (options.ZeroHeaderStart || options.IdCompatible || options.ZeroHeaderEnd) {
 		startLinedef = 1; // we don't need to add 0 twice :D
 	} else {
 		startLinedef = 0;
 	}
-*/
-	if ((options.ZeroHeader == 1) || options.IdCompatible ) {
+
+	if (options.ZeroHeaderStart || options.IdCompatible ) {
 		// Add all the dummy linedef 0 "headers" to all blocks...
 		// This matters for demo compability
 		for (int dc = 0; dc != (noCols * noRows);  dc++) {
@@ -127,7 +129,7 @@ sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int xOffset, int yOffset, const 
 
 	for ( int i = startLinedef; i < level->LineDefCount (); i++ ) {
 
-		if (extraData->lineDefsCollidable[i] == false) {
+		if (extraData->lineDefsUsed[i] == false) {
 			continue;
 		}
 
@@ -244,7 +246,7 @@ sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int xOffset, int yOffset, const 
 		}
 	}
 
-	if (options.ZeroHeader == 2) {
+	if (options.ZeroHeaderEnd /*|| options.IdCompatible*/) {
 		// Add all the dummy linedef 0 "headers" to all blocks...
 		// This matters for demo compability
 		for (int dc = 0; dc != (noCols * noRows);  dc++) {
@@ -365,33 +367,7 @@ int CompareBlocks(sBlockList *blockList, int i, int existingIndex) {
 
 // is the block inside the boundary box
 inline bool BoundaryBoxCheck(sBlockMap *blockMap, int i, int index, int xCheck, int yCheck) {
-	/*
-	int xCheck; //  = blockList[i].lineDefBlocks;
-	int yCheck; // = blockList[i].lineDefBlocks;
-
-	// Des the block have horisontal linedefs
-	if ((blockList[i].lineDefBlocksX != 9999) && blockList[i].lineDefBlocksX){
-		// Does it also have vertical lines, if so no other blocks can match it.
-		if ((blockList[i].lineDefBlocksY != 9999) && blockList[i].lineDefBlocksY)  {
-			return false;
-
-			// Horisontal lines, but no vertical lines. No need to check in Y-direction
-		} else {
-			yCheck = 0;
-		}
-		xCheck = blockList[i].lineDefBlocksX;
-		// Does the block have vertical linedefs. We know it doesn't have horisontal ones
-	} else if ((blockList[i].lineDefBlocksY != 9999) && blockList[i].lineDefBlocksY) {
-		xCheck = 0;
-		yCheck = blockList[i].lineDefBlocksY;
-
-		// Only diagonal lines, fall back to check area compared from longest linedef.
-	} else {
-		xCheck = blockList[i].lineDefBlocks;
-		yCheck = blockList[i].lineDefBlocks;
-	}
-	*/
-
+	// several if statements for xcheck/ycheck moved out of this function outside loop in createblockmap
 	if ((abs((i % blockMap->noColumns ) - (index % blockMap->noColumns)) > xCheck)) {
 		return false;
 	}
@@ -515,19 +491,19 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 	bool squeeze = options.SubBlockOptimization;
 
-	int earlyExitSize = 90000000; // 90meg, well over the 65k limit
+	int earlyExitSize = 300000; // 300k, well over the 65k limit
 
 	for (int offsetY = offsetYMin; offsetY <= offsetYMax; offsetY += offsetIncreaseY) {
 
 		if (bestBlockSize < 1234567) {
-			sprintf(zokoutput, "BLOCKMAP - Offset x{%d-%d} y=%-3d  Best: %dbytes, x=%d, y=%d", 
+			sprintf(zokoutput, "BLOCKMAP - Offset x{%d-%d} y=%-3d   Best: %dbytes, x=%d, y=%d", 
 					offsetYMin,
 					offsetXMax, 
 					offsetY, 
 					bestBlockSize, 
 					bestX, bestY );
 		} else {
-			sprintf(zokoutput, "BLOCKMAP - Offset x{%d-%d} y=%-3d  Best: N/A",
+			sprintf(zokoutput, "BLOCKMAP - Offset x{%d-%d} y=%-3d   Best: N/A",
 					offsetXMin,
 					offsetXMax,
 					offsetY);
@@ -561,17 +537,16 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 			totalSize = blockMap->noColumns * blockMap->noRows;
 
 			blockListSize = 0;
-	
+
 			int i = -1;
 			int minEntrySize = 0;
 #ifdef _WIN32
 			// TEMPORARY HACK TO GET THIS WORKING ON MSVC, NEED TO FIX
-			// bool blockHasList[65535];
+			bool blockHasList[65535];
 			int orderArray2[65535][2];
 #else
-			// bool blockHasList[totalSize];
+			bool blockHasList[totalSize];
 			int orderArray2 [totalSize][2];
-			// int *orderArray2[2] = new int [totalSize][2];
 #endif
 
 			int hashDifferences = 0;
@@ -588,7 +563,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 			}
 
 			for (int n = 0; n != totalSize; n++) {
-				// blockHasList[n] = false;
+				blockHasList[n] = false;
 				blockList[n].subBlockOffset = 0;
 
 				orderArray2[n][0] = blockList[n].count;
@@ -621,15 +596,16 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 					if (blockList [i].count) {
 						bool newBlock = true;
 
-						int xCheck; //  = blockList[i].lineDefBlocks;
-						int yCheck; // = blockList[i].lineDefBlocks;
-
+						// these block checks were inside BoundaryBoxCheck, moved here
+						// outside the loop for speed reasons
+						int xCheck, yCheck;
 						// Does the block have horisontal linedefs
 						if ((blockList[i].lineDefBlocksX != 9999) && blockList[i].lineDefBlocksX) {
 							// Does it also have vertical lines, if so no other blocks can match it.
 							if ((blockList[i].lineDefBlocksY != 9999) && blockList[i].lineDefBlocksY) {
 								return false;
-								// Horisontal lines, but no vertical lines. No need to check in Y-direction
+
+								// Horizontal lines, but no vertical lines. No need to check in Y-direction
 							} else {
 								yCheck = 0;
 							}
@@ -693,7 +669,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 				sBlockList *block = &blockList [i];
 				blockList [i].firstIndex = i;
 				blockListSize += 1 + blockList [i].count;
-				// blockHasList[i] = true;
+				blockHasList[i] = true;
 				if (earlyExitSize < (blockListSize + totalSize)) {
 					break;
 				}
@@ -720,8 +696,6 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 				for (int j = 0; j != totalSize; j++) {
 					bestLinedefArray[j] = orderArray2[j][1];
 				}
-
-				// delete [] orderArray2;
 
 				bestSavings = savings;
 				bestTotalSize = totalSize;
