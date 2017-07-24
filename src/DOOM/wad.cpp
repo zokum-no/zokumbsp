@@ -37,6 +37,8 @@
 #ifndef _WIN32
 	#include <strings.h>
 #endif
+#include <strings.h>
+
 #include <sys/stat.h>
 #include "common.hpp"
 #include "wad.hpp"
@@ -670,10 +672,12 @@ bool WAD::SaveFile ( const char *newName )
 
     FILE *tmpFile = NULL;
 
-    if ( stricmp ( wadPath, newPath ) == 0 ) {
+    // if ( strcasecamp ( wadPath, newPath ) == 0 ) {
+    if ( strcasecmp ( wadPath, newPath ) == 0 ) {
         if ( HasChanged () == false ) return true;
         sprintf ( tmpPath, "%s.XXXXXX", newPath );
-#ifdef _WIN32
+#if defined _WIN32 && !defined __MINGW32__
+// #ifdef _WIN32 
         int tmp = _mktemp_s( tmpPath );
 #else
 		int tmp = mkstemp(tmpPath);
@@ -749,8 +753,8 @@ bool WAD::SaveFile ( const char *newName )
         remove ( tempName );
         return false;
     }
-
-    if ( stricmp ( wadPath, newPath ) == 0 ) {
+// stri fix
+    if ( strcasecmp ( wadPath, newPath ) == 0 ) {
         if ( m_File != NULL ) fclose ( m_File );
         if ( remove ( m_Name ) != 0 ) {
             fprintf ( stderr, "\nERROR: WAD::SaveFile - Unable to remove %s.", m_Name );
@@ -1083,7 +1087,7 @@ bool wadList::Save ( const char *newName )
         while ( ptr->Next != NULL ) {
             m_Name = ptr->wad->Name ();
             _fullpath ( wadPath, m_Name, MAXPATH );
-            if ( stricmp ( wadPath, newPath ) == 0 ) break;
+            if ( strcasecmp ( wadPath, newPath ) == 0 ) break;
             ptr = ptr->Next;
         }
 
@@ -1092,9 +1096,9 @@ bool wadList::Save ( const char *newName )
         if ( newName == NULL ) newName = m_Name;
         const char *tempName = newName;
 
-        if ( stricmp ( wadPath, newPath ) == 0 ) {
+        if ( strcasecmp ( wadPath, newPath ) == 0 ) {
             sprintf ( tmpPath, "%s.XXXXXX", newPath );
-#ifdef _WIN32
+#if defined _WIN32 && !defined __MINGW32__
 			int tmp = _mktemp_s(tmpPath);
 #else
 			int tmp = mkstemp(tmpPath);
@@ -1164,7 +1168,7 @@ bool wadList::Save ( const char *newName )
             return false;
         }
 
-        if ( stricmp ( wadPath, newPath ) == 0 ) {
+        if ( strcasecmp ( wadPath, newPath ) == 0 ) {
             wad->CloseFile ();
             if ( remove ( m_Name ) != 0 ) {
                 fprintf ( stderr, "\nERROR: wadList::Save - Unable to remove %s.", m_Name );

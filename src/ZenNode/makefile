@@ -11,10 +11,11 @@ CFLAGS  += -g -O -fstrength-reduce -fno-rtti
 #CFLAGS   = -fpermissive -O3 -pipe -march=k8
 #CFLAGS	  = -O0 -g -pipe
 #CFLAGS 	  = -O2 -pipe -static
-CFLAGS   = -O2 -pipe
+#CFLAGS   = -O2 -pipe -fomit-frame-pointer -foptimize-sibling-calls -fbranch-probabilities
 INCLUDES = -I../DOOM -I../common
-TARGETS  = ZokumBSP bspdiff bspinfo compare
-LINKFLAGS = -static
+#TARGETS  = ZokumBSP bspdiff bspinfo compare
+TARGETS = ZokumBSP
+#LINKFLAGS = -static
 
 CFLAGS  += -D__LINUX__
 
@@ -42,7 +43,7 @@ depend: clean
 clean:
 	rm -rf {.,../DOOM/,../common/logger}/{*.o,*~} $(TARGETS)
 
-ZokumBSP: quicksort.cpp preprocess.o ZenMain.o ZenNode.o ZenReject.o ZenRMB.o blockmap.o console.o endoom.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
+ZokumBSP:quicksort.cpp preprocess.o ZenMain.o ZenNode.o ZenReject.o ZenRMB.o blockmap.o console.o endoom.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
 bspdiff: bspdiff.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)

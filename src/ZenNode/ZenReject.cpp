@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "common.hpp"
 #include "logger.hpp"
 #include "level.hpp"
@@ -166,7 +167,8 @@ static UINT8         *lineVisTable;
 static sPoint        *vertices;
 static int            noSolidLines;
 static sSolidLine    *solidLines;
-static int            noTransLines;
+// static int            noTransLines;
+static uint64_t		noTransLines;
 static sTransLine    *transLines;
 
 static sTransLine   **sectorLines;
@@ -367,7 +369,8 @@ bool SetupLines ( DoomLevel *level )
         line->end   = vertE;
     }
 
-    int lineVisSize = ( noTransLines - 1 ) * noTransLines / 2;
+    // int lineVisSize = ( noTransLines - 1 ) * noTransLines / 2;
+    uint64_t lineVisSize = ( noTransLines - 1 ) * noTransLines / 2;
     lineVisTable = new UINT8 [ lineVisSize ];
     memset ( lineVisTable, 0, sizeof ( UINT8 ) * lineVisSize );
 
@@ -816,11 +819,8 @@ void PrepareBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options )
 
 
 	// Stuff that works for all blockmaps, no matter what offset.
-	// sBlockMapExtraData *extraData = new (sBlockMapExtraData);
 	// populate it with data
-	// BlockMapExtraData(level, extraData, options);
 
-	// TODO BROKEN!!!!!
     	blockMap = GenerateBLOCKMAP ( level, 8, 8, options);
 
 	// delete [] extraData->lineDefsUsed;

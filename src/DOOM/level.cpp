@@ -298,7 +298,8 @@ void DoomLevel::CleanUp ()
     delete [] m_ThingData;
     delete [] m_LineDefData;
 
-	delete [] this->extraData->lineDefsUsed;
+	delete [] this->extraData->lineDefsCollidable;
+	delete [] this->extraData->lineDefsRendered;
 	delete this->extraData;
 
     m_ThingData   = NULL;
@@ -710,6 +711,7 @@ void DoomLevel::ConvertLineDefToRaw1 ( int max, wLineDef *src, wLineDef1 *dest )
     memset ( dest, 0, sizeof ( wLineDef1 ) * max );
     for ( int i = 0; i < max; i++ ) {
         memcpy ( &dest [i], &src [i], sizeof ( wLineDef1 ));
+	// printf("conving ld %d\n", i);
     }
 }
 
@@ -783,6 +785,109 @@ bool DoomLevel::LoadLineDefs ( bool hexenFormat )
     m_LineDef.elementSize  = size;
 
     return (( int ) m_LineDef.dataSize == size * count ) ? true : false;
+}
+
+/* adds a new LineDef to the end of the list. */
+void DoomLevel::AddLineDef(void) {
+
+	int count = 0;
+	// int size = 0;
+/*
+	if ( hexenFormat == false ) {
+		size = sizeof ( wLineDef1 );
+	} else {
+		size =  sizeof ( wLineDef2 );	
+	}
+	*/
+
+	count = m_LineDef.elementCount;
+
+	wLineDef *m_LineDefDataNew = new wLineDef [ count + 1 ];
+
+	for ( int i = 0; i < m_LineDef.elementCount; i++ ) {
+	    memcpy ( &m_LineDefDataNew[i], &m_LineDefData [i], sizeof ( wLineDef1 ));
+	}
+
+	// memcpy(m_LineDefDataNew, m_LineDefData, size * count);
+	
+	// zero it out, for safety
+	// bzero(m_LineDefData + size * count, size);
+
+	delete [] m_LineDefData;
+
+	m_LineDef.elementCount++; // add a new def to the list :D
+	
+	this->m_LineDefData = m_LineDefDataNew;
+
+	// add a new entry to the extraData structures
+
+	bool *lineDefsRenderedNew = new bool [m_LineDef.elementCount];
+	bool *lineDefsCollidableNew =  new bool [m_LineDef.elementCount];
+/*
+	memcpy(lineDefsRenderedNew, this->extraData->lineDefsRendered, m_LineDef.elementCount -1 );
+	memcpy(lineDefsCollidableNew, this->extraData->lineDefsCollidable, m_LineDef.elementCount -1 );
+*/
+	for (int i = 0; i != m_LineDef.elementCount - 1 ; i++) {
+		lineDefsRenderedNew[i] = this->extraData->lineDefsRendered[i];
+		lineDefsCollidableNew[i] = this->extraData->lineDefsCollidable[i];
+	}
+
+	delete [] this->extraData->lineDefsRendered;
+	delete [] this->extraData->lineDefsCollidable;
+
+	this->extraData->lineDefsRendered = lineDefsRenderedNew;
+	this->extraData->lineDefsCollidable = lineDefsCollidableNew;
+
+	m_LineDef.dataSize = m_LineDef.elementCount * m_LineDef.elementSize;
+
+	// printf("added linedef with number %d\n", m_LineDef.elementCount - 1);
+
+	// This buffer also has to be enlarged!
+	delete [] ( char * ) m_LineDef.rawData;
+	m_LineDef.rawData = new char [ LineDefCount () * m_LineDef.elementSize ];
+
+	m_LineDef.changed = true;
+
+}
+
+void DoomLevel::TrimLineDefs(void) {
+
+	int adjust = 0;
+
+	for ( int i = 0; i < m_LineDef.elementCount; i++ ) {
+		if (adjust) {
+			this->m_LineDefData[i - adjust].start =  this->m_LineDefData[i].start;
+			this->m_LineDefData[i - adjust].end =  this->m_LineDefData[i].end;
+			this->m_LineDefData[i - adjust].flags =  this->m_LineDefData[i].flags;
+			this->m_LineDefData[i - adjust].type =  this->m_LineDefData[i].type;
+			this->m_LineDefData[i - adjust].tag =  this->m_LineDefData[i].tag;
+			this->m_LineDefData[i - adjust].sideDef[0] =  this->m_LineDefData[i].sideDef[0];
+			this->m_LineDefData[i - adjust].sideDef[1] =  this->m_LineDefData[i].sideDef[1];
+
+			this->extraData->lineDefsCollidable[i - adjust] = this->extraData->lineDefsCollidable[i];
+			this->extraData->lineDefsRendered[i - adjust] = this->extraData->lineDefsRendered[i];
+		}
+		if ((this->extraData->lineDefsRendered[i] == false) && (this->extraData->lineDefsCollidable[i] == false) ) {
+			adjust++;
+			// printf("removing %d\n", i);
+		} else {
+			// printf("line is ok: %d", i);
+			if (this->extraData->lineDefsCollidable[i]) {
+			//	printf(" collidable");
+			} 
+			if (this->extraData->lineDefsRendered[i]) {
+			//	printf(" rendered");
+			}
+			// printf("\n");
+		}
+	}
+	
+	if (adjust) {
+		m_LineDef.changed = true;
+	}
+
+	m_LineDef.elementCount = m_LineDef.elementCount - adjust;
+	m_LineDef.dataSize = m_LineDef.elementCount * m_LineDef.elementSize;
 }
 
 bool DoomLevel::ReadEntry ( sLevelLump *entry, const char *name, const wadDirEntry *start, const wadDirEntry *end, bool required )
@@ -998,6 +1103,8 @@ void DoomLevel::AddToWAD ( WAD *m_Wad )
         m_Wad->InsertAfter (( const wLumpName * ) "BEHAVIOR", m_Behavior.dataSize,  m_Behavior.rawData,  false );
     }
 
+	// printf("-------------------------------------inserted linedef data size: %d\n\n", m_LineDef.dataSize);
+
     // Switch back to native byte ordering
     AdjustByteOrder ( BYTE_ORDER );
 }
@@ -1040,6 +1147,7 @@ void DoomLevel::StoreLineDefs ()
     }
 
     m_LineDef.dataSize = LineDefCount () * m_LineDef.elementSize;
+    // printf("-----------------------------------------------------------size: %d, %d lines\n ", m_LineDef.dataSize, LineDefCount());
 }
 
 bool DoomLevel::UpdateEntry ( sLevelLump *lump, const char *name, const char *follows, bool required )
