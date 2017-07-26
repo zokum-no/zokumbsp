@@ -1,5 +1,16 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.10-beta1
+- Renamed structs and methods in DOOM/level.* and wad.*
+- Converted filenames to lower case.
+
+ZokumBSP 1.0.9-rc2
+- Turning off blockmap compression is once again possible.
+- "-bi" parameter no longer claims to not use basic compression.
+- Added checking of return values of memory reallocs in ZenNode.cpp
+- Fixed a minor error in the va_args handling in ZenRMB.
+- Fixed a mismatch new[] / delete in wad.cpp.
+
 ZokumBSP 1.0.9-rc1
 - Added geometry simplification blockmap compression. Also speeds up the
   DOOM engine due to less calculations runtime.
