@@ -34,10 +34,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef _WIN32
+#ifdef _MSC_VER
+	#include <string.h>
+	#define strncasecmp _strnicmp
+	#define strcasecmp _stricmp
+#else
 	#include <strings.h>
 #endif
-#include <strings.h>
 
 #include <sys/stat.h>
 #include "common.hpp"
