@@ -26,17 +26,18 @@ Index
 02. Basic usage
 03. Doom V1.9 limits / algorithms
 04. Special effects
-05. Geometry pass
-06. Blockmap builder
-07. Nodes builder
-08. Reject builder
-09. Other options
-10. Compatibility
-11. Usage together with other tools
-12. Other resources
-13. Changelog
-14. Acknowledgements.
-15. Other node builders.
+05. Linedef specials
+06. Geometry pass
+07. Blockmap builder
+08. Nodes builder
+09. Reject builder
+10. Other options
+11. Compatibility
+12. Usage together with other tools
+13. Other resources
+14. Changelog
+15. Acknowledgements.
+16. Other node builders.
 
 Section 01: Project goals
 =========================
@@ -188,7 +189,37 @@ geoemtry just behind as non-collidable. This will ensure that stray projctiles
 and shots are still colliding, but not at the exact location of the rendered
 geometry.
 
-Section 05: Geometry pass
+Section 05: Linedef specials
+============================
+
+* Floor specials speed differences *
+
+The normal speed is the speed most floors move up or down at, however, some
+types move faster or slower than this speed. 
+
+These are the ones in Doom 2 that do not mover at the regular speed.
+
+Numeric Type Speed      Units per tic   Effect
+7       S1   Very slow  2               Raising stairs, 8 height
+9       S1   Slow       4               Donut
+20      S1   Slow       4               Raise floor next higher floor, texture
+22      W1   Slow       4               Raise floor next higher floor, texture
+36      W1   Very fast  32              Lower floor 8 above highest
+68      SR   Slow       4               Raise floor next higher, texture
+70      SR   Very fast  32              Lower floor 8 above highest
+71	S1   Very fast  32              Lower floor 8 above highest n. floor
+98      WR   Very fast  32              Lower floor 8 above highest n. floor 
+100     W1   Very fast  32              Raising stairs, 16 height
+127	S1   Very fast  32              Raising stairs, 16 height
+129     WR   Very fast  32              Raise floor to next higher floor
+130     W1   Very fast  32              Raise floor to next higher floor
+131	S1   Very fast  32              Raise floor to next higher floor
+132     SR   Very fast  32              Raise floor to next higher floor
+
+Gun floor
+47      G1   Normal    8                Raise floor to next higher, texture
+
+Section 06: Geometry pass
 =========================
 
 The geometry pass is a pass one the level done before the blockmap, nodes and
@@ -199,7 +230,7 @@ and reject steps to produce a smaller blockmap and better node tree etc.
 Currently the only geometry change possible is the collission geometry step,
 which is outlined in the blockmap builder chapter.
 
-Section 06: Blockmap builder
+Section 07: Blockmap builder
 ============================
 
 The blockmpa is a data structure that is part of the map format. It is a
@@ -446,7 +477,7 @@ ports where the blockmap is ignored. Sine the specifications are not final,
 nor the output correct, one cannot at this time expect any port to support
 this option.
 
-Section 07: Node builder
+Section 08: Node builder
 ========================
 
 Nothing has not changed much from the node code found in ZenNode. The changes
@@ -533,10 +564,10 @@ m{b} - Process RMB option file (.rej)
 This allows ZokumBSP to use the same kind of .rej files that RMB supports in
 order to have similar special effects applied.
 
-Section 09: Other options
+Section 10: Other options
 =========================
 
-Section 10: Compatibility
+Section 11: Compatibility
 =========================
 
 * BOOM compatibility *
@@ -553,7 +584,7 @@ systems can run this tool.
 The reject pass of the tool utilizes a 64bit integer in a non-time-sensitive
 part of the code to avoid an overflow found in ZenNode.
 
-* Operation systems *
+* Operating systems *
 
 Linux:
 
@@ -579,16 +610,15 @@ No BSD builds have been tested.
 DOS:
 
 No DOS ports have been tested. ZenNode supported DOS builds, and there hasn't
-been any changes to the code base that would make this an impossible feat.
+been any changes to the code base that would make this an impossible feat
+compiler-wise.
 
-Section 11: Usage together with other tools
+Section 12: Usage together with other tools
 ===========================================
 
 * GZ Doom Builder *
 
-
-
-Section 12: Other resources
+Section 13: Other resources
 ===========================
 
 If you are interested in more information about ZokumBSP and the Doom specs,
@@ -597,13 +627,14 @@ try the following resources:
 Project web site: http://doom2.net/zokum/zokumbsp
 Github: https://github.com/zokum-no/zokumbsp
 Wiki: https://doomwiki.org
+IRC: #nightmare
 
-Section 13: Changelog
+Section 14: Changelog
 =====================
 
 The changelog is kept in a seperate file, 'changelog.txt'. 
 
-Section 14: Acknowledgements
+Section 15: Acknowledgements
 ============================
 
 Marc Roussaeu            - ZenNode
@@ -617,7 +648,7 @@ Eternity Engine          - Adding compatibility fixes and testing
 #d****                   - Feedback and information
 #noteternityenginere...  - Feedback and inforamtion
 
-Section 15: Other node builders
+Section 16: Other node builders
 ===============================
 
 * Regular node builder *
