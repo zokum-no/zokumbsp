@@ -1,1 +1,1 @@
-void MakeENDOOMLump(void);
+WAD* MakeENDOOMLump(wadList *myList, char *);

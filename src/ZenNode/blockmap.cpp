@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include "common.hpp"
 #include "level.hpp"
-#include "ZenNode.hpp"
+#include "zennode.hpp"
 #include "blockmap.hpp"
 #include "console.hpp"
 
@@ -81,7 +81,7 @@ sBlockMap *GenerateBLOCKMAP ( DoomLevel *level, int xOffset, int yOffset, const 
 	sBlockMap *blockMap = new sBlockMap;
 
 	const wVertex *vertex   = level->GetVertices();
-	const wLineDef *lineDef = level->GetLineDefs();
+	const wLineDefInternal *lineDef = level->GetLineDefs();
 
 	static int xLeft, xRight, yTop, yBottom;
 
@@ -404,7 +404,7 @@ inline bool BoundaryBoxCheck(sBlockMap *blockMap, int i, int index, int xCheck, 
 
 int compare( const void *aa, const void  *bb);
 
-int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
+int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 	// Generate the data
 	sBlockMap *blockMap = NULL;
 	sBlockMap *oldBlockMap = NULL;;
@@ -421,7 +421,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	int bestTotalSize = 99999999;
 	int bestBlockListSize = 0;
 
-	int blockListSize = 0, savings = 0, bestSavings = 0;
+	int blockListSize = 0, savings = 0 /*, bestSavings = 0*/;
 
 	int oldBlockListSize = 0;
 
@@ -440,11 +440,22 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	// populate it with data
 	// BlockMapExtraData(level, extraData, options);
 
-	bool eight = options.OffsetEight || options.IdCompatible;
+	// one location to set all the DoomBSP-compability options
+
+	bool eight;
+
+	if (options.IdCompatible) {
+		options.OffsetEight = true;
+		options.SubBlockOptimization = false;
+		options.ZeroHeader = 1;
+	} 
+
+	eight = options.OffsetEight;
 
 	int bailout = 0;
 
 	bool blockBig = options.blockBig;
+
 
 	if (eight) {
 		offsetXMax= 8;
@@ -534,7 +545,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 		}
 		Status( (char *) zokoutput);
 
-		bool compress = true;
+		bool compress = options.Compress;
 
 		for (int offsetX = offsetXMin; offsetX <= offsetXMax; offsetX += offsetIncreaseX) {
 			if (bailout) {
@@ -723,7 +734,7 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 				// delete [] orderArray2;
 
-				bestSavings = savings;
+				// bestSavings = savings;
 				bestTotalSize = totalSize;
 				bestX = offsetX;
 				bestY = offsetY;
@@ -747,10 +758,10 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 
 	blockMap = bestBlockMap;
 	blockList  = bestBlockList;
-	blockListSize = bestBlockListSize;
+	// blockListSize = bestBlockListSize;
 	blockSize = bestBlockSize;
 	totalSize = bestTotalSize;
-	savings = bestSavings;
+	// savings = bestSavings;
 
 	// delete [] extraData->lineDefsUsed;
 	// delete extraData;
@@ -775,14 +786,22 @@ int CreateBLOCKMAP ( DoomLevel *level, const sBlockMapOptions &options ) {
 	}
 
 	// Fill in data & offsets
-	UINT16 *offset = ( UINT16 * ) ( map + 1 );
-	UINT16 *data   = offset + totalSize;
+	UINT16 *offset /* = ( UINT16 * ) ( map + 1 )*/;
+	UINT16 *data   /*= offset + totalSize*/;
 
-	UINT32 *offset32 = ( UINT32 * ) ( map32 + 1 );
-	UINT32 *data32   = offset32 + totalSize;
+	UINT32 *offset32 /*= ( UINT32 * ) ( map32 + 1 )*/;
+	UINT32 *data32   /*= offset32 + totalSize*/;
 
 	int j = 0;
 	int val = 0;
+
+	if (blockBig) {
+		offset32 = ( UINT32 * ) ( map32 + 1 );
+		data32   = offset32 + totalSize;
+	} else {
+		offset = ( UINT16 * ) ( map + 1 );
+		data   = offset + totalSize;
+	}
 
 	// write and compute savings :)
 
@@ -891,7 +910,7 @@ void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, cons
 	int grid = map->noColumns * map->noRows * sizeof(UINT16);
 	int lists = blockSize - grid - 8;
 	int idSize = grid + savings + grid * 2 + lists;
-	int val = 0;
+//	int val = 0;
 	
 	char *start = new char [ blockSize];
 
@@ -931,9 +950,9 @@ void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, cons
 
 	printf("<table>\n");
 
-	int size = 8;
+/*	int size = 8;
 	size = size + map->noColumns * map->noRows;
-
+*/
 	for (int rows = blockMap->noRows - 1; rows != -1; rows--) {
 		printf(" <tr>\n  ");
 		for (int cols = 0; cols != blockMap->noColumns; cols++) {
@@ -942,7 +961,7 @@ void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, cons
 
 			sBlockList *block = &blockList [j];
 
-			val = (data - ( UINT16 * ) start) * 2;
+			// val = (data - ( UINT16 * ) start) * 2;
 
 			int styleCount = 0;
 

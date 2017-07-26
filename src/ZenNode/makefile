@@ -1,4 +1,4 @@
-# ZenNode makefile for Linux
+# zennode makefile for Linux
 
 CC       = g++
 CFLAGS  += -g -O -fstrength-reduce -fno-rtti
@@ -10,11 +10,11 @@ CFLAGS  += -g -O -fstrength-reduce -fno-rtti
 #CFLAGS   = -g -O3
 #CFLAGS   = -fpermissive -O3 -pipe -march=k8
 #CFLAGS	  = -O0 -g -pipe
-#CFLAGS 	  = -O2 -pipe -static
+#CFLAGS   = -O2 -pipe -static
 #CFLAGS   = -O2 -pipe -fomit-frame-pointer -foptimize-sibling-calls -fbranch-probabilities
 INCLUDES = -I../DOOM -I../common
 #TARGETS  = ZokumBSP bspdiff bspinfo compare
-TARGETS = ZokumBSP
+TARGETS = zokumbsp
 #LINKFLAGS = -static
 
 CFLAGS  += -D__LINUX__
@@ -43,7 +43,7 @@ depend: clean
 clean:
 	rm -rf {.,../DOOM/,../common/logger}/{*.o,*~} $(TARGETS)
 
-ZokumBSP:quicksort.cpp preprocess.o ZenMain.o ZenNode.o ZenReject.o ZenRMB.o blockmap.o console.o endoom.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
+zokumbsp:quicksort.cpp preprocess.o zenmain.o zennode.o zenreject.o zenrmb.o blockmap.o console.o endoom.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
 bspdiff: bspdiff.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
@@ -55,51 +55,51 @@ bspinfo: bspinfo.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
 compare: compare.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
-ZenReject.o: \
-	ZenReject.cpp	\
-	ZenReject-util.cpp	\
+zenreject.o: \
+	zenreject.cpp	\
+	zenreject-util.cpp	\
 	../common/common.hpp	\
 	../DOOM/level.hpp	\
-	ZenNode.hpp		\
+	zennode.hpp		\
 	console.hpp		\
 	geometry.hpp
 
-ZenNode.o: \
-	ZenNode.cpp		\
+zennode.o: \
+	zennode.cpp		\
 	../common/common.hpp	\
 	../common/logger.hpp	\
 	../DOOM/level.hpp	\
-	ZenNode.hpp		\
+	zennode.hpp		\
 	console.hpp
 
-ZenMain.o: \
-	ZenMain.cpp		\
+zenMain.o: \
+	zenMain.cpp		\
 	../common/common.hpp	\
 	../common/logger.hpp	\
 	../DOOM/wad.hpp		\
 	../DOOM/level.hpp	\
 	console.hpp		\
-	ZenNode.hpp
+	zennode.hpp
 
-ZenReject.o: \
-	ZenReject.cpp		\
+zenreject.o: \
+	zenreject.cpp		\
 	../common/common.hpp	\
 	../DOOM/level.hpp	\
-	ZenNode.hpp		\
+	zennode.hpp		\
 	console.hpp		\
 	geometry.hpp
 
-ZenRMB.o: \
-	ZenRMB.cpp		\
+zenrmb.o: \
+	zenrmb.cpp		\
 	../common/common.hpp	\
 	../DOOM/level.hpp	\
-	ZenNode.hpp
+	zennode.hpp
 
 blockmap.o: \
 	blockmap.cpp		\
 	../common/common.hpp	\
 	../DOOM/level.hpp	\
-	ZenNode.hpp		\
+	zennode.hpp		\
 	endoom.hpp
 
 

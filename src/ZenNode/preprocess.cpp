@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "common.hpp"
 #include "level.hpp"
-#include "ZenNode.hpp"
+#include "zennode.hpp"
 #include "blockmap.hpp"
 #include "console.hpp"
 
@@ -33,7 +33,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 	const wSector *sectors = level->GetSectors();
 
 	// no longer const, since we change it
-	wLineDef *lineDef = level->GetLineDefs();
+	wLineDefInternal *lineDef = level->GetLineDefs();
 	const wVertex *vertex   = level->GetVertices();
 
 	int numberOfLineDefs = level->LineDefCount();
