@@ -122,7 +122,7 @@ bool DoomLevel::IsValid ( bool checkBSP, bool print ) const
     memset ( used, false, sizeof ( bool ) * SideDefCount ());
 
     // Sanity check for LINEDEFS
-    const wLineDef *lineDef = GetLineDefs ();
+    const wLineDefInternal *lineDef = GetLineDefs ();
 
     for ( int i = 0; i < LineDefCount (); i++ ) {
         if ( lineDef [i].start >= VertexCount ()) {
@@ -324,7 +324,7 @@ void DoomLevel::AdjustByteOrderThing ( int byteOrder )
     FUNCTION_ENTRY ( this, "DoomLevel::AdjustByteOrderThing", true );
 
     if ( m_Thing.byteOrder != byteOrder ) {
-        wThing *thing = m_ThingData;
+        wThingInternal *thing = m_ThingData;
         for ( int i = 0; i < m_Thing.elementCount; i++ ) {
             thing [i].xPos     = SWAP_ENDIAN_16 ( thing [i].xPos );
             thing [i].yPos     = SWAP_ENDIAN_16 ( thing [i].yPos );
@@ -344,7 +344,7 @@ void DoomLevel::AdjustByteOrderLineDef ( int byteOrder )
     FUNCTION_ENTRY ( this, "DoomLevel::AdjustByteOrderLineDef", true );
 
     if ( m_LineDef.byteOrder != byteOrder ) {
-        wLineDef *lineDef = m_LineDefData;
+        wLineDefInternal *lineDef = m_LineDefData;
         for ( int i = 0; i < m_LineDef.elementCount; i++ ) {
             lineDef [i].start       = SWAP_ENDIAN_16 ( lineDef [i].start );
             lineDef [i].end         = SWAP_ENDIAN_16 ( lineDef [i].end );
@@ -517,7 +517,7 @@ void DoomLevel::AdjustByteOrder ( int byteOrder )
 
 void DoomLevel::ReplaceVertices ( int *map, wVertex *newVertices, int count )
 {
-    wLineDef *lineDef = ( wLineDef * ) GetLineDefs ();
+    wLineDefInternal *lineDef = ( wLineDefInternal * ) GetLineDefs ();
     for ( int i = 0; i < LineDefCount (); i++ ) {
         lineDef [i].start = ( UINT16 ) map [ lineDef [i].start ];
         lineDef [i].end   = ( UINT16 ) map [ lineDef [i].end ];
@@ -548,7 +548,7 @@ void DoomLevel::TrimVertices ()
     int *used = new int [ VertexCount () ];
     memset ( used, 0, sizeof ( int ) * VertexCount ());
 
-    wLineDef *lineDef = ( wLineDef * ) GetLineDefs ();
+    wLineDefInternal *lineDef = ( wLineDefInternal * ) GetLineDefs ();
     for ( int i = 0; i < LineDefCount (); i++ ) {
         used [ lineDef [i].start ] = 1;
         used [ lineDef [i].end ]   = 1;
@@ -620,21 +620,21 @@ void DoomLevel::PackVertices ()
     ReplaceVertices ( used, newVertices, count );
 }
 
-void DoomLevel::ConvertRaw1ToThing ( int max, wThing1 *src, wThing *dest )
+void DoomLevel::ConvertRawDoomFormatToThing ( int max, wThingDoomFormat *src, wThingInternal *dest )
 {
-    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertRaw1ToThing", true );
+    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertRawDoomFormatToThing", true );
 
-    memset ( dest, 0, sizeof ( wThing ) * max );
+    memset ( dest, 0, sizeof ( wThingInternal ) * max );
     for ( int i = 0; i < max; i++ ) {
-        memcpy ( &dest [i], &src [i], sizeof ( wThing1 ));
+        memcpy ( &dest [i], &src [i], sizeof ( wThingDoomFormat ));
     }
 }
 
-void DoomLevel::ConvertRaw2ToThing ( int max, wThing2 *src, wThing *dest )
+void DoomLevel::ConvertRawHexenFormatToThing ( int max, wThingHexenFormat *src, wThingInternal *dest )
 {
-    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertRaw2ToThing", true );
+    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertRawHexenFormatToThing", true );
 
-    memset ( dest, 0, sizeof ( wThing ) * max );
+    memset ( dest, 0, sizeof ( wThingInternal ) * max );
     for ( int i = 0; i < max; i++ ) {
         dest [i].xPos     = src [i].xPos;
         dest [i].yPos     = src [i].yPos;
@@ -648,21 +648,21 @@ void DoomLevel::ConvertRaw2ToThing ( int max, wThing2 *src, wThing *dest )
     }
 }
 
-void DoomLevel::ConvertThingToRaw1 ( int max, wThing *src, wThing1 *dest )
+void DoomLevel::ConvertThingToRawDoomFormat ( int max, wThingInternal *src, wThingDoomFormat *dest )
 {
-    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertThingToRaw1", true );
+    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertThingToRawDoomFormat", true );
 
-    memset ( dest, 0, sizeof ( wThing1 ) * max );
+    memset ( dest, 0, sizeof ( wThingDoomFormat ) * max );
     for ( int i = 0; i < max; i++ ) {
-        memcpy ( &dest [i], &src [i], sizeof ( wThing1 ));
+        memcpy ( &dest [i], &src [i], sizeof ( wThingDoomFormat ));
     }
 }
 
-void DoomLevel::ConvertThingToRaw2 ( int max, wThing *src, wThing2 *dest )
+void DoomLevel::ConvertThingToRawHexenFormat ( int max, wThingInternal *src, wThingHexenFormat *dest )
 {
-    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertThingToRaw2", true );
+    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertThingToRawHexenFormat", true );
 
-    memset ( dest, 0, sizeof ( wThing2 ) * max );
+    memset ( dest, 0, sizeof ( wThingHexenFormat ) * max );
     for ( int i = 0; i < max; i++ ) {
         dest [i].xPos     = src [i].xPos;
         dest [i].yPos     = src [i].yPos;
@@ -676,21 +676,21 @@ void DoomLevel::ConvertThingToRaw2 ( int max, wThing *src, wThing2 *dest )
     }
 }
 
-void DoomLevel::ConvertRaw1ToLineDef ( int max, wLineDef1 *src, wLineDef *dest )
+void DoomLevel::ConvertRawDoomFormatToLineDef ( int max, wLineDefDoomFormat *src, wLineDefInternal *dest )
 {
-    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertRaw1ToLineDef", true );
+    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertRawDoomFormatToLineDef", true );
 
-    memset ( dest, 0, sizeof ( wLineDef ) * max );
+    memset ( dest, 0, sizeof ( wLineDefInternal ) * max );
     for ( int i = 0; i < max; i++ ) {
-        memcpy ( &dest [i], &src [i], sizeof ( wLineDef1 ));
+        memcpy ( &dest [i], &src [i], sizeof ( wLineDefDoomFormat ));
     }
 }
 
-void DoomLevel::ConvertRaw2ToLineDef ( int max, wLineDef2 *src, wLineDef *dest )
+void DoomLevel::ConvertRawHexenFormatToLineDef ( int max, wLineDefHexenFormat *src, wLineDefInternal *dest )
 {
     FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertRaw2toLineDef", true );
 
-    memset ( dest, 0, sizeof ( wLineDef ) * max );
+    memset ( dest, 0, sizeof ( wLineDefInternal ) * max );
     for ( int i = 0; i < max; i++ ) {
         dest [i].start      = src [i].start;
         dest [i].end        = src [i].end;
@@ -704,22 +704,22 @@ void DoomLevel::ConvertRaw2ToLineDef ( int max, wLineDef2 *src, wLineDef *dest )
     }
 }
 
-void DoomLevel::ConvertLineDefToRaw1 ( int max, wLineDef *src, wLineDef1 *dest )
+void DoomLevel::ConvertLineDefToDoomFormat ( int max, wLineDefInternal *src, wLineDefDoomFormat *dest )
 {
-    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertLineDefToRaw1", true );
+    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertLineDefToDoomFormat", true );
 
-    memset ( dest, 0, sizeof ( wLineDef1 ) * max );
+    memset ( dest, 0, sizeof ( wLineDefDoomFormat ) * max );
     for ( int i = 0; i < max; i++ ) {
-        memcpy ( &dest [i], &src [i], sizeof ( wLineDef1 ));
+        memcpy ( &dest [i], &src [i], sizeof ( wLineDefDoomFormat ));
 	// printf("conving ld %d\n", i);
     }
 }
 
-void DoomLevel::ConvertLineDefToRaw2 ( int max, wLineDef *src, wLineDef2 *dest )
+void DoomLevel::ConvertLineDefToHexenFormat ( int max, wLineDefInternal *src, wLineDefHexenFormat *dest )
 {
-    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertLineDefToRaw2", true );
+    FUNCTION_ENTRY ( NULL, "DoomLevel::ConvertLineDefToHexenFormat", true );
 
-    memset ( dest, 0, sizeof ( wLineDef2 ) * max );
+    memset ( dest, 0, sizeof ( wLineDefHexenFormat ) * max );
     for ( int i = 0; i < max; i++ ) {
         dest [i].start      = src [i].start;
         dest [i].end        = src [i].end;
@@ -741,15 +741,15 @@ bool DoomLevel::LoadThings ( bool hexenFormat )
     delete [] m_ThingData;
 
     if ( hexenFormat == false ) {
-        size        = sizeof ( wThing1 );
+        size        = sizeof ( wThingDoomFormat );
         count       = m_Thing.dataSize / size;
-        m_ThingData = new wThing [ count ];
-        ConvertRaw1ToThing ( count, ( wThing1 * ) m_Thing.rawData, m_ThingData );
+        m_ThingData = new wThingInternal [ count ];
+        ConvertRawDoomFormatToThing ( count, ( wThingDoomFormat * ) m_Thing.rawData, m_ThingData );
     } else {
-        size        = sizeof ( wThing2 );
+        size        = sizeof ( wThingHexenFormat );
         count       = m_Thing.dataSize / size;
-        m_ThingData = new wThing [ count ];
-        ConvertRaw2ToThing ( count, ( wThing2 * ) m_Thing.rawData, m_ThingData );
+        m_ThingData = new wThingInternal [ count ];
+        ConvertRawHexenFormatToThing ( count, ( wThingHexenFormat * ) m_Thing.rawData, m_ThingData );
     }
 
     m_Thing.byteOrder    = LITTLE_ENDIAN;
@@ -769,15 +769,15 @@ bool DoomLevel::LoadLineDefs ( bool hexenFormat )
     delete [] m_LineDefData;
 
     if ( hexenFormat == false ) {
-        size        = sizeof ( wLineDef1 );
+        size        = sizeof ( wLineDefDoomFormat );
         count       = m_LineDef.dataSize / size;
-        m_LineDefData = new wLineDef [ count ];
-        ConvertRaw1ToLineDef ( count, ( wLineDef1 * ) m_LineDef.rawData, m_LineDefData );
+        m_LineDefData = new wLineDefInternal [ count ];
+        ConvertRawDoomFormatToLineDef ( count, ( wLineDefDoomFormat * ) m_LineDef.rawData, m_LineDefData );
     } else {
-        size        = sizeof ( wLineDef2 );
+        size        = sizeof ( wLineDefHexenFormat );
         count       = m_LineDef.dataSize / size;
-        m_LineDefData = new wLineDef [ count ];
-        ConvertRaw2ToLineDef ( count, ( wLineDef2 * ) m_LineDef.rawData, m_LineDefData );
+        m_LineDefData = new wLineDefInternal [ count ];
+        ConvertRawHexenFormatToLineDef ( count, ( wLineDefHexenFormat * ) m_LineDef.rawData, m_LineDefData );
     }
 
     m_LineDef.byteOrder    = LITTLE_ENDIAN;
@@ -794,18 +794,18 @@ void DoomLevel::AddLineDef(void) {
 	// int size = 0;
 /*
 	if ( hexenFormat == false ) {
-		size = sizeof ( wLineDef1 );
+		size = sizeof ( wLineDefDoomFormat );
 	} else {
-		size =  sizeof ( wLineDef2 );	
+		size =  sizeof ( wLineDefHexenFormat );	
 	}
 	*/
 
 	count = m_LineDef.elementCount;
 
-	wLineDef *m_LineDefDataNew = new wLineDef [ count + 1 ];
+	wLineDefInternal *m_LineDefDataNew = new wLineDefInternal [ count + 1 ];
 
 	for ( int i = 0; i < m_LineDef.elementCount; i++ ) {
-	    memcpy ( &m_LineDefDataNew[i], &m_LineDefData [i], sizeof ( wLineDef1 ));
+	    memcpy ( &m_LineDefDataNew[i], &m_LineDefData [i], sizeof ( wLineDefDoomFormat ));
 	}
 
 	// memcpy(m_LineDefDataNew, m_LineDefData, size * count);
@@ -918,8 +918,8 @@ void DoomLevel::DetermineType ()
     }
 
     // See if we have an exact match in structure sizes in only 1 of the two formats
-    int isType1 = ( m_Thing.dataSize % sizeof ( wThing1 )) + ( m_LineDef.dataSize % sizeof ( wLineDef1 ));
-    int isType2 = ( m_Thing.dataSize % sizeof ( wThing2 )) + ( m_LineDef.dataSize % sizeof ( wLineDef2 ));
+    int isType1 = ( m_Thing.dataSize % sizeof ( wThingDoomFormat )) + ( m_LineDef.dataSize % sizeof ( wLineDefDoomFormat ));
+    int isType2 = ( m_Thing.dataSize % sizeof ( wThingHexenFormat )) + ( m_LineDef.dataSize % sizeof ( wLineDefHexenFormat ));
 
     if ( isType1 != isType2 ) {
         if ( isType1 == 0 ) return;
@@ -1121,9 +1121,9 @@ void DoomLevel::StoreThings ()
     }
 
     if ( m_IsHexen == false ) {
-        ConvertThingToRaw1 ( ThingCount (), m_ThingData, ( wThing1 * ) m_Thing.rawData );
+        ConvertThingToRawDoomFormat ( ThingCount (), m_ThingData, ( wThingDoomFormat * ) m_Thing.rawData );
     } else {
-        ConvertThingToRaw2 ( ThingCount (), m_ThingData, ( wThing2 * ) m_Thing.rawData );
+        ConvertThingToRawHexenFormat ( ThingCount (), m_ThingData, ( wThingHexenFormat * ) m_Thing.rawData );
     }
 
     m_LineDef.dataSize = ThingCount () * m_LineDef.elementSize;
@@ -1141,9 +1141,9 @@ void DoomLevel::StoreLineDefs ()
     }
 
     if ( m_IsHexen == false ) {
-        ConvertLineDefToRaw1 ( LineDefCount (), m_LineDefData, ( wLineDef1 * ) m_LineDef.rawData );
+        ConvertLineDefToDoomFormat ( LineDefCount (), m_LineDefData, ( wLineDefDoomFormat * ) m_LineDef.rawData );
     } else {
-        ConvertLineDefToRaw2 ( LineDefCount (), m_LineDefData, ( wLineDef2 * ) m_LineDef.rawData );
+        ConvertLineDefToHexenFormat ( LineDefCount (), m_LineDefData, ( wLineDefHexenFormat * ) m_LineDef.rawData );
     }
 
     m_LineDef.dataSize = LineDefCount () * m_LineDef.elementSize;
@@ -1231,7 +1231,7 @@ void DoomLevel::NewEntry ( sLevelLump *entry, int newCount, void *newData )
     entry->rawData      = newData;
 }
 
-void DoomLevel::NewThings ( int newCount, wThing *newData )
+void DoomLevel::NewThings ( int newCount, wThingInternal *newData )
 {
     FUNCTION_ENTRY ( this, "DoomLevel::NewThings", true );
 
@@ -1244,7 +1244,7 @@ void DoomLevel::NewThings ( int newCount, wThing *newData )
     m_Thing.elementCount = newCount;
 }
 
-void DoomLevel::NewLineDefs ( int newCount, wLineDef *newData )
+void DoomLevel::NewLineDefs ( int newCount, wLineDefInternal *newData )
 {
     FUNCTION_ENTRY ( this, "DoomLevel::NewLineDefs", true );
 

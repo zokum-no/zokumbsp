@@ -40,7 +40,7 @@
 #include "thing.hpp"
 #include "lineDef.hpp"
 
-struct wThing1 {
+struct wThingDoomFormat {
     INT16       xPos;                   // x position
     INT16       yPos;                   // y position
     UINT16      angle;                  // direction
@@ -48,7 +48,7 @@ struct wThing1 {
     UINT16      attr;                   // attributes of thing
 };
 
-struct wThing2 {        // HEXEN
+struct wThingHexenFormat {        // HEXEN
     UINT16      tid;                    // Thing ID - for scripts & specials
     INT16       xPos;                   // x position
     INT16       yPos;                   // y position
@@ -60,7 +60,7 @@ struct wThing2 {        // HEXEN
     UINT8       arg [5];                // special arguments
 };      
 
-struct wThing {
+struct wThingInternal {
     INT16       xPos;                   // x position
     INT16       yPos;                   // y position
     UINT16      angle;                  // in degrees not BAM
@@ -72,16 +72,16 @@ struct wThing {
     UINT8       arg [5];                // special arguments
 };
 
-struct wLineDef1 {
+struct wLineDefDoomFormat { // Doom, Doom 2, Final Doom, Heretic
     UINT16      start;                  // from this vertex ...
     UINT16      end;                    // ... to this vertex
-    UINT16      flags;
-    UINT16      type;
+    UINT16      flags;			// Hide on automap etc
+    UINT16      type;			// Door, teleport, animated etc
     UINT16      tag;                    // crossing this linedef activates the sector with the same tag
-    UINT16      sideDef[2];             // sidedef
+    UINT16      sideDef[2];             // sidedefs 
 };
 
-struct wLineDef2 {      // HEXEN
+struct wLineDefHexenFormat {      // HEXEN
     UINT16      start;                  // from this vertex ...
     UINT16      end;                    // ... to this vertex
     UINT16      flags;
@@ -90,7 +90,7 @@ struct wLineDef2 {      // HEXEN
     UINT16      sideDef[2];             // sidedef
 };
 
-struct wLineDef {
+struct wLineDefInternal {
     UINT16      start;                  // from this vertex ...
     UINT16      end;                    // ... to this vertex
     UINT16      flags;
@@ -213,9 +213,9 @@ class DoomLevel {
 	const char *m_Music;
 	int         m_Cluster;
 
-	wThing     *m_ThingData;
+	wThingInternal     *m_ThingData;
 	public:
-	wLineDef   *m_LineDefData;
+	wLineDefInternal   *m_LineDefData;
 	private:
 
 	sLevelLump  m_Map;
@@ -236,15 +236,15 @@ class DoomLevel {
 	sMapExtraData *extraData;
 	private:
 
-	static void ConvertRaw1ToThing ( int, wThing1 *, wThing * );
-	static void ConvertRaw2ToThing ( int, wThing2 *, wThing * );
-	static void ConvertThingToRaw1 ( int, wThing *, wThing1 * );
-	static void ConvertThingToRaw2 ( int, wThing *, wThing2 * );
+	static void ConvertRawDoomFormatToThing ( int, wThingDoomFormat *, wThingInternal * );
+	static void ConvertRawHexenFormatToThing ( int, wThingHexenFormat *, wThingInternal * );
+	static void ConvertThingToRawDoomFormat ( int, wThingInternal *, wThingDoomFormat * );
+	static void ConvertThingToRawHexenFormat ( int, wThingInternal *, wThingHexenFormat * );
 
-	static void ConvertRaw1ToLineDef ( int, wLineDef1 *, wLineDef * );
-	static void ConvertRaw2ToLineDef ( int, wLineDef2 *, wLineDef * );
-	static void ConvertLineDefToRaw1 ( int, wLineDef *, wLineDef1 * );
-	static void ConvertLineDefToRaw2 ( int, wLineDef *, wLineDef2 * );
+	static void ConvertRawDoomFormatToLineDef ( int, wLineDefDoomFormat *, wLineDefInternal * );
+	static void ConvertRawHexenFormatToLineDef ( int, wLineDefHexenFormat *, wLineDefInternal * );
+	static void ConvertLineDefToDoomFormat ( int, wLineDefInternal *, wLineDefDoomFormat * );
+	static void ConvertLineDefToHexenFormat ( int, wLineDefInternal *, wLineDefHexenFormat * );
 
 	void ReplaceVertices ( int *, wVertex *, int );
 
@@ -306,9 +306,9 @@ class DoomLevel {
 	int BlockMapSize () const                   { return m_BlockMap.dataSize; }
 	int BehaviorSize () const                   { return m_Behavior.dataSize; }
 
-	const wThing    *GetThings () const         { return m_ThingData; }
+	const wThingInternal    *GetThings () const         { return m_ThingData; }
 	// no longer const
-	wLineDef  *GetLineDefs () const       { return m_LineDefData; }
+	wLineDefInternal  *GetLineDefs () const       { return m_LineDefData; }
 	const wSideDef  *GetSideDefs () const       { return ( wSideDef * ) m_SideDef.rawData; }
 	const wVertex   *GetVertices () const       { return ( wVertex * ) m_Vertex.rawData; }
 	const wSector   *GetSectors () const        { return ( wSector * ) m_Sector.rawData; }
@@ -319,8 +319,8 @@ class DoomLevel {
 	const wBlockMap *GetBlockMap () const       { return ( wBlockMap * ) m_BlockMap.rawData; }
 	const UINT8     *GetBehavior () const       { return ( UINT8 * ) m_Behavior.rawData; }
 
-	void NewThings ( int, wThing * );
-	void NewLineDefs ( int, wLineDef * );
+	void NewThings ( int, wThingInternal * );
+	void NewLineDefs ( int, wLineDefInternal * );
 	void NewSideDefs ( int, wSideDef * );
 	void NewVertices ( int, wVertex * );
 	void NewSectors ( int, wSector * );
