@@ -26,6 +26,13 @@
 //
 //----------------------------------------------------------------------------
 
+/*
+ * This file has been cleaned up and had fields and functions renamed in 2017.
+ *
+ * Doom usually implies Doom, Doom 2, Final Doom and Heretic unless otherwise noted
+ *
+ */
+
 #ifndef LEVEL_HPP_
 #define LEVEL_HPP_
 
@@ -45,7 +52,7 @@ struct wThingDoomFormat {
     INT16       yPos;                   // y position
     UINT16      angle;                  // direction
     UINT16      type;                   // thing type
-    UINT16      attr;                   // attributes of thing
+    UINT16      attr;                   // flags, skill level etc
 };
 
 struct wThingHexenFormat {        // HEXEN
@@ -61,15 +68,17 @@ struct wThingHexenFormat {        // HEXEN
 };      
 
 struct wThingInternal {
-    INT16       xPos;                   // x position
-    INT16       yPos;                   // y position
-    UINT16      angle;                  // in degrees not BAM
-    UINT16      type;                   // thing type
-    UINT16      attr;                   // attributes of thing
-    UINT16      tid;                    // Thing ID - for scripts & specials
-    UINT16      altitude;               // starting altitude
-    UINT8       special;                // special type
-    UINT8       arg [5];                // special arguments
+// Fields common to both Doom and Hexen
+	INT16       xPos;                   // x position
+	INT16       yPos;                   // y position
+	UINT16      angle;                  // in degrees not BAM
+	UINT16      type;                   // thing type
+	UINT16      attr;                   // flags, skill level etc
+// Hexen specific fields    
+	UINT16      tid;                    // Thing ID - for scripts & specials
+	UINT16      altitude;               // starting altitude
+	UINT8       special;                // special from Hexen
+	UINT8       arg [5];                // special arguments
 };
 
 struct wLineDefDoomFormat { // Doom, Doom 2, Final Doom, Heretic
@@ -85,20 +94,24 @@ struct wLineDefHexenFormat {      // HEXEN
     UINT16      start;                  // from this vertex ...
     UINT16      end;                    // ... to this vertex
     UINT16      flags;
-    UINT8       special;                // special type
+    UINT8       special;                // analog to Doom type, but only 8 bits.
     UINT8       arg [5];                // special arguments
     UINT16      sideDef[2];             // sidedef
 };
 
 struct wLineDefInternal {
-    UINT16      start;                  // from this vertex ...
-    UINT16      end;                    // ... to this vertex
-    UINT16      flags;
-    UINT16      type;
-    UINT16      tag;                    // crossing this linedef activates the sector with the same tag
-    UINT16      sideDef[2];             // sidedef
-    UINT8       special;                // special type
-    UINT8       arg [5];                // special arguments
+// Found in both Doom and Hexen
+	UINT16      start;                  // from this vertex ...
+	UINT16      end;                    // ... to this vertex
+	UINT16      flags;
+// Found only in Doom, not Hexen
+	UINT16      type;
+// Found in both Doom and Hexen
+	UINT16      tag;                    // crossing this linedef activates the sector with the same tag
+	UINT16      sideDef[2];             // sidedef
+// Found only in Hexen
+	UINT8       special;                // special type
+	UINT8       arg [5];                // special arguments
 };
 
 #define NO_SIDEDEF      (( UINT16 ) -1 )
