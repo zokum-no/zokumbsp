@@ -12,7 +12,7 @@ CFLAGS  += -g -O -fstrength-reduce -fno-rtti
 #CFLAGS	  = -O0 -g -pipe
 #CFLAGS   = -O2 -pipe -static
 #CFLAGS   = -O2 -pipe -fomit-frame-pointer -foptimize-sibling-calls -fbranch-probabilities
-INCLUDES = -I../DOOM -I../common
+INCLUDES = -I../doom -I../common
 #TARGETS  = ZokumBSP bspdiff bspinfo compare
 TARGETS = zokumbsp
 #LINKFLAGS = -static
@@ -41,25 +41,25 @@ all: $(TARGETS)
 depend: clean
 
 clean:
-	rm -rf {.,../DOOM/,../common/logger}/{*.o,*~} $(TARGETS)
+	rm -rf {.,../doom/,../common/logger}/{*.o,*~} $(TARGETS)
 
-zokumbsp:quicksort.cpp preprocess.o zenmain.o zennode.o zenreject.o zenrmb.o blockmap.o console.o endoom.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
+zokumbsp:quicksort.cpp preprocess.o zenmain.o zennode.o zenreject.o zenrmb.o blockmap.o console.o endoom.o ../doom/wad.o ../doom/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
-bspdiff: bspdiff.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
+bspdiff: bspdiff.o console.o ../doom/wad.o ../doom/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
-bspinfo: bspinfo.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
+bspinfo: bspinfo.o console.o ../doom/wad.o ../doom/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
-compare: compare.o console.o ../DOOM/wad.o ../DOOM/level.o $(LOGGER)
+compare: compare.o console.o ../doom/wad.o ../doom/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
 zenreject.o: \
 	zenreject.cpp	\
 	zenreject-util.cpp	\
 	../common/common.hpp	\
-	../DOOM/level.hpp	\
+	../doom/level.hpp	\
 	zennode.hpp		\
 	console.hpp		\
 	geometry.hpp
@@ -68,7 +68,7 @@ zennode.o: \
 	zennode.cpp		\
 	../common/common.hpp	\
 	../common/logger.hpp	\
-	../DOOM/level.hpp	\
+	../doom/level.hpp	\
 	zennode.hpp		\
 	console.hpp
 
@@ -76,15 +76,15 @@ zenMain.o: \
 	zenMain.cpp		\
 	../common/common.hpp	\
 	../common/logger.hpp	\
-	../DOOM/wad.hpp		\
-	../DOOM/level.hpp	\
+	../doom/wad.hpp		\
+	../doom/level.hpp	\
 	console.hpp		\
 	zennode.hpp
 
 zenreject.o: \
 	zenreject.cpp		\
 	../common/common.hpp	\
-	../DOOM/level.hpp	\
+	../doom/level.hpp	\
 	zennode.hpp		\
 	console.hpp		\
 	geometry.hpp
@@ -92,58 +92,58 @@ zenreject.o: \
 zenrmb.o: \
 	zenrmb.cpp		\
 	../common/common.hpp	\
-	../DOOM/level.hpp	\
+	../doom/level.hpp	\
 	zennode.hpp
 
 blockmap.o: \
 	blockmap.cpp		\
 	../common/common.hpp	\
-	../DOOM/level.hpp	\
+	../doom/level.hpp	\
 	zennode.hpp		\
 	endoom.hpp
 
 
 console.o: \
 	console.cpp		\
-	../DOOM/level.hpp	\
+	../doom/level.hpp	\
 	../common/common.hpp	\
 	console.hpp		\
 
-../DOOM/wad.o: \
-	../DOOM/wad.cpp		\
+../doom/wad.o: \
+	../doom/wad.cpp		\
 	../common/common.hpp	\
-	../DOOM/wad.hpp		\
-	../DOOM/level.hpp
+	../doom/wad.hpp		\
+	../doom/level.hpp
 
-../DOOM/level.o: \
-	../DOOM/level.cpp	\
+../doom/level.o: \
+	../doom/level.cpp	\
 	../common/common.hpp	\
 	../common/logger.hpp	\
-	../DOOM/wad.hpp		\
-	../DOOM/level.hpp
+	../doom/wad.hpp		\
+	../doom/level.hpp
 
 bspdiff.o: \
 	bspdiff.cpp		\
 	../common/common.hpp	\
 	../common/logger.hpp	\
-	../DOOM/wad.hpp		\
-	../DOOM/level.hpp	\
+	../doom/wad.hpp		\
+	../doom/level.hpp	\
 	console.hpp
 
 bspinfo.o: \
 	bspinfo.cpp		\
 	../common/common.hpp	\
 	../common/logger.hpp	\
-	../DOOM/wad.hpp		\
-	../DOOM/level.hpp	\
+	../doom/wad.hpp		\
+	../doom/level.hpp	\
 	console.hpp
 
 compare.o: \
 	compare.cpp		\
 	../common/common.hpp	\
 	../common/logger.hpp	\
-	../DOOM/wad.hpp		\
-	../DOOM/level.hpp	\
+	../doom/wad.hpp		\
+	../doom/level.hpp	\
 	console.hpp
 
 quicksort.o: \
