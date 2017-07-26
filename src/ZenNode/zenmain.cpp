@@ -37,9 +37,13 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-#include <strings.h>
+#ifdef _MSC_VER
+	#include <string.h>
+	#define strncasecmp _strnicmp
+	#define strcasecmp _stricmp
+#else
+	#include <strings.h>
+#endif
 
 #if defined ( __OS2__ )
     #include <conio.h>
