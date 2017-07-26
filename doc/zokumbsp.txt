@@ -567,8 +567,20 @@ order to have similar special effects applied.
 Section 10: Other options
 =========================
 
+t - Test mode, do not write data to disk.
+
 Section 11: Compatibility
 =========================
+
+* Heretic *
+
+Geometry simplification may not work correctly with Heretic due to different
+linedef types than Doom.
+
+* Hexen *
+
+Geometry simplification may not work correctly with Hexen due to different
+linedef types than Doom.
 
 * BOOM compatibility *
 
@@ -618,6 +630,9 @@ Section 12: Usage together with other tools
 
 * GZ Doom Builder *
 
+ZokumBSP is a drop in replacement for ZenNode, so simply copying your current
+settings for ZenNode should suffice.
+
 Section 13: Other resources
 ===========================
 
@@ -651,13 +666,26 @@ Eternity Engine          - Adding compatibility fixes and testing
 Section 16: Other node builders
 ===============================
 
-* Regular node builder *
+* Regular node builders *
 
-ZenNode: ?
-BSP: ?
-DoomBSP / IdBSP: ?
+BSP:
+http://games.moria.org.uk/doom/bsp/
+
+DoomBSP / IdBSP:
+https://www.doomworld.com/idgames/utils/level_edit/node_builders/ibsp102d
+
+ZDBSP:
+https://zdoom.org/wiki/ZDBSP
+
+ZenNode:
+http://www.mrousseau.org/programs/ZenNode/
 
 * GL Node builders *
 
-GLBSP: ?
+glBSP:
+http://glbsp.sourceforge.net/
+
+ZDBSP:
+https://zdoom.org/wiki/ZDBSP
+
 
