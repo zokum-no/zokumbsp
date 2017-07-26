@@ -462,24 +462,30 @@ bool WAD::WriteEntry ( const wadDirEntry *entry, UINT32 newSize, void *newStuff,
     if ( index == ( UINT32 ) -1 ) return false;
 
     if ( newSize && ( newSize == entry->size )) {
-        char *oldStuff = ( char * ) ReadEntry ( entry, NULL );
+        // printf("same size\n");
+	char *oldStuff = ( char * ) ReadEntry ( entry, NULL );
         if ( memcmp ( newStuff, oldStuff, newSize ) == 0 ) {
             delete [] oldStuff;
             if ( owner == true ) delete [] ( char * ) newStuff;
             return false;
         }
         delete [] oldStuff;
+    } else {
+	// printf("not same %d %d %s\n", newSize, entry->size, (char *) entry->name);
     }
 
     UINT8 *temp = ( UINT8 * ) newStuff;
     if ( owner == false ) {
         temp = new UINT8 [ newSize ];
-        memcpy ( temp, newStuff, newSize );
+        // printf("copying... %d\n", newSize);
+	memcpy ( temp, newStuff, newSize );
     }
     if ( m_DirInfo [ index ].cacheData ) {
         delete m_DirInfo [ index ].cacheData;
         m_DirInfo [ index ].cacheData = NULL;
     }
+
+    // printf("index is %d\n", index);
 
     m_DirInfo [ index ].newData = temp;
     m_Directory [ index ].size = newSize;
@@ -600,9 +606,15 @@ bool WAD::HasChanged () const
     if ( m_bDirChanged ) return true;
     bool changed = false;
     for ( UINT32 i = 0; ! changed && ( i < m_Header.dirSize ); i++ ) {
-        if ( m_DirInfo [i].newData ) changed = true;
+        if ( m_DirInfo [i].newData ) {
+		changed = true;
+		printf("found new data\n");
+	}
     }
-
+	if (!changed) {
+		printf("no new data\n");
+	}
+	
     return changed;
 }
 
@@ -619,7 +631,12 @@ bool WAD::InsertBefore ( const wLumpName *name, UINT32 newSize, void *newStuff, 
 
     bool retVal = WriteEntry ( newDir, newSize, newStuff, owner );
 
-    if ( m_List != NULL ) m_List->UpdateDirectory ();
+    if ( m_List != NULL ) {
+    	m_List->UpdateDirectory ();
+
+	} else {
+		printf("directory was null\n");
+	}
 
     return retVal;
 }
@@ -1047,10 +1064,10 @@ const wadListDirEntry *wadList::FindWAD ( const char *name, const wadListDirEntr
 
     for ( ; i < last; i++ ) {
         const wadListDirEntry *dir = &m_Directory [i];
-        if ( dir->entry->name[0] != name[0] ) continue;
+	// printf("%d Comparing %s to %s\n", i, dir->entry->name, name);
+	if ( dir->entry->name[0] != name[0] ) continue;
         if ( strncmp ( dir->entry->name, name, 8 ) == 0 ) return dir;
     }
-
     return NULL;
 }
 
@@ -1076,7 +1093,12 @@ bool wadList::Contains ( WAD *wad ) const
 
 bool wadList::Save ( const char *newName )
 {
-    if ( IsEmpty ()) return false;
+    if ( IsEmpty ()) {
+    		printf("empty!!!!\n");
+	    return false;
+    }
+
+	printf("saving!!!!\n");
 
     if ( m_List->Next ) {
 
@@ -1141,7 +1163,10 @@ bool wadList::Save ( const char *newName )
             delete [] ptr;
             dir[i].offset = offset;
             srcDir++;
+	    // printf("writing %s\n", srcDir->entry->name);
         }
+
+	//printf("done writing\n");
 
         WAD *wad = ptr->wad;
 
@@ -1153,7 +1178,7 @@ bool wadList::Save ( const char *newName )
             errors = true;
             fprintf ( stderr, "\nERROR: wadList::Save - Error writing directory." );
         }
-        delete dir;
+        delete [] dir;
 
         fseek ( tmpFile, 0, SEEK_SET );
         if ( fwrite ( &m_Header, sizeof ( m_Header ), 1, tmpFile ) != 1 ) {
