@@ -137,7 +137,7 @@ public:
     virtual bool readData ( FILE *, UINT32 *, void ** ) const = 0;
     virtual bool writeData ( FILE *, UINT32, void * ) const = 0;
 };
-
+
 class WAD {
 
     char               *m_Name;
