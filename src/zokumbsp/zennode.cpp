@@ -225,9 +225,7 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
 			}
 			else if (lineDef->type == 1082) // linedef special for additive bam
 			{
-				printf("\n");
 				angle += (BAM)lineDef->tag;
-				printf("\n");
 			}
 		}
 
