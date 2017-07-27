@@ -48,24 +48,32 @@ this document as classic Doom. Support for other source ports, feature and
 limit wise is within the goal as long as it doesn't interfere with classic
 Doom support.
 
-* Non-Doom games *
+01:01 Non-Doom games
+--------------------
+
 Hexen, Heretic and Strife etc support is within the scope of the project as
 nice-to-have, the features for these executables that already exist in the
 game will be kept, but not tested when new code is added due to the added
 complexity this would cause.
 
-* Slot in for ZenNode *
+01:02 Slot in for ZenNode
+-------------------------
+
 An important aspect of ZokumBSP is to be a slot-in-replacement for ZenNode.
 One should be able to run it with the exact same paramaters as ZenNode and get
 a comparable result, hopefully with a better runtime performance or a better
 built structure.
 
-* Bigger and more complex maps in classic Doom *
+01:03 Bigger and more complex maps in classic Doom
+--------------------------------------------------
+
 One important goal of the project is to enable mappers to make maps that are
 bigger and more complex than other similar tools can do and still stay
 playable in classic doom. 
 
-* Advanced and novel special effects *
+01:04 Advanced and novel special effects
+----------------------------------------
+
 Finally, by adding more switches, options and tweaks, the tool should enable
 mappers to add new special effects that rely on the final data structure
 output from the tool to have certain properties.
@@ -73,15 +81,17 @@ output from the tool to have certain properties.
 Section 02: Basic usage
 =======================
 
-* Basic syntax *
+02:01 Basic syntax
+------------------
 
 The basic usage is just like ZenNode, although some argument parsing bugs has
 been cleaned up to allow for the addition of other parameters.
 
-To build a map for use in Doom, simply invoke: "ZokumBSP mapfile.wad" where
+To build a map for use in Doom, simply invoke: "zokumbsp mapfile.wad" where
 you substitute mapfile.wad with the name of your map.
 
-* Help screen *
+02:02 Help screen
+-----------------
 
 You can see a help screen with a terse command overview by simply invoking
 ZokumBSP without any arguments.
@@ -90,7 +100,8 @@ The help screen has more lines than a standard 25 line terminal, so the use of
 a higher-resolution terminal or a scrollback buffer is recommended to see all
 the available information.
 
-* Supported arguments / switches *
+02:03 Supported arguments / switches
+------------------------------------
 
 Most supported parameters are explained in sections 5 to 10.
 
@@ -101,14 +112,16 @@ There are a number of limitations size wise for a Doom map, and this document
 won't cover all of them, only the ones that are relevant to a node, blockmap
 and reject builder.
 
-* Sidedefs *
+03:01 Sidedefs
+--------------
 
 A map can't contain more than 32768 sidedefs. A tool called dshrink can reduce
 the amount of sidedefs by combining identical side defs. For very big maps,
 the usage of this tool in addition to ZokumBSP could make maps not normally
 playable in Doom playable. Some ports have changed the sidedef limit to 65536.
 
-* Linedefs *
+03:02 Linedefs
+--------------
 
 The limit of linedefs is the same as sidedefs. It is possible to have more
 linedefs than sidedefs if dshrink is used to compress the map. There isn't
@@ -118,7 +131,8 @@ possibly leading to a map that will crash Doom.
 
 TODO: Fix max-linedefs limit crash bug!
 
-* Segs *
+03:03 Segs
+----------
 
 Segs are linedef segments and are used by the rendering part of the engine.
 The limit is a 32768 segs. At least one seg is created for every linedef, two
@@ -129,7 +143,8 @@ partitioning algorithms can change the amount of segs in a map. For more
 information about segs-count manipulation, see the special effects chapter of
 the manual.
 
-* Vertices *
+03:04 Vertices
+--------------
 
 The limit for vertices is the same as many other structures, 32768. It should
 be noted that a node builder will add vertices to a map when it splits a seg
@@ -144,7 +159,9 @@ over the limit.
 Section 04: Special effects
 ===========================
 
-* Invisible floors / deep water *
+04:01 Invisible floors / deep water
+-----------------------------------
+
 Adding a sector inside another with sector references on both sidedefs of all
 the involved linedefs in the new sector, will make it act as a height changing
 sector compare to the rendered floor. If a the invisible sector has a lower
@@ -158,7 +175,8 @@ For invisible floors, there are no clipping problems, but be aware that stairs
 are hard for monsters to ascend and descend if the height difference is too
 big.
 
-* Do not add to blockmap - 'tag 999' *
+04:02 Do not add to blockmap - 'tag 999'
+----------------------------------------
 
 Linedefs tagged with the tag 999 will not be added to the blockmap, this can
 allow you to add architecture that will not incrase the blockmap. If used
@@ -171,14 +189,16 @@ than what would normally be possible. This will also speed up collision
 detection and in some ports the line of sight calculations. This is due to the
 reduced amount of linedef the engine has to check in an area.
 
-* No render tag for linedef - 'tag 998' *
+04:03 No render tag for linedef - 'tag 998'
+-------------------------------------------
 
 By setting the tag to 998 on a linedef, this line will not be rendered by the
 Doom engine. More specifically, this will not create a seg out of that
 linedef. This can be used to add impassible lines and manually simplified
 geometry. See the next section for more information.
 
-* Manually simplified geometry *
+04:04 Manually simplified geometry
+----------------------------------
 
 By using a combination of blockmap only lines and rendering only geometry the
 size of the blockmap can be reduced. If one has a rounded corner that consists
@@ -192,7 +212,8 @@ geometry.
 Section 05: Linedef specials
 ============================
 
-* Floor specials speed differences *
+05:01 Floor specials speed differences
+--------------------------------------
 
 The normal speed is the speed most floors move up or down at, however, some
 types move faster or slower than this speed. 
@@ -216,9 +237,6 @@ Numeric Type Speed      Units per tic   Effect
 131	S1   Very fast  32              Raise floor to next higher floor
 132     SR   Very fast  32              Raise floor to next higher floor
 
-Gun floor
-47      G1   Normal    8                Raise floor to next higher, texture
-
 Section 06: Geometry pass
 =========================
 
@@ -233,7 +251,7 @@ which is outlined in the blockmap builder chapter.
 Section 07: Blockmap builder
 ============================
 
-The blockmpa is a data structure that is part of the map format. It is a
+The blockmap is a data structure that is part of the map format. It is a
 lookup table where the engine can quickly see which lines are in a given area
 when performaing collission detection.
 
@@ -256,7 +274,8 @@ having a too large grid. The exact size of the blockmap is undefined, due to
 the addresses of the start of the list can only be within 65536 bytes. A list
 can be of variable length, with the list entries extending beyond 65536 bytes.
 
-'c' - Compress BLOCKMAP
+07:01 'c' - Compress BLOCKMAP
+-----------------------------
 
 This turns on basic compression of the blockmap. This makes identical lists
 only appear once in the blockmap. The code in ZokumBSP performs a better
@@ -264,14 +283,16 @@ search than ZenNode, and will yield a better result in many cases due to
 checking more eligible lists. ZenNode would mostly find identical lists from
 the same row, but not same column or diagonally.
 
-'h' - Output BLOCKMAP data as HTML.
+07:02 'h' - Output BLOCKMAP data as HTML.
+-----------------------------------------
 
 This will oputput a simple html output to the standard output. On a unix-like
 operation system, this output can be piped into a file, and with some minor
 edits of the file, produce a color coded visualization of the offset addresses
 in the grid part of the blockmap. 
 
-'i' - Id compatible BLOCKMAP. Sets 'o=1n=2' and 'c-s-r-'
+07:03 'i' - Id compatible BLOCKMAP. Sets 'o=1n=2' and 'c-s-r-'
+-------------------------------------------------------------
 
 This switch will turn on and off several other switches and options for the
 blockmap in order to attempt to produce blockmaps that are demo compatible
@@ -284,14 +305,15 @@ using it on these maps could break demo compability. This most likely applies
 to: 
 
 Ultimate Doom: e4m7.
-Doom 2: No maps.
-Final Doom TNT.wad: All maps.
-Final Doom Plutonia.wad: All maps.
+Doom 2: None of the maps.
+Final Doom TNT.wad: All the maps.
+Final Doom Plutonia.wad: All the maps.
 
 The following pwad is built with DoomBSP:
 id Map01 idmap01.wad: map01
 
-'o' -Offset configuration.
+07:04 'o' -Offset configuration.
+--------------------------------
 
 The 128x128 grid offset can start at any arbitrary location, but due to the
 size, anything more than 127 game units more than the leftmost or bottom most
@@ -351,7 +373,8 @@ artifact requires a specific setting. Aparently the collission detection
 algorithm performs differently when lindefs are on the exact edge of a grid in
 the blockmap.
 
-r - Remove non-collidable lines from BLOCKMAP.
+07:05 'r' - Remove non-collidable lines from BLOCKMAP.
+------------------------------------------------------
 
 This option will try to remove some lines from the blockmap that one cannot
 interact with. These are typically the outer edge of zero-height sectors which
@@ -364,7 +387,8 @@ sector and the line is not a special line.
 Unlike the similar algorithm found in the nodes code that removes segs,
 textures do not matter.
 
-s - Subset compress BLOCKMAP.
+07:06 's' - Subset compress BLOCKMAP.
+-------------------------------------
 
 This option will reuse a list in the blockmap if the list is a sub set of
 another bigger list. This can save a nice amount of space in the list
@@ -375,7 +399,8 @@ rare occurance, and rarely noticable during normal play. The original engine
 and IWAD data already has a faulty line 0 in all the lists, and this is not
 considered a big problem in normal gaemplay.
 
-z - Zero header configuration.
+07:07 'z' - Zero header configuration.
+--------------------------------------
 
 Id's DoomBSP would originally added a small 00 header in each list. This is a
 bug. The engine does not parse this correctly, and sees it as a reference to
@@ -422,7 +447,8 @@ last entry in the linedef list. Doing this causes demos to desync. This is
 proof that not only the entries, but also the order is important. This
 parameter serves no other use.
 
-g - Geometry simplification.
+07:08 'g' - Geometry simplification
+-----------------------------------
 
 This is an umbrella term for several optimizations that will alter the level
 geometry by adding linedefs that only sohw up in collision detection and
@@ -465,7 +491,8 @@ has no importance for the purpose of collission detection.
 
 This has not been extensively tested, but should be a fairly safe optimization.
 
-b - Build big 32bit BLOCKMAP.
+07:09 'a' - Build big 32bit BLOCKMAP
+------------------------------------
 
 This is experimental code, and is not fully functional. The plan is to make
 this entry have a different name than the current name, BLOCKMAP in order to
@@ -484,7 +511,8 @@ Nothing has not changed much from the node code found in ZenNode. The changes
 are related to the concept of having collission geometry seperate from the
 rendered geometry though the use of 998 and 999.
 
-a - Partition Selection Algorithm
+08:01 'a' - Partition selection algorithm
+-----------------------------------------
 
 ZokumBSP offers the same 3 algoritms as ZenNode does.
 
@@ -508,27 +536,30 @@ for as many combinations as a=2. It will pick the best out of 30. This makes
 the nodes build much faster. The downside is that the better splits may not be
 found every time, leading to a worse performing tree.
 
-q - Don't display progress bar
+08:02 'q' - Don't display progress bar
+--------------------------------------
 
 This hides all the updates indicating the progress and depth of the BSP tree.
 If one does not pay attention to the tool output, use this option to speed up
 the node building process slightly.
 
-u - Ensure all sub-sectors contain only 1 sector
+08:03 'u' - Ensure all sub-sectors contain only 1 sector
+--------------------------------------------------------
 
 This will try to make sure that sub sectors only contain one sector. A sub
 sector is a convex area that are used to construct a convex sector out of
 concave sub sectors. This property is important when designing a 3d engine
 since it allows for much faster rendering if all of the areas are convex.
 
-i - Ignore non-visible lineDefs
+08:04 'i' - Ignore non-visible lineDefs
+---------------------------------------
 
 This option is similar to a blockmap option that removes non-collidable lines
 from the level geometry. It does however check for the presence of a middle
 texture, since those need to be rendered even if a linedef has sidefs
 belonging to the same sector.
 
-Section 08: Reject builder
+Section 09: Reject builder
 ==========================
 
 Only one thing has been changed from the reject builder code found in ZenNode.
@@ -537,7 +568,8 @@ reject maps to be built for very big levels. It has been tested for reject
 maps with over ten thousand sectors. When building reject maps this big, one
 might have to use big blockmap support in order to compute the reject table.
 
-z -Insert empty REJECT resource.
+09:01 'z' - Insert empty REJECT resource
+----------------------------------------
 
 This will insert a REJECT table where all the lookup values are zero. This
 means the engine has to do all the checks during regular gameplay. This is a
@@ -546,20 +578,23 @@ will be low if there are monsters or other things that perform line of sight
 calculations. This is mostly used for testing a map in the game without having
 to wait for a long time due to building a reject table.
 
-f - Rebuild even if REJECT effects are detected.
+09:02 'f' - Rebuild even if REJECT effects are detected
+-------------------------------------------------------
 
 This forces ZokumBSP to build a reject table even if the old one seems to
 contain special effects. Reject special effects usually involve setting
 certain entries to 1 instead of 0 to make monsters appear blind or fail to
 attack from certain areas when the player is in a certain area.
 
-g - Use graphs to reduce LOS calculations.
+09:03 'g' - Use graphs to reduce LOS calculations
+-------------------------------------------------
 
 Use this for a quicker built reject table. The idea is that if a sector A
 cannot see into sector B at all, then any sector where the line of sight has
 to go through sector B will also not see into sector A.
 
-m{b} - Process RMB option file (.rej)
+09:04 'm{b}' - Process RMB option file (.rej)
+---------------------------------------------
 
 This allows ZokumBSP to use the same kind of .rej files that RMB supports in
 order to have similar special effects applied.
@@ -567,27 +602,35 @@ order to have similar special effects applied.
 Section 10: Other options
 =========================
 
-t - Test mode, do not write data to disk.
+10:01 't' - Test mode, do not write data to disk
+------------------------------------------------
 
 Section 11: Compatibility
 =========================
 
-* Heretic *
+The goal is to have a nodebuilder that is highly compatible with all the
+classic Doom engine based games and vanilla compatible source ports.
+
+11:01 Heretic
+-------------
 
 Geometry simplification may not work correctly with Heretic due to different
 linedef types than Doom.
 
-* Hexen *
+11:02 Hexen
+-----------
 
 Geometry simplification may not work correctly with Hexen due to different
 linedef types than Doom.
 
-* BOOM compatibility *
+11:03 BOOM compatibility
+------------------------
 
 Generic raising stairs and similar specials will be autodetected, disabling
 the removal of some seemingly unneeded collision lines in the blockmap.
 
-* 32 and 64 bit *
+11:04 32 and 64 bit
+-------------------
 
 ZokumBSP was developed on a 64bit system, and has not been tested on 32bit
 systems. Hopefully this will be tested in the future to ensure a wide range of
@@ -596,15 +639,16 @@ systems can run this tool.
 The reject pass of the tool utilizes a 64bit integer in a non-time-sensitive
 part of the code to avoid an overflow found in ZenNode.
 
-* Operating systems *
+11:05 Operating systems
+-----------------------
 
-Linux:
+* Linux *
 
 ZokumBSP was primarily developed on Linux, using gcc, and should hopefully
 work well on most distributions. ZokumBSP was developed on a x86 64bit system,
 and has not yet been tested on a 32 bit system. 
 
-Windows:
+* Windows *
 
 The Windows versions are usually mingw static compiles built on a Windows
 machine from the same source tree as the Linux version.
@@ -615,11 +659,11 @@ been tested extensively. So far no one has reported problems with
 incompatibilities, so it's likely one can assume it works well on other
 versions of this operating system.
 
-BSD:
+* BSD *
 
 No BSD builds have been tested.
 
-DOS:
+* DOS *
 
 No DOS ports have been tested. ZenNode supported DOS builds, and there hasn't
 been any changes to the code base that would make this an impossible feat
@@ -628,7 +672,8 @@ compiler-wise.
 Section 12: Usage together with other tools
 ===========================================
 
-* GZ Doom Builder *
+12:01 GZ Doom Builder
+---------------------
 
 ZokumBSP is a drop in replacement for ZenNode, so simply copying your current
 settings for ZenNode should suffice.
@@ -666,26 +711,26 @@ Eternity Engine          - Adding compatibility fixes and testing
 Section 16: Other node builders
 ===============================
 
-* Regular node builders *
+16:01 Regular node builders
+---------------------------
 
-BSP:
+* BSP *
 http://games.moria.org.uk/doom/bsp/
 
-DoomBSP / IdBSP:
+* DoomBSP / IdBSP *
 https://www.doomworld.com/idgames/utils/level_edit/node_builders/ibsp102d
 
-ZDBSP:
+* ZDBSP *
 https://zdoom.org/wiki/ZDBSP
 
-ZenNode:
+* ZenNode *
 http://www.mrousseau.org/programs/ZenNode/
 
-* GL Node builders *
+16:02 GL Node builders
+----------------------
 
-glBSP:
+* glBSP *
 http://glbsp.sourceforge.net/
 
-ZDBSP:
+* ZDBSP *
 https://zdoom.org/wiki/ZDBSP
-
-
