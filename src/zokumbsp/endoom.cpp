@@ -30,8 +30,8 @@
 #include <string.h>
 #include "common.hpp"
 #include "logger.hpp"
-#include "level.hpp"
 #include "wad.hpp"
+#include "level.hpp"
 
 // Artwork by Kim Roar 'Zokum' Foldøy Hauge. Drawn in PabloDraw.
 
@@ -402,6 +402,7 @@ WAD * MakeENDOOMLump(wadList *myList, char *wadFileName) {
 		printf("ret %d", ret);
 	}
 	printf("\n");
+	*/
 	return NULL;
-*/	
+	
 }
