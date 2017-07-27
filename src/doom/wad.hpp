@@ -320,3 +320,14 @@ inline eWadType  wadList::Type () const		{ return m_Type; }
 inline eWadStyle wadList::Style () const	{ return m_Style; }
 
 #endif
+
+/*
+#if defined ( __GNUC__ ) || defined ( __INTEL_COMPILER )
+void _fullpath ( char *full, const char *name, int max ) {
+	strncpy ( full, name, max );
+}
+#endif
+*/
+
+
+

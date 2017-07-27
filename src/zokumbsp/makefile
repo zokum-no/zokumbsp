@@ -43,16 +43,16 @@ depend: clean
 clean:
 	rm -rf {.,../doom/,../common/logger}/{*.o,*~} $(TARGETS)
 
-zokumbsp:quicksort.cpp preprocess.o zenmain.o zennode.o zenreject.o zenrmb.o blockmap.o console.o endoom.o ../doom/wad.o ../doom/level.o $(LOGGER)
+zokumbsp:quicksort.cpp preprocess.o zenmain.o zennode.o zenreject.o zenrmb.o blockmap.o console.o endoom.o ../doom/wadlist.o ../doom/wad.o ../doom/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
-bspdiff: bspdiff.o console.o ../doom/wad.o ../doom/level.o $(LOGGER)
+bspdiff: bspdiff.o console.o ../doom/wad.o ../doom/wadlist.o ../doom/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
-bspinfo: bspinfo.o console.o ../doom/wad.o ../doom/level.o $(LOGGER)
+bspinfo: bspinfo.o console.o ../doom/wad.o ../doom/wadlist.o ../doom/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
-compare: compare.o console.o ../doom/wad.o ../doom/level.o $(LOGGER)
+compare: compare.o console.o ../doom/wad.o ../doom/wadlist.o ../doom/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
 zenreject.o: \
@@ -108,6 +108,12 @@ console.o: \
 	../doom/level.hpp	\
 	../common/common.hpp	\
 	console.hpp		\
+
+wadlist.o: \
+	../doom/wadlist.cpp     \
+	../common/common.hpp    \
+	../doom/wadlist.hpp     \
+	../doom/level.hpp
 
 ../doom/wad.o: \
 	../doom/wad.cpp		\

@@ -32,8 +32,8 @@
 #include <string.h>
 #include "common.hpp"
 #include "logger.hpp"
-#include "level.hpp"
 #include "wad.hpp"
+#include "level.hpp"
 
 DBG_REGISTER ( __FILE__ );
 

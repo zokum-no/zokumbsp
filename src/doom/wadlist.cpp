@@ -65,8 +65,10 @@
 	#define TEMP_DIR		"TMP="
 #endif
 
+/*
 int		 WAD::sm_NoFilters;
 wadFilter **WAD::sm_Filter;
+*/
 
 static int _init () {
 	if ( sizeof ( wadHeader ) != 12 ) {
@@ -82,11 +84,16 @@ static int foo = _init ();
 
 
 #if defined ( __GNUC__ ) || defined ( __INTEL_COMPILER )
+        void _fullpath ( char *full, const char *name, int max );
+#endif
+
+/*
+#if defined ( __GNUC__ ) || defined ( __INTEL_COMPILER )
 	void _fullpath ( char *full, const char *name, int max ) {
 		strncpy ( full, name, max );
 	}
 #endif
-
+*/
 
 #if defined ( VISUAL_STUDIO )
 
@@ -131,6 +138,7 @@ static int foo = _init ();
 	}
 #endif
 
+/*
 WAD::WAD ( const char *filename ) :
 	m_Name ( NULL ),
 	m_File ( NULL ),
@@ -360,12 +368,16 @@ void WAD::SetList ( wadList *_list ) {
 	m_List = _list;
 }
 
+*/
+
 /*
  * This function is horrible! It desperatly needs a rewrite to fix e5mX bugs for Heretic
  * and more modern less constrained doom ports that do not follow these naming conventions
  * at all!. Should also support eXm10 etc ala early doom versions.
  */
 
+
+/*
 bool WAD::IsMap ( const char *name ) {
 	if ( name == NULL ) { 
 		return false;
@@ -740,6 +752,7 @@ bool WAD::Remove ( const wLumpName *lump, const wadDirEntry *start, const wadDir
 
 	return ReduceDirectory ( index, 1 );
 }
+*/
 
 /*
 // TBD
@@ -748,6 +761,7 @@ int  InsertAfter ( const wLumpName *, UINT32, void *, bool, const wadDirEntry * 
 // TBD
 */
 
+/*
 bool WAD::SaveFile ( const char *newName ) {
 	if ( newName == NULL ) {
 		newName = m_Name;
@@ -871,8 +885,8 @@ bool WAD::SaveFile ( const char *newName ) {
 
 	return true;
 }
+*/
 
-/*
 wadList::wadList () :
 	m_DirSize ( 0 ),
 	m_MaxSize ( 0 ),
@@ -1079,7 +1093,7 @@ int wadList::AddLevel ( UINT32 index, const wadDirEntry *&entry, WAD *wad ) {
 			/* TBD proper replacement of level lumps
 			   const wadListDirEntry *entry = FindWAD ( entry[1].name, index, index + 10 );
 			   UINT32 index = IndexOf ( entry );
-			   */ /*
+			   */
 			m_Directory [ index ].wad   = wad;
 			m_Directory [ index ].entry = ++entry;
 			index++;
@@ -1344,4 +1358,3 @@ bool wadList::Extract ( const wLumpName *res, const char *m_Name ) {
 
 	return retVal;
 }
-*/
