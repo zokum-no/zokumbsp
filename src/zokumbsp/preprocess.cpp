@@ -12,7 +12,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef ENDOOM
 #include "endoom.hpp"
+#endif
 
 #include <algorithm>
 

@@ -37,9 +37,13 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-#include <strings.h>
+#ifdef _MSC_VER
+	#include <string.h>
+	#define strncasecmp _strnicmp
+	#define strcasecmp _stricmp
+#else
+	#include <strings.h>
+#endif
 
 #if defined ( __OS2__ )
     #include <conio.h>
@@ -69,7 +73,10 @@
 #include "zennode.hpp"
 #include "blockmap.hpp"
 #include "preprocess.hpp"
+
+#ifdef ENDOOM
 #include "endoom.hpp"
+#endif
 
 DBG_REGISTER ( __FILE__ );
 
@@ -1180,7 +1187,10 @@ int main ( int argc, const char *argv [] ) {
 
 			// generate new ENDOOM goes here
 			// WAD *end = MakeENDOOMLump(myList, "fuxxor");
+#ifdef ENDOOM
 			WAD *end = MakeENDOOMLump(myList, wadFileName);
+#endif
+
 			//totalUpdates += 1;
 			updateCount++;
 
@@ -1204,10 +1214,11 @@ int main ( int argc, const char *argv [] ) {
 				printf(" no updates........... ! \n");
 			}
 			cprintf ( "\r\n" );
-
+#ifdef ENDOOM
 			if (end) {
 				delete end;
 			}
+#endif
 
 			// Undo the bogus update level count
 			updateCount -= myList->wadCount () - 1;

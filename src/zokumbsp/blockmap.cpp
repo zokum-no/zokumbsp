@@ -41,7 +41,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef ENDOOM
 #include "endoom.hpp"
+#endif
 
 #include <algorithm>
 #include "quicksort.hpp"
@@ -575,7 +577,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 	
 			int i = -1;
 			int minEntrySize = 0;
-#ifdef _WIN32
+#ifdef _MSC_VER
 			// TEMPORARY HACK TO GET THIS WORKING ON MSVC, NEED TO FIX
 			// bool blockHasList[65535];
 			int orderArray2[65535][2];
