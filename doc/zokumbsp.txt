@@ -212,7 +212,32 @@ geometry.
 Section 05: Linedef specials
 ============================
 
-05:01 Floor specials speed differences
+ZokumBSP has additional linedef specials that change how the map is rendered
+and plays.
+
+05:01 Seg manipulation specials
+-------------------------------
+
+This feature is available in version 1.0.10+
+
+The following four additional linedef specials allow you to change the angle
+of the rendered wall. This can be useful for special effects like subtly
+changed secret doors.
+
+BAM (Binary Angle Measurement) is the internal degree system used in the Doom 
+engine games. They use 16 bits to differentiate up to 65536 different angles.
+
+There is support for both BAMs and the more familiar 360 degree system. The
+tag tells the node builder how many degrees clockwise the wall should be
+rotated.
+
+Numeric Effect
+1080    Rotate the rendered wall N degrees, where degrees is taken from tag.
+1081    Set the wall rotation to a hardcoded degree, degree taken from tag.
+1082    Rotate the rendered wall N BAMs, BAMs taken from tag.
+1083    Set the wall rotation to a hardoced BAM, taken from tag.
+
+05:02 Floor specials speed differences
 --------------------------------------
 
 The normal speed is the speed most floors move up or down at, however, some
@@ -698,7 +723,8 @@ Section 15: Acknowledgements
 ============================
 
 Marc Roussaeu            - ZenNode
-Brad Specer              - Web site layout and feedback
+Anotak                   - Bug fixes and improvments
+Brad Spencer             - Web site layout and feedback
 Dew                      - Feedback and bug testing
 Anders Johnsen           - Feedback and suggestions
 Andrew 'Linguica' Stine  - Feedback and information
