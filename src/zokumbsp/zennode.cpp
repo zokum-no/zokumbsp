@@ -203,10 +203,33 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
         }
 
         if ( options->ignoreLineDef && options->ignoreLineDef [i] ) continue;
+		
+		BAM angle;
+		if (lineDef->type == 1081) // linedef special to force angle to degrees
+		{
+			angle = ((BAM)lineDef->tag * BAM360) / (BAM)360;
+		}
+		else if (lineDef->type == 1083) // linedef special to force angle to BAM
+		{
+			angle = (BAM)lineDef->tag;
+		}
+		else
+		{
+			angle = (dy == 0) ? (BAM)((dx < 0) ? BAM180 : 0) :
+						(dx == 0) ? (BAM)((dy < 0) ? BAM270 : BAM90) :
+						(BAM)(atan2((float)dy, (float)dx) * BAM180 / M_PI + 0.5 * sgn(dy));
 
-        BAM angle = ( dy == 0 ) ? ( BAM ) (( dx < 0 ) ? BAM180 : 0 ) :
-                    ( dx == 0 ) ? ( BAM ) (( dy < 0 ) ? BAM270 : BAM90 ) :
-                                  ( BAM ) ( atan2 (( float ) dy, ( float ) dx ) * BAM180 / M_PI + 0.5 * sgn ( dy ));
+			if (lineDef->type == 1080) // linedef special for additive degrees
+			{
+				angle += ((double)lineDef->tag * (double)BAM360) / 360.0;
+			}
+			else if (lineDef->type == 1082) // linedef special for additive bam
+			{
+				printf("\n");
+				angle += (BAM)lineDef->tag;
+				printf("\n");
+			}
+		}
 
         bool split = options->dontSplit ? options->dontSplit [i] : false;
 
@@ -799,7 +822,7 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg )
     // Get the correct endpoint of the base LINEDEF for the offset calculation
     if ( rSeg->Data.flip ) vertS = vertE;
     if ( rSeg->Data.flip ) l = 1.0 - l;
-
+	
     rSeg->Split = true;
     lSeg->Split = true;
 
