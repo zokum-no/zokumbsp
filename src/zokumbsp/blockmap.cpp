@@ -841,11 +841,19 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 			}
 
 		} else if (block->firstIndex == -1) {
-				
-			block->offset = blockList [ bestLinedefArray[totalSize- 1]].offset + blockList[bestLinedefArray[totalSize- 1] ].count;
+			
+			if (blockBig) {
+				block->offset = blockList [ bestLinedefArray[totalSize- 1]].offset + blockList[bestLinedefArray[totalSize- 1] ].count;
+			} else {
+				block->offset = blockList [ bestLinedefArray[totalSize- 1]].offset + blockList[bestLinedefArray[totalSize- 1] ].count;
+			}
 			savings++;
 		} else {
-			block->offset = blockList [ block->firstIndex ].offset;
+			if (blockBig) {
+				block->offset = blockList [ block->firstIndex ].offset;
+			} else {
+				block->offset = blockList [ block->firstIndex ].offset;
+			}
 			savings = savings + blockList[i].count + 1;
 		}
 		/*if ( blockList [i].offset > 0xFFFF ) {
