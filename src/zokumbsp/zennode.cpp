@@ -210,9 +210,9 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
          * the base linedef. Check docs for more info.
 	*/
 
-
 	if (lineDef->type == 1081) { // linedef special to force angle to degrees
-		angle = ((BAM)lineDef->tag * BAM360) / (BAM)360;
+		// angle = ((BAM)lineDef->tag * BAM360) / (BAM)360;
+		angle = (BAM) ((lineDef->tag * BAM360) / 360);
 	} else if (lineDef->type == 1083) { // linedef special to force angle to BAM
 			angle = (BAM)lineDef->tag;
 	} else {
@@ -221,18 +221,19 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
 			(BAM)(atan2((float)dy, (float)dx) * BAM180 / M_PI + 0.5 * sgn(dy));
 
 		if (lineDef->type == 1080) { // linedef special for additive degrees
-			angle += ((double)lineDef->tag * (double)BAM360) / 360.0;
+			// angle += ((double)lineDef->tag * (double)BAM360) / 360.0;
+			angle += (BAM) ((lineDef->tag * BAM360) / 360);
 		} else if (lineDef->type == 1082) { // linedef special for additive bam
-			printf("\n");
+			// printf("\n");
 			angle += (BAM)lineDef->tag;
-			printf("\n");
+			// printf("\n");
 		}
 	}
-
+/*
 	BAM angle = ( dy == 0 ) ? ( BAM ) (( dx < 0 ) ? BAM180 : 0 ) :
 		( dx == 0 ) ? ( BAM ) (( dy < 0 ) ? BAM270 : BAM90 ) :
 		( BAM ) ( atan2 (( float ) dy, ( float ) dx ) * BAM180 / M_PI + 0.5 * sgn ( dy ));
-
+*/
 	bool split = options->dontSplit ? options->dontSplit [i] : false;
 
 	if ( sideRight ) {
