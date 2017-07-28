@@ -1,8 +1,14 @@
 Changelog for ZokumBSP
 
 ZokumBSP 1.0.10-beta1
-- Renamed structs and methods in DOOM/level.* and wad.*
+- Renamed structs and methods in doom/level.* and wad.*
 - Converted filenames to lower case.
+- Renamed source dirs to all lower case.
+- Split wadlist object into its own file, wadlist.cpp
+- Added support for linedef 1080-1083 for seg bam trickery.
+- Fixed nodes algorithm paramters, a=s,d,f.
+- Old nodes algorithms selectonow r act as aliases for a=s,d,f.
+- Minor tweaks to the output to make columns align better.
 
 ZokumBSP 1.0.9-rc2
 - Turning off blockmap compression is once again possible.
