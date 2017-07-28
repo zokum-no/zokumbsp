@@ -222,7 +222,12 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
 
 		if (lineDef->type == 1080) { // linedef special for additive degrees
 			// angle += ((double)lineDef->tag * (double)BAM360) / 360.0;
+			//printf("\n-- %u %d --\n", angle, lineDef->tag);
+			//double d = ( (double) lineDef->tag / 360.0) * (double) BAM360;
+
 			angle += (BAM) ((lineDef->tag * BAM360) / 360);
+			// angle += (BAM) d;
+			// printf("\n-- %u -- (%f)\n", angle, d);
 		} else if (lineDef->type == 1082) { // linedef special for additive bam
 			// printf("\n");
 			angle += (BAM)lineDef->tag;

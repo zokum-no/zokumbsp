@@ -74,7 +74,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.9-rc1"
+#define ZOKVERSION		"1.0.10-beta1"
 #define ZOKVERSIONSHORT		"1.0.9"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2017 Kim Roar Foldøy Hauge";
@@ -129,7 +129,7 @@ void printHelp () {
     // fprintf ( stdout, "    m               %c   - Merge block compression BLOCKMAP. Not done!\n", config.BlockMap.BlockMerge ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    r              %c   - Remove non-collidable lines from BLOCKMAP.\n", config.BlockMap.RemoveNonCollidable ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    s              %c   - Subset compress BLOCKMAP.\n", config.BlockMap.SubBlockOptimization ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    z                    - Zero header configuration.\n");
+    fprintf ( stdout, "    z                  - Zero header configuration.\n");
     fprintf ( stdout, "                   %c     0 = No zero header.\n", (config.BlockMap.ZeroHeader == 0) ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     1 = Conventional zero header.\n", (config.BlockMap.ZeroHeader == 1) ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     2 = Zero footer.\n", (config.BlockMap.ZeroHeader == 2) ? DEFAULT_CHAR : ' ' );
@@ -139,24 +139,27 @@ void printHelp () {
     fprintf ( stdout, "                   %c     2 = Also 1-sided lines in different sectors.\n", (config.BlockMap.GeometrySimplification == 2) ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    b              %c   - Build big 32bit BLOCKMAP.\n", config.BlockMap.blockBig ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "\n" );
-    fprintf ( stdout, " -n[a=1,2,3|q|u|i] %c - Rebuild NODES\n", config.Nodes.Rebuild ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    a                   - Partition Selection Algorithm\n" );
-    fprintf ( stdout, "                   %c     1 = Minimize splits\n", ( config.Nodes.Method == 1 ) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     2 = Minimize BSP depth\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     3 = Minimize time\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
+    fprintf ( stdout, " -n[a=s,d,f|q|u|i] %c - Rebuild NODES\n", config.Nodes.Rebuild ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    a                  - Partition Selection Algorithm\n" );
+    fprintf ( stdout, "                   %c     s = Minimize splits.\n", ( config.Nodes.Method == 1 ) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     d = Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     f = Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
     fprintf ( stdout, "    q              %c   - Don't display progress bar\n", config.Nodes.Quiet ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    u              %c   - Ensure all sub-sectors contain only 1 sector\n", config.Nodes.Unique ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    i              %c   - Ignore non-visible lineDefs\n", config.Nodes.ReduceLineDefs ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    i              %c   - Ignore non-visible lineDefs.\n", config.Nodes.ReduceLineDefs ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    1                  - Alias for a=s.\n" );
+    fprintf ( stdout, "    2                  - Alias for a=d.\n" );
+    fprintf ( stdout, "    3                  - Alias for a=f.\n" );
     fprintf ( stdout, "\n");
-    fprintf ( stdout, " -r[zfgm]          %c - Rebuild REJECT resource\n", config.Reject.Rebuild ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    z              %c   - Insert empty REJECT resource\n", config.Reject.Empty  ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    f              %c   - Rebuild even if REJECT effects are detected\n", config.Reject.Force ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    g              %c   - Use graphs to reduce LOS calculations\n", config.Reject.UseGraphs ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    m{b}           %c   - Process RMB option file (.rej)\n", config.Reject.UseRMB ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, " -r[zfgm]          %c - Rebuild REJECT resource.\n", config.Reject.Rebuild ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    z              %c   - Insert empty REJECT resource.\n", config.Reject.Empty  ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    f              %c   - Rebuild even if REJECT effects are detected.\n", config.Reject.Force ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    g              %c   - Use graphs to reduce LOS calculations.\n", config.Reject.UseGraphs ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    m{b}           %c   - Process RMB option file (.rej).\n", config.Reject.UseRMB ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "\n" );
-    fprintf ( stdout, " -t                %c - Don't write output file (test mode)\n", ! config.WriteWAD ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, " -t                %c - Don't write output file (test mode).\n", ! config.WriteWAD ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "\n" );
-    fprintf ( stdout, " level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN\n" );
+    fprintf ( stdout, " level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN.\n" );
 }
 
 bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
@@ -279,8 +282,7 @@ bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
     return false;
 }
 
-bool parseNODESArgs ( char *&ptr, bool setting )
-{
+bool parseNODESArgs ( char *&ptr, bool setting ) {
 	FUNCTION_ENTRY ( NULL, "parseNODESArgs", true );
 
 	config.Nodes.Rebuild = setting;
@@ -297,6 +299,24 @@ bool parseNODESArgs ( char *&ptr, bool setting )
 			case 'Q' : config.Nodes.Quiet = setting;            break;
 			case 'U' : config.Nodes.Unique = setting;           break;
 			case 'I' : config.Nodes.ReduceLineDefs = setting;   break;
+			case 'A' :
+				   if (ptr[0] && ptr[1]) {
+					   if (ptr[1] == 'S') {
+						   config.Nodes.Method = 1;
+					   } else if (ptr[1] == 'D') {
+						   config.Nodes.Method = 2;
+					   } else if (ptr[1] == 'F') {
+						   config.Nodes.Method = 3;
+					   } else {
+						   printf("error");
+						   return true;
+					   }
+					   ptr += 2;
+				   } else {
+					printf("Bad node algorithm\n");
+					return true;
+				   }
+				   break;
 			default  : return true;
 		}
 		config.Nodes.Rebuild = true;

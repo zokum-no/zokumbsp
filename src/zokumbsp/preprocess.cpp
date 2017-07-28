@@ -21,6 +21,23 @@
 // int CrossProduct(
 
 
+void GeometryStatusLine(int orglines, int pairs) {
+
+	char lines[128];
+	char zokoutput[256];
+
+	sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
+
+	if (pairs) {
+		sprintf(zokoutput, "GEOMETRY - %11s lines       Reduced to: %3.2f%%",
+		lines,
+		100.0 * (float) ((orglines - pairs) / (float) orglines));
+	} else {
+		sprintf(zokoutput, "GEOMETRY - %11s lines       No reduction", lines);
+	}
+	Status( (char *) zokoutput);
+}
+
 void MapExtraData( DoomLevel *level, const sOptions *config) {
 	const sBlockMapOptions options = config->BlockMap; //  sOptions
 	
@@ -62,8 +79,8 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 		} else {
 			extraData->lineDefsRendered[i] = true;
 		}
-		
 	}
+	/*
 	char lines[128];
 	sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
 
@@ -71,7 +88,8 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 	lines,
 	100.0 * (float) ((orglines - pairs) / (float) orglines));
 	Status( (char *) zokoutput);
-
+*/
+	GeometryStatusLine(orglines, pairs);
 
 
 	// Check all linedefs and flag them as false if we don't
@@ -233,13 +251,16 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 			}
 		}
 		level->TrimLineDefs();
-		
+	
+		/*
 		sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
 
 		sprintf(zokoutput, "GEOMETRY - %11s lines      Reduced to: %3.2f%%",
 		lines,
 		100.0 * (float) ((orglines - pairs) / (float) orglines));
 		Status( (char *) zokoutput);
+		*/
+		GeometryStatusLine(orglines, pairs);
 
 	}
 
