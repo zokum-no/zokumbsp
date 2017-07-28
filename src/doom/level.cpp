@@ -890,8 +890,50 @@ void DoomLevel::TrimLineDefs(void) {
 	m_LineDef.dataSize = m_LineDef.elementCount * m_LineDef.elementSize;
 }
 
-bool DoomLevel::ReadEntry ( sLevelLump *entry, const char *name, const wadDirEntry *start, const wadDirEntry *end, bool required )
-{
+/* Adds a new sector to the end of the sector list, uninitialized! */
+
+void DoomLevel::AddSector(void) {
+	int count = m_Sector.elementCount;
+
+	wSector *m_SectorDataNew = new wSector [ count + 1 ];
+	wSector *m_SectorData = (wSector *)  m_Sector.rawData;
+
+
+	for ( int i = 0; i < m_Sector.elementCount; i++ ) {
+	    memcpy ( &m_SectorDataNew[i], &m_SectorData[i], sizeof ( wSector ));
+	}
+
+        delete [] m_SectorData;
+
+        m_Sector.elementCount++; // Updates sector counter.
+
+	this->m_Sector.rawData = m_SectorDataNew;
+
+}
+
+void DoomLevel::AddSideDef(void) {
+	int count = m_SideDef.elementCount;
+
+	wSideDef *m_SideDefDataNew = new wSideDef [ count + 1 ];
+	wSideDef *m_SideDefData = (wSideDef *)  m_SideDef.rawData;
+
+
+	for ( int i = 0; i < m_SideDef.elementCount; i++ ) {
+	    memcpy ( &m_SideDefDataNew[i], &m_SideDefData[i], sizeof ( wSideDef ));
+	}
+
+        delete [] m_SideDefData;
+
+        m_SideDef.elementCount++; // Updates sector counter.
+
+	this->m_SideDef.rawData = m_SideDefDataNew;
+
+}
+
+
+
+
+bool DoomLevel::ReadEntry ( sLevelLump *entry, const char *name, const wadDirEntry *start, const wadDirEntry *end, bool required ) {
     FUNCTION_ENTRY ( this, "DoomLevel::ReadEntry", true );
 
     const wadDirEntry *dir = m_Wad->FindDir ( name, start, end );
@@ -905,8 +947,7 @@ bool DoomLevel::ReadEntry ( sLevelLump *entry, const char *name, const wadDirEnt
     return true;
 }
 
-void DoomLevel::DetermineType ()
-{
+void DoomLevel::DetermineType () {
     FUNCTION_ENTRY ( this, "DoomLevel::DetermineType", true );
 
     m_IsHexen = false;
