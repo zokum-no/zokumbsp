@@ -365,6 +365,8 @@ class DoomLevel {
 // Zokum 2017 additions:
 	void AddLineDef(void);
 	void TrimLineDefs(void);
+	void AddSector(void);
+	void AddSideDef(void);
 };
 
 #if ( BYTE_ORDER == LITTLE_ENDIAN )
