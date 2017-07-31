@@ -1997,7 +1997,7 @@ void CreateNODES ( DoomLevel *level, sBSPOptions *options )
                 Status ( (char *) "Nodes (quick): " );
         } else if ( options->algorithm == 4 ) {
 		char zokoutput [256];
-		sprintf(zokoutput, "Nodes (adaptive %3d/%-3d): ", adaptiveCutoff, maxAdaptiveCutoff  );
+		sprintf(zokoutput, "Nodes (adaptive %3d/%-3d, best: %d): ", adaptiveCutoff, maxAdaptiveCutoff, bestAdaptiveCutoff  );
 		Status (zokoutput);
 	}
 
