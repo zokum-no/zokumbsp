@@ -29,11 +29,11 @@ void GeometryStatusLine(int orglines, int pairs) {
 	sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
 
 	if (pairs) {
-		sprintf(zokoutput, "GEOMETRY - %11s lines       Reduced to: %3.2f%%",
+		sprintf(zokoutput, "Geometry: %11s lines        Reduced to: %3.2f%%",
 		lines,
 		100.0 * (float) ((orglines - pairs) / (float) orglines));
 	} else {
-		sprintf(zokoutput, "GEOMETRY - %11s lines       No reduction", lines);
+		sprintf(zokoutput, "Geometry: %11s lines        No reduction", lines);
 	}
 	Status( (char *) zokoutput);
 }

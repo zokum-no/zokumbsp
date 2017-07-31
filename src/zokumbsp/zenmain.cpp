@@ -849,13 +849,13 @@ int CheckREJECT ( DoomLevel *curLevel ) {
 		count -= HammingTable [ ptr [-1] & mask ];
 	}
 
-	return ( int ) ( 1000.0 * count / ( noSectors * noSectors ) + 0.5 );
+	return ( int ) ( 10000.0 * count / ( noSectors * noSectors ) + 0.5 );
 }
 void PrintTime ( UINT32 time ) {
 	FUNCTION_ENTRY ( NULL, "PrintTime", false );
 
-	GotoXY ( 65, startY );
-	cprintf ( "%3ld.%03ld sec%s", time / 1000, time % 1000, ( time == 1000 ) ? "" : "s" );
+	GotoXY ( 53, startY );
+	cprintf ( "%4ld.%03ld sec%s", time / 1000, time % 1000, ( time == 1000 ) ? "" : "s" );
 }
 
 bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
@@ -865,8 +865,10 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 	*elapsed = 0;
 
-	cprintf ( "\r  %-*.*s: ", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
+	// cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
+	 cprintf ( "\r%-*.*s        Old       New    %%Change    %%Limit   Time Elapsed\n\r", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
 	GetXY ( &startX, &startY );
+	// startX = 4;
 
 	const wadListDirEntry *dir = myList->FindWAD ( name );
 	DoomLevel *curLevel = new DoomLevel ( name, dir->wad );
@@ -881,19 +883,54 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 	// sMapExtraData *extraData = new sMapExtraData;
 
+	startX = 4;
+
 	if ( config.BlockMap.Rebuild || config.Nodes.Rebuild || config.Reject.Rebuild ) {
 		UINT32 preTime = CurrentTime ();
+
+		int oldSectorCount = curLevel->SectorCount ();
+		int oldLineCount = curLevel->LineDefCount();
 
 		MapExtraData(curLevel, &config);
 		*elapsed += preTime = CurrentTime () - preTime;
 		// Status ( (char *) "" );
 		// GotoXY ( startX, startY );
 		//cprintf ( "PREPROCESS - ");
+		
+		Status ( (char *) "" );
+		GotoXY ( startX, startY );
+
+		cprintf ( "Linedefs: %6d => %6d ", (int) oldLineCount,  curLevel->LineDefCount ());
+		
+		if ( oldLineCount ) {
+			cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->LineDefCount () / (float) oldLineCount ));
+		} else {
+			cprintf ( " - " );
+		}
+
+		double pct = ((double) curLevel->LineDefCount () / 32768.0) * 100.0;
+		cprintf("   %6.2f%%", pct);
+		
 		PrintTime (preTime);
 		cprintf ( "\r\n" );
+		GotoXY ( startX, startY );
+
+		cprintf ( "Sectors:  %6d => %6d ", (int) oldSectorCount,  curLevel->SectorCount ());
+
+		if ( oldSectorCount ) {
+			cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->SectorCount () / (float) oldSectorCount ));
+		} else {
+			cprintf ( " - " );
+		}
+
+		pct = ((double) curLevel->SectorCount () / 32768.0) * 100.0;
+		cprintf("   %6.2f%%", pct);
+		cprintf ( "\r\n" );
+		
 		GetXY ( &dummyX, &startY );
 
 	}
+
 	if ( config.BlockMap.Rebuild ) {
 
 		rows++;
@@ -908,17 +945,21 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		GotoXY ( startX, startY );
 
 		if ( saved >= 0 ) {
-			cprintf ( "BLOCKMAP - %5d/%-5d ", newSize, oldSize );
-			if ( oldSize ) cprintf ( "(%3.2f%%)", ( float ) ( 100.0 * newSize / oldSize ));
-			else cprintf ( "(****)" );
-			cprintf ( "   Compressed: " );
-			if ( newSize + saved ) cprintf ( "%3.2f%%", ( float ) ( 100.0 * newSize / ( newSize + saved ) ));
-			else cprintf ( "(****)" );
+			cprintf ( "Blockmap: %6d => %6d ", oldSize, newSize );
+			if ( oldSize ) cprintf ( "   %6.2f%%", ( float ) ( 100.0 * newSize / oldSize ));
+			else cprintf ( " - " );
+			/*cprintf ( "   Compressed: " );
+			  if ( newSize + saved ) cprintf ( "%3.2f%%", ( float ) ( 100.0 * newSize / ( newSize + saved ) ));
+			  else cprintf ( "(****)" );
+			  */
+			double pct = ((double) newSize / 65535.0) * 100.0; 
+			cprintf("   %6.2f%%", pct);
 		} else {
-			cprintf ( "BLOCKMAP - * Level too big to create valid BLOCKMAP *" );
+			cprintf ( "Blockmap: * Level too big to create valid BLOCKMAP *" );
 		}
 
 		PrintTime ( blockTime );
+
 		cprintf ( "\r\n" );
 		GetXY ( &dummyX, &startY );
 	}
@@ -954,15 +995,53 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		Status ( (char *) "" );
 		GotoXY ( startX, startY );
 
-		cprintf ( "NODES - %4d/%-4d ", curLevel->NodeCount (), oldNodeCount );
-		if ( oldNodeCount ) cprintf ( "(%3d%%)", ( int ) ( 100.0 * curLevel->NodeCount () / oldNodeCount + 0.5 ));
-		else cprintf ( "(****)" );
-		cprintf ( "  " );
-		cprintf ( "SEGS - %5d/%-5d ", curLevel->SegCount (), oldSegCount );
-		if ( oldSegCount ) cprintf ( "(%3d%%)", ( int ) ( 100.0 * curLevel->SegCount () / oldSegCount + 0.5 ));
-		else cprintf ( "(****)" );
+		double pct;
+
+
+		cprintf ( "Nodes: %9d => %6d    ", oldNodeCount,  curLevel->NodeCount ());
+		if ( oldNodeCount ) {
+			double pct = ( 100.0 * (curLevel->NodeCount () / (double) oldNodeCount) );
+			cprintf ( "%6.2f%%", pct);
+			//cprintf ( "%3.1f%%", ( 100.0 * (curLevel->NodeCount () / oldNodeCount) ));
+		}
+		else {
+			cprintf ( "     -" );
+		}
+		pct = ((double) curLevel->NodeCount() / 32878.0) * 100.0;
+		cprintf("   %6.2f%%", pct);
 
 		PrintTime ( nodeTime );
+
+		//cprintf("\r\n");
+		cprintf("\r\n");
+		GotoXY ( startX, startY );
+
+		cprintf ( "Segs: %10d => %6d ",  oldSegCount, curLevel->SegCount ());
+
+		if ( oldSegCount ) {
+			pct = ( 100.0 * ( (double) curLevel->SegCount () / (double) oldSegCount) );
+			cprintf ( "   %6.2f%%", pct);
+		} else {
+			cprintf ( "     -" );
+		}
+
+		pct = ((double) curLevel->SegCount() / 32768.0) * 100.0;
+		cprintf("   %6.2f%%", pct);
+		/*
+		   cprintf ( "\r\n   Nodes: %9d => %6d   ", oldNodeCount,  curLevel->NodeCount ());
+		   if ( oldNodeCount ) {
+		   pct = ( 100.0 * (curLevel->NodeCount () / (double) oldNodeCount) );
+		   cprintf ( " %6.2f%%", pct);
+		//cprintf ( "%3.1f%%", ( 100.0 * (curLevel->NodeCount () / oldNodeCount) ));
+		}
+		else {
+		cprintf ( "     -" );
+		}
+		pct = ((double) curLevel->NodeCount() / 32878.0) * 100.0;
+		cprintf("   %6.2f%%", pct);
+		*/
+
+		// PrintTime ( nodeTime );
 		cprintf ( "\r\n" );
 		GetXY ( &dummyX, &startY );
 	}
@@ -982,11 +1061,16 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		if ( special == false ) {
 			Status ( (char *) "" );
 			GotoXY ( startX, startY );
-			cprintf ( "REJECT - Efficiency: %3ld.%1ld%%/%2ld.%1ld%%  Sectors: %5d", newEfficiency / 10, newEfficiency % 10,
-					oldEfficiency / 10, oldEfficiency % 10, curLevel->SectorCount ());
+			//cprintf ( "Reject:  %3ld.%1ld%% =>%3ld.%1ld%%  Sectors: %5d", newEfficiency / 100, newEfficiency % 100,
+			//		oldEfficiency / 100, oldEfficiency % 100, curLevel->SectorCount ());
+			cprintf ( "Reject:  %3ld.%1ld%% =>%3ld.%1ld%%", newEfficiency / 100, newEfficiency % 100, oldEfficiency / 100, oldEfficiency % 100);
+
+			cprintf ( "    %6.2f%%         -", ((double) newEfficiency / (double) oldEfficiency) * 100.0);
+
+
 			PrintTime ( rejectTime );
 		} else {
-			cprintf ( "REJECT - Special effects detected - use -rf to force an update" );
+			cprintf ( "Reject: Special effects detected, use -rf to force an update." );
 		}
 
 		cprintf ( "\r\n" );
