@@ -1397,7 +1397,28 @@ next:
 
 	return pSeg;
 }
-
+
+int initialAdaptiveCutoff = 3;
+int adaptiveCutoff = initialAdaptiveCutoff;
+int bestAdaptiveCutoff = 3;
+bool lowestSegCountFound = false;
+int bestSegCount = 32767;
+int maxAdaptiveCutoff = 500;
+
+static SEG *AlgorithmAdaptive( SEG *segs, int noSegs) {
+	if (noSegs <= adaptiveCutoff) {
+		return AlgorithmFewerSplits (segs, noSegs );
+	} else {
+		return AlgorithmBalancedTree (segs, noSegs );
+	}
+}
+
+
+
+
+
+
+
 //----------------------------------------------------------------------------
 //  Check to see if the list of segs contains more than one sector and at least
 //    one of them requires "unique subsectors".
@@ -1893,7 +1914,10 @@ wSegs *GetSegs ()
 //    BSP tree and insert the new data into the level.  All screen I/O is
 //    done in this routine (with the exception of progress indication).
 //----------------------------------------------------------------------------
-
+/*
+bool lowestSegCountFound = false;
+int bestSegCount = 32767;
+*/
 void CreateNODES ( DoomLevel *level, sBSPOptions *options )
 {
 	FUNCTION_ENTRY ( NULL, "CreateNODES", true );
@@ -1911,6 +1935,14 @@ void CreateNODES ( DoomLevel *level, sBSPOptions *options )
 	PartitionFunction = AlgorithmFewerSplits;
 	if ( options->algorithm == 2 ) PartitionFunction = AlgorithmBalancedTree;
 	if ( options->algorithm == 3 ) PartitionFunction = AlgorithmQuick;
+	if ( options->algorithm == 4 ) {
+		PartitionFunction = AlgorithmAdaptive;
+		lowestSegCountFound = false;
+		bestSegCount = 32767;
+		adaptiveCutoff = initialAdaptiveCutoff;
+		bestAdaptiveCutoff = 0;
+	}
+	restart:
 
 	nodeCount    = 0;
 	ssectorCount = 0;
@@ -1948,11 +1980,28 @@ void CreateNODES ( DoomLevel *level, sBSPOptions *options )
 	CreateSideInfo ( level );
 
 	score = ( options->algorithm == 2 ) ? new sScoreInfo [ noAliases ] : NULL;
+	
+	// Adaptive algorithm also uses this
+	if (options->algorithm == 4) {
+		score = ( options->algorithm == 4 ) ? new sScoreInfo [ noAliases ] : NULL;
+	}
 
 	convexList = new int [ noAliases ];
 	convexPtr  = convexList;
 
-	Status ( (char *) "Creating NODES ... " );
+	if ( options->algorithm == 1 ) {
+		Status ( (char *) "Nodes (split): " );
+	} else if ( options->algorithm == 2 ) {
+		Status ( (char *) "Nodes (balance): " );
+	} else if ( options->algorithm == 3 ) {
+                Status ( (char *) "Nodes (quick): " );
+        } else if ( options->algorithm == 4 ) {
+		char zokoutput [256];
+		sprintf(zokoutput, "Nodes (adaptive %3d/%-3d): ", adaptiveCutoff, maxAdaptiveCutoff  );
+		Status (zokoutput);
+	}
+
+
 
 	nodesLeft   = ( int ) ( FACTOR_NODE * level->SideDefCount ());
 	nodePool    = ( wNode * ) malloc( sizeof ( wNode ) * nodesLeft );
@@ -1987,4 +2036,28 @@ void CreateNODES ( DoomLevel *level, sBSPOptions *options )
 	free ( nodePool );
 
 	delete [] tempSeg;
+
+	if (options->algorithm == 4) {
+		if (level->SegCount() < bestSegCount) {
+			bestSegCount = level->SegCount();
+			bestAdaptiveCutoff = adaptiveCutoff;
+		}
+
+		if (lowestSegCountFound) {
+			return;
+		}
+
+		if (adaptiveCutoff < maxAdaptiveCutoff) {
+			adaptiveCutoff++;
+			goto restart;
+		} else {
+			lowestSegCountFound = true;
+			adaptiveCutoff = bestAdaptiveCutoff;
+			
+			// printf("\n - %d -\n", bestAdaptiveCutoff);
+			
+			goto restart;
+		}
+	}
+
 }

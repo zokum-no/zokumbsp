@@ -300,23 +300,25 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 			case 'U' : config.Nodes.Unique = setting;           break;
 			case 'I' : config.Nodes.ReduceLineDefs = setting;   break;
 			case 'A' :
-				   if (ptr[0] && ptr[1]) {
-					   if (ptr[1] == 'S') {
-						   config.Nodes.Method = 1;
-					   } else if (ptr[1] == 'D') {
-						   config.Nodes.Method = 2;
-					   } else if (ptr[1] == 'F') {
-						   config.Nodes.Method = 3;
-					   } else {
-						   printf("error");
-						   return true;
-					   }
-					   ptr += 2;
-				   } else {
+				if (ptr[0] && ptr[1]) {
+					if (ptr[1] == 'S') {
+						config.Nodes.Method = 1;
+					} else if (ptr[1] == 'D') {
+						config.Nodes.Method = 2;
+					} else if (ptr[1] == 'F') {
+						config.Nodes.Method = 3;
+					} else if (ptr[1] == 'A') {
+						config.Nodes.Method = 4;
+					} else {
+						printf("error");
+						return true;
+					}
+					ptr += 2;
+				} else {
 					printf("Bad node algorithm\n");
 					return true;
-				   }
-				   break;
+				}
+				break;
 			default  : return true;
 		}
 		config.Nodes.Rebuild = true;
@@ -866,7 +868,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	*elapsed = 0;
 
 	// cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
-	 cprintf ( "\r%-*.*s        Old       New    %%Change    %%Limit   Time Elapsed\n\r", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
+	cprintf ( "\r%-*.*s        Old       New    %%Change    %%Limit   Time Elapsed\n\r", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
 	GetXY ( &startX, &startY );
 	// startX = 4;
 
@@ -896,12 +898,12 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		// Status ( (char *) "" );
 		// GotoXY ( startX, startY );
 		//cprintf ( "PREPROCESS - ");
-		
+
 		Status ( (char *) "" );
 		GotoXY ( startX, startY );
 
 		cprintf ( "Linedefs: %6d => %6d ", (int) oldLineCount,  curLevel->LineDefCount ());
-		
+
 		if ( oldLineCount ) {
 			cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->LineDefCount () / (float) oldLineCount ));
 		} else {
@@ -910,7 +912,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		double pct = ((double) curLevel->LineDefCount () / 32768.0) * 100.0;
 		cprintf("   %6.2f%%", pct);
-		
+
 		PrintTime (preTime);
 		cprintf ( "\r\n" );
 		GotoXY ( startX, startY );
@@ -926,7 +928,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		pct = ((double) curLevel->SectorCount () / 32768.0) * 100.0;
 		cprintf("   %6.2f%%", pct);
 		cprintf ( "\r\n" );
-		
+
 		GetXY ( &dummyX, &startY );
 
 	}

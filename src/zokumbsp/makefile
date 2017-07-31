@@ -1,14 +1,14 @@
 # zennode makefile for Linux
 
 CC       = g++
-CFLAGS  += -g -O -fstrength-reduce -fno-rtti
+#CFLAGS  += -g -O -fstrength-reduce -fno-rtti
 #CFLAGS  += -fomit-frame-pointer -foptimize-sibling-calls
 #CFLAGS  += -fbranch-probabilities
 #CFLAGS  += -fprofile-arcs
 #WARNINGS = -Wall -Wno-format -Winline
 #CC       = /opt/intel/compiler60/ia32/bin/icc
 #CFLAGS   = -g -O3
-#CFLAGS   = -fpermissive -O3 -pipe -march=k8
+CFLAGS   = -fpermissive -O3 -pipe -march=k8
 #CFLAGS	  = -O0 -g -pipe
 #CFLAGS   = -O2 -pipe -static
 #CFLAGS   = -O2 -pipe -fomit-frame-pointer -foptimize-sibling-calls -fbranch-probabilities
