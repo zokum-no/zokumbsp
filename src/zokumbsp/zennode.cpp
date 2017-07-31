@@ -1035,9 +1035,9 @@ retry:
 //    balanced and run deep.
 //----------------------------------------------------------------------------
 
-static SEG *Algorithm1 ( SEG *segs, int noSegs )
+static SEG *AlgorithmFewerSplits ( SEG *segs, int noSegs )
 {
-	FUNCTION_ENTRY ( NULL, "Algorithm1", true );
+	FUNCTION_ENTRY ( NULL, "AlgorithmFewerSplits", true );
 
 	SEG *pSeg = NULL, *testSeg = segs;
 	int count [3];
@@ -1176,9 +1176,9 @@ int sortMetric2 ( const void *ptr1, const void *ptr2 )
 	return (( sScoreInfo * ) ptr1)->index - (( sScoreInfo * ) ptr2)->index;
 }
 	
-static SEG *Algorithm2 ( SEG *segs, int noSegs )
+static SEG *AlgorithmBalancedTree( SEG *segs, int noSegs )
 {
-	FUNCTION_ENTRY ( NULL, "Algorithm2", true );
+	FUNCTION_ENTRY ( NULL, "AlgorithmBalancedTree", true );
 
 	SEG *testSeg = segs;
 	int count [3], noScores = 0, rank, i;
@@ -1303,9 +1303,9 @@ next:
 //    continued until one is found or all segs have been searched.
 //----------------------------------------------------------------------------
 
-static SEG *Algorithm3 ( SEG *segs, int noSegs )
+static SEG *AlgorithmQuick ( SEG *segs, int noSegs )
 {
-	FUNCTION_ENTRY ( NULL, "Algorithm3", true );
+	FUNCTION_ENTRY ( NULL, "AlgorithmQuick", true );
 
 	SEG *pSeg = NULL, *testSeg = segs;
 	int count [3];
@@ -1908,9 +1908,9 @@ void CreateNODES ( DoomLevel *level, sBSPOptions *options )
 	showProgress     = options->showProgress;
 	uniqueSubsectors = options->keepUnique ? true : false;
 
-	PartitionFunction = Algorithm1;
-	if ( options->algorithm == 2 ) PartitionFunction = Algorithm2;
-	if ( options->algorithm == 3 ) PartitionFunction = Algorithm3;
+	PartitionFunction = AlgorithmFewerSplits;
+	if ( options->algorithm == 2 ) PartitionFunction = AlgorithmBalancedTree;
+	if ( options->algorithm == 3 ) PartitionFunction = AlgorithmQuick;
 
 	nodeCount    = 0;
 	ssectorCount = 0;
