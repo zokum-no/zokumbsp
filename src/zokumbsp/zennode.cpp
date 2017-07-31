@@ -1046,6 +1046,10 @@ static SEG *Algorithm1 ( SEG *segs, int noSegs )
 	long maxMetric = ( noSegs / 2 ) * ( noSegs - noSegs / 2 );
 	long bestMetric = LONG_MIN, bestSplits = LONG_MAX;
 
+	bool diagonal, bestDiagonal;
+	int halfDistance = noSegs / 2;
+	int bestHalf = 32768;
+
 	for ( int i = 0; i < noSegs; i++ ) {
 		if ( showProgress && (( i & 15 ) == 0 )) ShowProgress ();
 		int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
@@ -1069,12 +1073,25 @@ static SEG *Algorithm1 ( SEG *segs, int noSegs )
 					if ( X2 < temp ) metric = X2 * metric / temp;
 					metric -= ( X3 * sCount + X4 ) * sCount;
 				}
-				if ( ANGLE & 0x3FFF ) metric--;
-				if ( metric == maxMetric ) return testSeg;
-				if ( metric > bestMetric ) {
+				
+				if ( (ANGLE & 0x0000) || ( ANGLE & 0x3FFF) || ( ANGLE & 0x7FFF) || ( ANGLE & 0xAFFF)) {
+					// metric--;
+					diagonal = false;
+				} else {
+					diagonal = true;
+				}
+
+				if ( metric == maxMetric ) {
+					return testSeg;
+				}
+				if ( (metric > bestMetric) 
+					|| ((metric == bestMetric) && !diagonal) 
+					// || ((metric == bestMetric) && (bestHalf > (halfDistance - i)) ) 
+				) {
 					pSeg       = testSeg;
 					bestSplits = sCount + 2;
 					bestMetric = metric;
+					// bestHalf = halfDistance - i;
 				}
 			} else if ( alias != 0 ) {
 				// Eliminate outer edges of the map from here & down
@@ -1322,7 +1339,13 @@ retry:
 					if ( X2 < temp ) metric = X2 * metric / temp;
 					metric -= ( X3 * sCount + X4 ) * sCount;
 				}
-				if ( ANGLE & 0x3FFF ) metric--;
+				if ( ANGLE & 0x3FFF ) {
+					metric--;
+					// printf("red\n");
+				}
+				/*if ( ANGLE & 0x7FFF ) metric--;
+				if ( ANGLE & 0xAFFF ) metric--;*/
+
 				if ( metric == maxMetric ) return testSeg;
 				if ( metric > bestMetric ) {
 					pSeg = testSeg;
