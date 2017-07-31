@@ -7,8 +7,11 @@ ZokumBSP 1.0.10-beta1
 - Split wadlist object into its own file, wadlist.cpp
 - Added support for linedef 1080-1083 for seg bam trickery.
 - Fixed nodes algorithm paramters, a=s,d,f.
-- Old nodes algorithms selectonow r act as aliases for a=s,d,f.
-- Minor tweaks to the output to make columns align better.
+- Old nodes algorithms selection now act as aliases for a=s,d,f.
+- Rewrote the output, more info, xaser had the column header idea!
+- Removed a bug in the split reduction algorithm, it no longer favors lines
+  that are horisontal over diagonal or vertical lines with fewer splits.
+- Split-reduction algorithm now favors non-diagonal lines if splits are same.
 
 ZokumBSP 1.0.9-rc2
 - Turning off blockmap compression is once again possible.

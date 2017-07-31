@@ -722,17 +722,18 @@ The changelog is kept in a seperate file, 'changelog.txt'.
 Section 15: Acknowledgements
 ============================
 
-Marc Roussaeu            - ZenNode
-Anotak                   - Bug fixes and improvments
-Brad Spencer             - Web site layout and feedback
-Dew                      - Feedback and bug testing
-Anders Johnsen           - Feedback and suggestions
-Andrew 'Linguica' Stine  - Feedback and information
-x38_ViTa_38              - Spell checking
-Eternity Engine          - Adding compatibility fixes and testing
-#nightmare               - Feedback and support
-#d****                   - Feedback and information
-#noteternityenginere...  - Feedback and inforamtion
+Marc Roussaeu            - ZenNode.
+Anotak                   - Bug fixes and improvments.
+Brad Spencer             - Web site layout and feedback.
+Dew                      - Feedback and bug testing.
+Anders Johnsen           - Feedback and suggestions.
+Andrew 'Linguica' Stine  - Feedback and information.
+x38_ViTa_38              - Spell checking.
+Xaser                    - Tool output suggestions.
+Eternity Engine          - Adding compatibility fixes and testing.
+#nightmare               - Feedback and support.
+#d****                   - Feedback and information.
+#noteternityenginere...  - Feedback and inforamtion.
 
 Section 16: Other node builders
 ===============================
