@@ -39,8 +39,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef _MSC_VER
-	#include <string.h>
 	#define strncasecmp _strnicmp
 	#define strcasecmp _stricmp
 #else
