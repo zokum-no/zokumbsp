@@ -59,6 +59,7 @@ struct sBlockMapOptions {
 	bool  RemoveNonCollidable;
 	bool  HTMLOutput;
 	bool  blockBig;
+	bool autoDetectBacksideRemoval;
 };
 
 struct sNodeOptions {

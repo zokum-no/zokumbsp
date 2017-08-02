@@ -54,6 +54,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 	const wVertex *vertex   = level->GetVertices();
 
 	int numberOfLineDefs = level->LineDefCount();
+	int numberOfSectors = level->SectorCount();
 
 	extraData->multiSectorSpecial = false;
 
@@ -64,6 +65,8 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 	// For simplicity we set them all to true, then to false if needed :)
 	extraData->lineDefsCollidable = new bool [numberOfLineDefs];
 	extraData->lineDefsRendered = new bool [numberOfLineDefs];
+	extraData->lineDefsFrontsideOnly = new bool [numberOfLineDefs];
+	extraData->sectorsActive = new bool [numberOfSectors];
 
 	int pairs = 0;
 	int orglines = level->LineDefCount();
@@ -73,22 +76,92 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 
 	for ( int i = 0; i < level->LineDefCount(); i++ ) {
 		extraData->lineDefsCollidable[i] = true;
+
 		
 		if (lineDef [i].tag == 998) {
 			extraData->lineDefsRendered[i] = false;
 		} else {
 			extraData->lineDefsRendered[i] = true;
 		}
+		
+		if (lineDef [i].type == 1084) {
+			extraData->lineDefsFrontsideOnly[i] = true;
+		} else {
+			extraData->lineDefsFrontsideOnly[i] = false;
+		}
 	}
-	/*
-	char lines[128];
-	sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
+	
+	for (int i = 0; i < level->SectorCount(); i++) {
+		if (sectors[i].special) {
+			extraData->sectorsActive[i] = true;
+		} else if (sectors[i].trigger) {
+			extraData->sectorsActive[i] = true;	
+		} else {
+			extraData->sectorsActive[i] = false;
+		}
+	}	
+	
+	// now for the damn doors that are direct, tagless
+	
+	// printf("\n----\n");
+	
+	for ( int i = 0; i < level->LineDefCount(); i++ ) {
+		bool active;
 
-	sprintf(zokoutput, "GEOMETRY - %11s lines      Reduced to: %3.2f%%",
-	lines,
-	100.0 * (float) ((orglines - pairs) / (float) orglines));
-	Status( (char *) zokoutput);
-*/
+		switch (lineDef [i].type) {
+			case 1:		// normal door
+			case 26:	// blue door
+			case 27:	// yellow door
+			case 28: 	// red door
+			case 31:	// d1
+			case 32:	// d1 key
+			case 33:	// d1 key
+			case 34:	// d1 key
+			case 117: 	// dr turbo
+			case 118: {	// d1 turbo
+					  active = true;
+					  // printf("door at %d\n", i);
+					  break;
+				  }
+			default: {
+					 active = false;
+					 break;
+				 }
+		}
+
+		// aparently, this is the kind of trickery boom uses...
+		if ((lineDef [i].type > 0x3C00) && (lineDef [i].type < 0x4000)) {
+			active = true;
+		}
+
+		if (lineDef [i].sideDef[LEFT_SIDEDEF] == 0xffff) {
+			continue;
+		}
+
+		int backSector = sideDef[lineDef [i].sideDef[LEFT_SIDEDEF]].sector ;
+
+		if (active) {
+			// printf("Sector %d active\n", backSector);
+			extraData->sectorsActive[backSector] = true;
+		}
+
+	}
+
+
+
+
+
+
+
+	/*
+	   char lines[128];
+	   sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
+
+	   sprintf(zokoutput, "GEOMETRY - %11s lines      Reduced to: %3.2f%%",
+	   lines,
+	   100.0 * (float) ((orglines - pairs) / (float) orglines));
+	   Status( (char *) zokoutput);
+	   */
 	GeometryStatusLine(orglines, pairs);
 
 
@@ -101,10 +174,10 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 	if (options.GeometrySimplification) { // && (config->OutputWad || !config->WriteWAD )) {
 		for ( int i = 0; i < level->LineDefCount(); i++ ) {
 			sprintf(zokoutput, "GEOMETRY - Simplifying geometry %d of %d lines, found %d pairs.",
-			i,
-			level->LineDefCount(),
-			pairs
-			);
+					i,
+					level->LineDefCount(),
+					pairs
+			       );
 			Status( (char *) zokoutput);
 
 			if (extraData->lineDefsCollidable [i] == false) {
@@ -121,9 +194,9 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 				     )) {
 					continue;
 				}
-				
+
 				if (extraData->lineDefsCollidable [inner] == false) {
-				        continue;
+					continue;
 				}
 
 				// Reduced form of cross product of two vectors in 3d.
@@ -140,7 +213,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 					continue;
 				}
 
-	
+
 				// Basic check to see if the lines have same amount of sides.
 
 				if ((lineDef [i].sideDef[LEFT_SIDEDEF] != 65535) && (lineDef [inner].sideDef[LEFT_SIDEDEF] == 65535)) {
@@ -189,7 +262,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 				} else if (geoLevel == 2) {
 					// we know they have the same sidedness, 1 or 2, not a mix
 					// if they are both 1-sided, let's merge!
-					
+
 					if (!((lineDef [i].sideDef[RIGHT_SIDEDEF] == 65535) || (lineDef [i].sideDef[LEFT_SIDEDEF] == 65535))) {
 						continue;
 					}
@@ -251,15 +324,15 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 			}
 		}
 		level->TrimLineDefs();
-	
-		/*
-		sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
 
-		sprintf(zokoutput, "GEOMETRY - %11s lines      Reduced to: %3.2f%%",
-		lines,
-		100.0 * (float) ((orglines - pairs) / (float) orglines));
-		Status( (char *) zokoutput);
-		*/
+		/*
+		   sprintf(lines, "%5d/%-5d", orglines - pairs, orglines);
+
+		   sprintf(zokoutput, "GEOMETRY - %11s lines      Reduced to: %3.2f%%",
+		   lines,
+		   100.0 * (float) ((orglines - pairs) / (float) orglines));
+		   Status( (char *) zokoutput);
+		   */
 		GeometryStatusLine(orglines, pairs);
 
 	}
@@ -295,6 +368,70 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 				extraData->multiSectorSpecial = true;
 			} 
 		}
+
+		if (options.autoDetectBacksideRemoval) {
+			for ( int i = 0; i < level->LineDefCount(); i++ ) {
+
+				// doom 2 map06 has crash doors :)
+				if ((lineDef [i].flags & LDF_TWO_SIDED) == false) {
+					continue;
+				}
+
+				if (lineDef [i].sideDef[LEFT_SIDEDEF] == 0xffff) {
+					// printf("oops\n");
+					continue;
+				}
+
+				if (lineDef [i].sideDef[RIGHT_SIDEDEF] == 0xffff) {
+					continue;
+				}
+
+				if (lineDef [i].tag != 0) {
+					continue;
+				}
+				if (lineDef [i].type != 0) {
+					continue;
+				}
+
+				int backSector = sideDef [lineDef [i].sideDef[LEFT_SIDEDEF]].sector;
+				//  sideDef [lineDef [i].sideDef[LEFT_SIDEDEF]].sector;
+				// printf("sector: %d\n", backSector);
+
+				if (extraData->sectorsActive[backSector]) {
+					continue;
+				}
+
+				/*
+				   if (sectors[backSector].trigger != 0) {
+				   continue;
+				   }
+
+				   if (sectors[backSector].special != 0) {
+				   continue;
+				   }
+				   */
+
+				if (sectors[backSector].floorh == sectors[backSector].ceilh) {
+					// printf("found one: %d\n", i);
+					extraData->lineDefsFrontsideOnly[i] = true;	
+				}
+
+
+				// if (sectors[ ].floorh
+
+				/*
+				   for (int j = 0; j < level->SectorCount(); j++) {
+				   if ((sideDef [lineDef [i].sideDef[LEFT_SIDEDEF]].sector) == j) {
+				   if 
+
+				   }
+				   }
+				   */
+
+			}
+
+		}
+
 
 		for ( int i = 0; i < level->LineDefCount(); i++ ) {
 			if ((lineDef [i].tag) == 999) {

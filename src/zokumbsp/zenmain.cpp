@@ -76,8 +76,8 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10-beta1"
-#define ZOKVERSIONSHORT		"1.0.9"
+#define ZOKVERSION		"1.0.10-beta2"
+#define ZOKVERSIONSHORT		"1.0.10"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2017 Kim Roar Foldøy Hauge";
 const char BANNER []            = "Based on: ZenNode Version " ZENVERSION " (c) 1994-2004 Marc Rousseau";
@@ -161,12 +161,13 @@ void printHelp () {
     fprintf ( stdout, "                   %c     1 = Try some variations.\n", ( config.Nodes.Thoroughness == 1 ) ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     2-7 = Try more variations.\n", ( config.Nodes.Thoroughness == 2 ) ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     x = Try all variations.\n", ( config.Nodes.Thoroughness == 999 ) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    q              %c   - Don't display progress bar\n", config.Nodes.Quiet ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    u              %c   - Ensure all sub-sectors contain only 1 sector\n", config.Nodes.Unique ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    q              %c   - Don't display progress bar.\n", config.Nodes.Quiet ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "    u              %c   - Ensure all sub-sectors contain only 1 sector.\n", config.Nodes.Unique ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    i              %c   - Ignore non-visible lineDefs.\n", config.Nodes.ReduceLineDefs ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    1                  - Alias for a=s.\n" );
     fprintf ( stdout, "    2                  - Alias for a=d.\n" );
     fprintf ( stdout, "    3                  - Alias for a=f.\n" );
+    fprintf ( stdout, "    b              %c   - Remove backside seg on on some linedefs.\n", config.BlockMap.autoDetectBacksideRemoval ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "\n");
     fprintf ( stdout, " -r[zfgm]          %c - Rebuild REJECT resource.\n", config.Reject.Rebuild ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    z              %c   - Insert empty REJECT resource.\n", config.Reject.Empty  ? DEFAULT_CHAR : ' ' );
@@ -316,6 +317,7 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 			case 'Q' : config.Nodes.Quiet = setting;            break;
 			case 'U' : config.Nodes.Unique = setting;           break;
 			case 'I' : config.Nodes.ReduceLineDefs = setting;   break;
+			case 'B' : config.BlockMap.autoDetectBacksideRemoval = setting; break;
 			case 'A' :
 				if (ptr[0] && ptr[1]) {
 					if (ptr[1] == 'S') {
@@ -1308,6 +1310,7 @@ int main ( int argc, const char *argv [] ) {
 	config.BlockMap.IdCompatible = false;
 	config.BlockMap.HTMLOutput = false;
 	config.BlockMap.blockBig = false;
+	config.BlockMap.autoDetectBacksideRemoval = false;
 
 	config.Nodes.Rebuild        = true;
 	config.Nodes.Method         = 1;

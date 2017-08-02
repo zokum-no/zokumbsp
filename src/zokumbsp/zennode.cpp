@@ -2386,6 +2386,7 @@ restart:
 
 		if (segCount < maxAdaptiveCutoff) {
 			max = segCount;
+			maxAdaptiveCutoff = max;
 		}
 
 		sprintf(zokoutput, "Nodes (adaptive %3d/%-3d, best: %d): ", adaptiveCutoff, max, bestAdaptiveCutoff  );
