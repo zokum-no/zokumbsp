@@ -155,6 +155,12 @@ void printHelp () {
     fprintf ( stdout, "                   %c     s = Minimize splits.\n", ( config.Nodes.Method == 1 ) ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     d = Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "                   %c     f = Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
+    fprintf ( stdout, "                   %c     a = Adaptive, depth then splits.\n", ( config.Nodes.Method == 4 ) ? DEFAULT_CHAR : ' ');
+    fprintf ( stdout, "    t                  - Thoroughness, tweak how many variations to test\n" );
+    fprintf ( stdout, "                   %c     0 = Try 1 variation.\n", ( config.Nodes.Thoroughness == 0 ) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     1 = Try some variations.\n", ( config.Nodes.Thoroughness == 1 ) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     2-7 = Try more variations.\n", ( config.Nodes.Thoroughness == 2 ) ? DEFAULT_CHAR : ' ' );
+    fprintf ( stdout, "                   %c     x = Try all variations.\n", ( config.Nodes.Thoroughness == 999 ) ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    q              %c   - Don't display progress bar\n", config.Nodes.Quiet ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    u              %c   - Ensure all sub-sectors contain only 1 sector\n", config.Nodes.Unique ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "    i              %c   - Ignore non-visible lineDefs.\n", config.Nodes.ReduceLineDefs ? DEFAULT_CHAR : ' ' );
@@ -330,8 +336,33 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 					return true;
 				}
 				break;
+			case 'T' : 
+				if (ptr[0] && ptr[1]) {
+					if (ptr[1] == '0') {
+						config.Nodes.Thoroughness = 0;
+					} else if (ptr[1] == '1') {
+						config.Nodes.Thoroughness = 1;
+					} else if (ptr[1] == '2') {
+						config.Nodes.Thoroughness = 2;
+					} else if (ptr[1] == '3') {
+						config.Nodes.Thoroughness = 3;
+					} else if (ptr[1] == '4') {
+						config.Nodes.Thoroughness = 4;
+					} else if (ptr[1] == '5') {
+						config.Nodes.Thoroughness = 5;
+					} else if (ptr[1] == '6') {
+						config.Nodes.Thoroughness = 6;
+					} else if (ptr[1] == '7') {
+						config.Nodes.Thoroughness = 7;
+					} else if (ptr[1] == 'x') {
+						config.Nodes.Thoroughness = 999;
+					}
+					ptr += 2;
+				}
+				break;
 			default  : return true;
 		}
+
 		config.Nodes.Rebuild = true;
 	}
 	return false;
@@ -989,6 +1020,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		sBSPOptions options;
 		options.algorithm      = config.Nodes.Method;
+		options.thoroughness   = config.Nodes.Thoroughness;
 		options.showProgress   = ! config.Nodes.Quiet;
 		options.reduceLineDefs = config.Nodes.ReduceLineDefs;
 		options.ignoreLineDef  = NULL;
@@ -1277,6 +1309,7 @@ int main ( int argc, const char *argv [] ) {
 
 	config.Nodes.Rebuild        = true;
 	config.Nodes.Method         = 1;
+	config.Nodes.Thoroughness   = 1;
 	config.Nodes.Quiet          = isatty ( fileno ( stdout )) ? false : true;
 	config.Nodes.Unique         = false;
 	config.Nodes.ReduceLineDefs = false;

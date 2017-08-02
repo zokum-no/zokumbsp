@@ -64,6 +64,7 @@ struct sBlockMapOptions {
 struct sNodeOptions {
 	bool  Rebuild;
 	int   Method;
+	int   Thoroughness;
 	bool  Quiet;
 	bool  Unique;
 	bool  ReduceLineDefs;
@@ -116,6 +117,7 @@ struct SEG {
 
 struct sBSPOptions {
 	int       algorithm;
+	int 	thoroughness;
 	bool      showProgress;
 	bool      reduceLineDefs;		// global flag for invisible linedefs
 	bool     *ignoreLineDef;		// linedefs that can be left out
