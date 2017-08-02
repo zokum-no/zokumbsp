@@ -39,7 +39,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef _MSC_VER
 #include <strings.h>
+#endif
 
 #if defined ( __OS2__ )
     #include <conio.h>
