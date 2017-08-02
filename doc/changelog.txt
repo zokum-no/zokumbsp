@@ -12,6 +12,9 @@ ZokumBSP 1.0.10-beta1
 - Removed a bug in the split reduction algorithm, it no longer favors lines
   that are horisontal over diagonal or vertical lines with fewer splits.
 - Split-reduction algorithm now favors non-diagonal lines if splits are same.
+- Adaptive algorithm will not try seg thresholds above the seg count;
+- Node split algorithm will favor splits near the middle if same  split count.
+- Added a small summary output, adding up data from all processed maps.
 
 ZokumBSP 1.0.9-rc2
 - Turning off blockmap compression is once again possible.
