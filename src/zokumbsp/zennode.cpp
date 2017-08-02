@@ -2447,7 +2447,7 @@ restart:
 			lowestSegCountFound = true;
 			adaptiveCutoff = bestAdaptiveCutoff;
 
-			printf("\n - %d -\n", bestAdaptiveCutoff);
+			// printf("\n - %d -\n", bestAdaptiveCutoff);
 
 			goto restart;
 		}

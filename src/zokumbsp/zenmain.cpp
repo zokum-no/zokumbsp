@@ -354,7 +354,7 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 						config.Nodes.Thoroughness = 6;
 					} else if (ptr[1] == '7') {
 						config.Nodes.Thoroughness = 7;
-					} else if (ptr[1] == 'x') {
+					} else if (ptr[1] == 'X') {
 						config.Nodes.Thoroughness = 999;
 					}
 					ptr += 2;
@@ -1184,6 +1184,8 @@ void PrintStats ( int totalLevels, UINT32 totalTime, int totalUpdates ) {
 }
 
 void printTotals(void) {
+	return ;
+
 	double pct;
 
 	// summary..
