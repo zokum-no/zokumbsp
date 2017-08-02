@@ -237,6 +237,8 @@ Numeric Effect
 1082    Rotate the rendered wall N BAMs, BAMs taken from tag.
 1083    Set the wall rotation to a hardoced BAM, taken from tag.
 
+1084    Do not render seg on the second side of a linedef.
+
 05:02 Floor specials speed differences
 --------------------------------------
 
@@ -529,37 +531,47 @@ ports where the blockmap is ignored. Sine the specifications are not final,
 nor the output correct, one cannot at this time expect any port to support
 this option.
 
-Section 08: Node builder
-========================
+Section 08: Nodes builder
+=========================
 
-Nothing has not changed much from the node code found in ZenNode. The changes
-are related to the concept of having collission geometry seperate from the
-rendered geometry though the use of 998 and 999.
+There has been significant changes, tweaks and improvements in version 1.0.10
+of ZokumBSP and upwards. There's support for different ways to manipulate SEGs
+directly, like the angle.
 
 08:01 'a' - Partition selection algorithm
 -----------------------------------------
 
 ZokumBSP offers the same 3 algoritms as ZenNode does.
 
-a=1 - Minimize splits
+a=s - Minimize splits
 
 This is the simplest and most basic algorithm. Although it is stated to
 attempt to minimize splits, it may produce more segs than the other
 algorithms. 
 
-a=2 - Minimize BSP depth
+a=d - Minimize BSP depth
 
 This is the most complex of the two main algorithms, and will attempt to
 produce a BSP tree that is not as deep as the ones made with the first
 algorithm. Anecdotal evidence suggest that this algorithm can in fact produce
 fewer splits for bigger maps. Try both if a reduced seg count is required.
 
-a=3 - Minimize time
+a=q - Minimize time
 
 This lagorithm uses the same approach as algorithm 2, except it doesn't check
 for as many combinations as a=2. It will pick the best out of 30. This makes
 the nodes build much faster. The downside is that the better splits may not be
 found every time, leading to a worse performing tree.
+
+a=a - Adaptive algorithm
+
+This one uses the depth minimization algorithm first, to make good choice for
+an effective tree, then changes to the split minimzation algorithm when
+tackling a certain amount of SEGs or fewer. In addition it will try different
+thresholds and final output will be the one that produced the fewest amount of
+segs. How man ythresholds to test can be adjusted by the thoroughness switch.
+The threshold will never be higher than the amount of SEGs the map initiially
+had.
 
 08:02 'q' - Don't display progress bar
 --------------------------------------
@@ -583,6 +595,14 @@ This option is similar to a blockmap option that removes non-collidable lines
 from the level geometry. It does however check for the presence of a middle
 texture, since those need to be rendered even if a linedef has sidefs
 belonging to the same sector.
+
+08:05 't' - Thoroughness
+------------------------
+
+This option allows you to select how many different thresholds to try out in
+order to try to minimize SEG splits. Higher numbers performs more checks and
+take longer to compute. Setting it to 'x' will attempt to try all possible
+combinations.
 
 Section 09: Reject builder
 ==========================
