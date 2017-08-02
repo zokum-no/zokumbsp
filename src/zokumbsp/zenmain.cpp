@@ -108,6 +108,15 @@ sOptionsRMB rmbOptionTable [MAX_WADS];
     extern char *strupr ( char * );
 #endif
 
+long long totalNodes = 0;
+long long oldTotalNodes = 0;
+long long totalSegs = 0;
+long long oldTotalSegs = 0;
+long long totalBlockmap = 0;
+long long oldTotalBlockmap = 0;
+
+
+
 void printHelp () {
     FUNCTION_ENTRY ( NULL, "printHelp", true );
 
@@ -999,6 +1008,10 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		double pct;
 
+		totalNodes +=  curLevel->NodeCount ();
+		oldTotalNodes += oldNodeCount;
+		totalSegs += curLevel->SegCount ();
+		oldTotalSegs += oldSegCount;
 
 		cprintf ( "Nodes: %9d => %6d    ", oldNodeCount,  curLevel->NodeCount ());
 		if ( oldNodeCount ) {
@@ -1136,6 +1149,37 @@ void PrintStats ( int totalLevels, UINT32 totalTime, int totalUpdates ) {
 	}
 }
 
+void printTotals(void) {
+	double pct;
+
+	// summary..
+	GotoXY ( 0, startY );
+	cprintf ( "=================================================================");
+
+	cprintf("\r\n");
+	GotoXY ( startX, startY );
+
+	cprintf ( "Nodes: %9d => %6d    ", oldTotalNodes, totalNodes );
+	if ( oldTotalNodes ) {
+		pct = ( 100.0 * (totalNodes / (double) oldTotalNodes) );
+		cprintf ( "%6.2f%%", pct);
+	}
+
+	cprintf("\r\n");
+	GotoXY ( startX, startY );
+
+	cprintf ( "Segs: %10d => %6d ",  oldTotalSegs, totalSegs );
+
+	if ( oldTotalSegs ) {
+		pct = ( 100.0 * ( (double) totalSegs / (double) oldTotalSegs) );
+		cprintf ( "   %6.2f%%", pct);
+	} else {
+		cprintf ( "     -" );
+	}
+	cprintf("\r\n");
+
+}
+
 int getOutputFile ( int index, const char *argv [], char *wadFileName )
 {
 	FUNCTION_ENTRY ( NULL, "getOutputFile", true );
@@ -1186,6 +1230,16 @@ char *ConvertNumber ( UINT32 value ) {
 	while ( *ptr == ' ' ) ptr++;
 	return ptr;
 }
+
+/*
+   long long totalNodes = 0;
+   long long oldTotalNodes = 0;
+   long long totalSegs = 0;
+   long long oldTotalSegs = 0;
+   long long totalBlockmap = 0;
+   long long oldTotalBlockmap = 0;
+   */
+
 
 int main ( int argc, const char *argv [] ) {
 	FUNCTION_ENTRY ( NULL, "main", true );
@@ -1280,6 +1334,8 @@ int main ( int argc, const char *argv [] ) {
 				if ( KeyPressed () && ( GetKey () == 0x1B )) break;
 
 			} while ( levelNames [noLevels][0] );
+
+			printTotals();
 
 			config.Extract = false;
 			argIndex = getOutputFile ( argIndex, argv, wadFileName );
