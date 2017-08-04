@@ -1508,8 +1508,11 @@ static SEG *AlgorithmVertexPair ( SEG *segs, int noSegs )
 	int bestHalf = 32768;
 
 	// bool array that works as a vertex lookup table
-
+#ifdef _MSC_VER
+	bool* vertxInUse = new bool[noVertices];
+#else
 	bool vertxInUse[noVertices];
+#endif
 
 	// we mark all of them as false, for now
 	for (int i = 0; i != noVertices; i++) {
@@ -1559,6 +1562,9 @@ static SEG *AlgorithmVertexPair ( SEG *segs, int noSegs )
 				}
 
 				if ( metric == maxMetric ) {
+#ifdef _MSC_VER
+					delete [] vertxInUse;
+#endif
 					return testSeg;
 				}
 				if ( (metric > bestMetric) 
@@ -1607,6 +1613,9 @@ next:
 		testSeg++;
 	}
 
+#ifdef _MSC_VER
+	delete[] vertxInUse;
+#endif
 	return pSeg;
 }
 
