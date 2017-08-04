@@ -300,6 +300,7 @@ void DoomLevel::CleanUp ()
 
 	delete [] this->extraData->lineDefsCollidable;
 	delete [] this->extraData->lineDefsRendered;
+	delete [] this->extraData->lineDefsFrontsideOnly;
 	delete this->extraData;
 
     m_ThingData   = NULL;
@@ -822,6 +823,7 @@ void DoomLevel::AddLineDef(void) {
 	// add a new entry to the extraData structures
 
 	bool *lineDefsRenderedNew = new bool [m_LineDef.elementCount];
+	bool *lineDefsFrontsideOnlyNew = new bool [m_LineDef.elementCount];
 	bool *lineDefsCollidableNew =  new bool [m_LineDef.elementCount];
 /*
 	memcpy(lineDefsRenderedNew, this->extraData->lineDefsRendered, m_LineDef.elementCount -1 );
@@ -829,6 +831,7 @@ void DoomLevel::AddLineDef(void) {
 */
 	for (int i = 0; i != m_LineDef.elementCount - 1 ; i++) {
 		lineDefsRenderedNew[i] = this->extraData->lineDefsRendered[i];
+		lineDefsFrontsideOnlyNew[i] = this->extraData->lineDefsFrontsideOnly[i];
 		lineDefsCollidableNew[i] = this->extraData->lineDefsCollidable[i];
 	}
 
@@ -836,6 +839,7 @@ void DoomLevel::AddLineDef(void) {
 	delete [] this->extraData->lineDefsCollidable;
 
 	this->extraData->lineDefsRendered = lineDefsRenderedNew;
+	this->extraData->lineDefsFrontsideOnly = lineDefsFrontsideOnlyNew;
 	this->extraData->lineDefsCollidable = lineDefsCollidableNew;
 
 	m_LineDef.dataSize = m_LineDef.elementCount * m_LineDef.elementSize;
@@ -866,6 +870,7 @@ void DoomLevel::TrimLineDefs(void) {
 
 			this->extraData->lineDefsCollidable[i - adjust] = this->extraData->lineDefsCollidable[i];
 			this->extraData->lineDefsRendered[i - adjust] = this->extraData->lineDefsRendered[i];
+			this->extraData->lineDefsFrontsideOnly[i - adjust] = this->extraData->lineDefsFrontsideOnly[i];
 		}
 		if ((this->extraData->lineDefsRendered[i] == false) && (this->extraData->lineDefsCollidable[i] == false) ) {
 			adjust++;
@@ -898,10 +903,16 @@ void DoomLevel::AddSector(void) {
 	wSector *m_SectorDataNew = new wSector [ count + 1 ];
 	wSector *m_SectorData = (wSector *)  m_Sector.rawData;
 
+	bool *sectorsActiveNew = new bool [m_Sector.elementCount];
 
 	for ( int i = 0; i < m_Sector.elementCount; i++ ) {
+	    sectorsActiveNew[i] = this->extraData->sectorsActive[i];
+
 	    memcpy ( &m_SectorDataNew[i], &m_SectorData[i], sizeof ( wSector ));
 	}
+
+	delete [] this->extraData->sectorsActive;
+	this->extraData->sectorsActive = sectorsActiveNew;
 
         delete [] m_SectorData;
 
