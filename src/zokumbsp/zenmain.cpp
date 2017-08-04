@@ -120,184 +120,199 @@ long long oldTotalBlockmap = 0;
 
 
 void printHelp () {
-    FUNCTION_ENTRY ( NULL, "printHelp", true );
+	FUNCTION_ENTRY ( NULL, "printHelp", true );
 
-    fprintf ( stdout, "Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}\n" );
-    fprintf ( stdout, "\n" );
-    fprintf ( stdout, " -x+ turn on option   -x- turn off option  %c = default\n", DEFAULT_CHAR );
-    fprintf ( stdout, "\n" );
-    fprintf ( stdout, " -b[chio=0,1,2,3rsz=0,1,2g=0,1,2] %c - Rebuild BLOCKMAP\n", config.BlockMap.Rebuild ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    c              %c   - Compress BLOCKMAP.\n", config.BlockMap.Compress ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    h              %c   - Output BLOCKMAP data as HTML.\n", config.BlockMap.HTMLOutput ?  DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    i              %c   - Id compatible BLOCKMAP. Sets 'o=1n=2g=0' and 's-r-'\n", config.BlockMap.IdCompatible ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    o                  - Offset configuration.\n");
-    fprintf ( stdout, "                   %c     0 = ZenNode 0,0 offset BLOCKMAP.\n", config.BlockMap.OffsetZero ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     1 = DooMBSP / BSP 8,8 offset BLOCKMAP.\n", config.BlockMap.OffsetEight ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     2 = Best of 36 offset combinations.\n", config.BlockMap.OffsetThirtySix ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     3 = Heuristic method to reduce from 65536 offsets.\n", config.BlockMap.OffsetHeuristic ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     4 = Best of all 65536 offset combinations.\n", config.BlockMap.OffsetBruteForce ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     x,y = Specify specific offsets.\n", config.BlockMap.OffsetUser ? DEFAULT_CHAR : ' ' );
-    // fprintf ( stdout, "    m               %c   - Merge block compression BLOCKMAP. Not done!\n", config.BlockMap.BlockMerge ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    r              %c   - Remove non-collidable lines from BLOCKMAP.\n", config.BlockMap.RemoveNonCollidable ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    s              %c   - Subset compress BLOCKMAP.\n", config.BlockMap.SubBlockOptimization ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    z                  - Zero header configuration.\n");
-    fprintf ( stdout, "                   %c     0 = No zero header.\n", (config.BlockMap.ZeroHeader == 0) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     1 = Conventional zero header.\n", (config.BlockMap.ZeroHeader == 1) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     2 = Zero footer.\n", (config.BlockMap.ZeroHeader == 2) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    g                  - Geometry simplification.\n");
-    fprintf ( stdout, "                   %c     0 = No simplification.\n", (config.BlockMap.GeometrySimplification == 0) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     1 = Only if same sector.\n", (config.BlockMap.GeometrySimplification == 1) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     2 = Also 1-sided lines in different sectors.\n", (config.BlockMap.GeometrySimplification == 2) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    b              %c   - Build big 32bit BLOCKMAP.\n", config.BlockMap.blockBig ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "\n" );
-    fprintf ( stdout, " -n[a=s,d,f|q|u|i] %c - Rebuild NODES\n", config.Nodes.Rebuild ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    a                  - Partition Selection Algorithm\n" );
-    fprintf ( stdout, "                   %c     s = Minimize splits.\n", ( config.Nodes.Method == 1 ) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     d = Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     f = Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
-    fprintf ( stdout, "                   %c     a = Adaptive, depth then splits.\n", ( config.Nodes.Method == 4 ) ? DEFAULT_CHAR : ' ');
-    fprintf ( stdout, "    t                  - Thoroughness, tweak how many variations to test\n" );
-    fprintf ( stdout, "                   %c     0 = Try 1 variation.\n", ( config.Nodes.Thoroughness == 0 ) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     1 = Try some variations.\n", ( config.Nodes.Thoroughness == 1 ) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     2-7 = Try more variations.\n", ( config.Nodes.Thoroughness == 2 ) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "                   %c     x = Try all variations.\n", ( config.Nodes.Thoroughness == 999 ) ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    q              %c   - Don't display progress bar.\n", config.Nodes.Quiet ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    u              %c   - Ensure all sub-sectors contain only 1 sector.\n", config.Nodes.Unique ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    i              %c   - Ignore non-visible lineDefs.\n", config.Nodes.ReduceLineDefs ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    1                  - Alias for a=s.\n" );
-    fprintf ( stdout, "    2                  - Alias for a=d.\n" );
-    fprintf ( stdout, "    3                  - Alias for a=f.\n" );
-    fprintf ( stdout, "    b              %c   - Remove backside seg on on some linedefs.\n", config.BlockMap.autoDetectBacksideRemoval ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "\n");
-    fprintf ( stdout, " -r[zfgm]          %c - Rebuild REJECT resource.\n", config.Reject.Rebuild ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    z              %c   - Insert empty REJECT resource.\n", config.Reject.Empty  ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    f              %c   - Rebuild even if REJECT effects are detected.\n", config.Reject.Force ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    g              %c   - Use graphs to reduce LOS calculations.\n", config.Reject.UseGraphs ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "    m{b}           %c   - Process RMB option file (.rej).\n", config.Reject.UseRMB ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "\n" );
-    fprintf ( stdout, " -t                %c - Don't write output file (test mode).\n", ! config.WriteWAD ? DEFAULT_CHAR : ' ' );
-    fprintf ( stdout, "\n" );
-    fprintf ( stdout, " level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN.\n" );
+	fprintf ( stdout, "Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}\n" );
+	fprintf ( stdout, "\n" );
+	fprintf ( stdout, " -x+ turn on option   -x- turn off option  %c = default\n", DEFAULT_CHAR );
+	fprintf ( stdout, "\n" );
+// Geometry	
+	fprintf ( stdout, " -g[s=0,1,2]       %c   - Geometry pass.\n", config.Geometry.Perform ? DEFAULT_CHAR : ' ' );
+
+	fprintf ( stdout, "    s                  - Simplify collision geometry.\n");
+	fprintf ( stdout, "                   %c     0 = No simplification.\n", (config.Geometry.Simplification == 0) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     1 = Only if same sector.\n", (config.Geometry.Simplification == 1) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     2 = Also 1-sided lines in different sectors.\n", (config.Geometry.Simplification == 2) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "\n" );
+// Blockmap	
+	fprintf ( stdout, " -b[chio=0,1,2,3rsz=0,1,2] %c - Rebuild BLOCKMAP\n", config.BlockMap.Rebuild ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    c              %c   - Compress BLOCKMAP.\n", config.BlockMap.Compress ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    h              %c   - Output BLOCKMAP data as HTML.\n", config.BlockMap.HTMLOutput ?  DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    i              %c   - Id compatible BLOCKMAP. Sets 'o=1n=2g=0' and 's-r-'\n", config.BlockMap.IdCompatible ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    o                  - Offset configuration.\n");
+	fprintf ( stdout, "                   %c     0 = ZenNode 0,0 offset BLOCKMAP.\n", config.BlockMap.OffsetZero ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     1 = DooMBSP / BSP 8,8 offset BLOCKMAP.\n", config.BlockMap.OffsetEight ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     2 = Best of 36 offset combinations.\n", config.BlockMap.OffsetThirtySix ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     3 = Heuristic method to reduce from 65536 offsets.\n", config.BlockMap.OffsetHeuristic ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     4 = Best of all 65536 offset combinations.\n", config.BlockMap.OffsetBruteForce ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     x,y = Specify specific offsets.\n", config.BlockMap.OffsetUser ? DEFAULT_CHAR : ' ' );
+	// fprintf ( stdout, "    m               %c   - Merge block compression BLOCKMAP. Not done!\n", config.BlockMap.BlockMerge ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    r              %c   - Remove non-collidable lines from BLOCKMAP.\n", config.BlockMap.RemoveNonCollidable ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    s              %c   - Subset compress BLOCKMAP.\n", config.BlockMap.SubBlockOptimization ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    z                  - Zero header configuration.\n");
+	fprintf ( stdout, "                   %c     0 = No zero header.\n", (config.BlockMap.ZeroHeader == 0) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     1 = Conventional zero header.\n", (config.BlockMap.ZeroHeader == 1) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     2 = Zero footer.\n", (config.BlockMap.ZeroHeader == 2) ? DEFAULT_CHAR : ' ' );
+/*	fprintf ( stdout, "    g                  - Geometry simplification.\n");
+	fprintf ( stdout, "                   %c     0 = No simplification.\n", (config.BlockMap.GeometrySimplification == 0) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     1 = Only if same sector.\n", (config.BlockMap.GeometrySimplification == 1) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     2 = Also 1-sided lines in different sectors.\n", (config.BlockMap.GeometrySimplification == 2) ? DEFAULT_CHAR : ' ' );*/
+	fprintf ( stdout, "    b              %c   - Build big 32bit BLOCKMAP.\n", config.BlockMap.blockBig ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "\n" );
+// Nodes
+	fprintf ( stdout, " -n[a=s,d,f|q|u|i] %c - Rebuild NODES\n", config.Nodes.Rebuild ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    a                  - Partition Selection Algorithm\n" );
+	fprintf ( stdout, "                   %c     s = Minimize splits.\n", ( config.Nodes.Method == 1 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     d = Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     f = Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "                   %c     a = Adaptive, depth then splits.\n", ( config.Nodes.Method == 4 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "    t                  - Thoroughness, tweak how many variations to test\n" );
+	fprintf ( stdout, "                   %c     0 = Try 1 variation.\n", ( config.Nodes.Thoroughness == 0 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     1 = Try some variations.\n", ( config.Nodes.Thoroughness == 1 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     2-7 = Try more variations.\n", ( config.Nodes.Thoroughness == 2 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "                   %c     x = Try all variations.\n", ( config.Nodes.Thoroughness == 999 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    q              %c   - Don't display progress bar.\n", config.Nodes.Quiet ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    u              %c   - Ensure all sub-sectors contain only 1 sector.\n", config.Nodes.Unique ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    i              %c   - Ignore non-visible lineDefs.\n", config.Nodes.ReduceLineDefs ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    1                  - Alias for a=s.\n" );
+	fprintf ( stdout, "    2                  - Alias for a=d.\n" );
+	fprintf ( stdout, "    3                  - Alias for a=f.\n" );
+	fprintf ( stdout, "    b              %c   - Remove backside seg on on some linedefs.\n", config.BlockMap.autoDetectBacksideRemoval ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "\n");
+// Reject	
+	fprintf ( stdout, " -r[zfgm]          %c - Rebuild REJECT resource.\n", config.Reject.Rebuild ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    z              %c   - Insert empty REJECT resource.\n", config.Reject.Empty  ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    f              %c   - Rebuild even if REJECT effects are detected.\n", config.Reject.Force ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    g              %c   - Use graphs to reduce LOS calculations.\n", config.Reject.UseGraphs ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    m{b}           %c   - Process RMB option file (.rej).\n", config.Reject.UseRMB ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "\n" );
+	fprintf ( stdout, " -t                %c - Don't write output file (test mode).\n", ! config.WriteWAD ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "\n" );
+// Statistics
+
+// Misc
+	fprintf ( stdout, " level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN.\n" );
 }
 
 bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
-    FUNCTION_ENTRY ( NULL, "parseBLOCKMAPArgs", true );
+	FUNCTION_ENTRY ( NULL, "parseBLOCKMAPArgs", true );
 
-    config.BlockMap.Rebuild = setting;
-    while ( *ptr ) {
-        int option = *ptr++;
-        bool setting = true;
-        if (( *ptr == '+' ) || ( *ptr == '-' )) {
-            setting = ( *ptr++ == '+' ) ? true : false;
-        }
-        switch ( option ) {
-            case 'C' : 
-	    	config.BlockMap.Compress = setting;      
-		break;
-	    case 'R' :
-	        config.BlockMap.RemoveNonCollidable = setting;
-		break;
-	    case 'S' :
-	    	config.BlockMap.SubBlockOptimization = setting;
-		break;
-/*	    case 'G' :
-	    	config.BlockMap.GeometrySimplification = setting;
-		break;*/
-	    case 'I':
-	    	config.BlockMap.IdCompatible = setting;
-		break;
-	    case 'B':
-	    	config.BlockMap.blockBig = setting;
-		break;
-            case 'M':
-	        config.BlockMap.BlockMerge = setting;
-	    case 'H':
-	    	config.BlockMap.HTMLOutput = setting;
-		break;
-            case 'Z' : 
-	    if (ptr[0] && ptr[1]) {
-	    	if (ptr[1] == '0') {
-			config.BlockMap.ZeroHeader = 0;
-		} else if (ptr[1] == '1') {
-			config.BlockMap.ZeroHeader = 1;
-		} else if (ptr[1] == '2') {
-			config.BlockMap.ZeroHeader = 2;
-		} else {
-			printf("error");
-			return true;
+	config.BlockMap.Rebuild = setting;
+	while ( *ptr ) {
+		int option = *ptr++;
+		bool setting = true;
+		if (( *ptr == '+' ) || ( *ptr == '-' )) {
+			setting = ( *ptr++ == '+' ) ? true : false;
 		}
-		ptr += 2;
-	    }
-	    case 'G' :
-	    if (ptr[0] && ptr[1]) {
+		switch ( option ) {
+			case 'C' : 
+				config.BlockMap.Compress = setting;      
+				break;
+			case 'R' :
+				config.BlockMap.RemoveNonCollidable = setting;
+				break;
+			case 'S' :
+				config.BlockMap.SubBlockOptimization = setting;
+				break;
+				/*	    case 'G' :
+					    config.BlockMap.GeometrySimplification = setting;
+					    break;*/
+			case 'I':
+				config.BlockMap.IdCompatible = setting;
+				break;
+			case 'B':
+				config.BlockMap.blockBig = setting;
+				break;
+			case 'M':
+				config.BlockMap.BlockMerge = setting;
+			case 'H':
+				config.BlockMap.HTMLOutput = setting;
+				break;
+			case 'Z' : 
+				if (ptr[0] && ptr[1]) {
+					if (ptr[1] == '0') {
+						config.BlockMap.ZeroHeader = 0;
+					} else if (ptr[1] == '1') {
+						config.BlockMap.ZeroHeader = 1;
+					} else if (ptr[1] == '2') {
+						config.BlockMap.ZeroHeader = 2;
+					} else {
+						printf("error");
+						return true;
+					}
+					ptr += 2;
+				}
+				/*
+				   case 'G' :
+				   if (ptr[0] && ptr[1]) {
 
-		    if (ptr[1] == '0') {
-			    config.BlockMap.GeometrySimplification = 0;
-		    } else if (ptr[1] == '1') {
-			    config.BlockMap.GeometrySimplification = 1;
-		    } else if (ptr[1] == '2') {
-			    config.BlockMap.GeometrySimplification = 2;
-		    } else {
-			    printf("error");
-			    return true;
-		    }
-		    ptr += 2;
-	    }
+				   if (ptr[1] == '0') {
+				   config.BlockMap.GeometrySimplification = 0;
+				   } else if (ptr[1] == '1') {
+				   config.BlockMap.GeometrySimplification = 1;
+				   } else if (ptr[1] == '2') {
+				   config.BlockMap.GeometrySimplification = 2;
+				   } else {
+				   printf("error");
+				   return true;
+				   }
+				   ptr += 2;
+				   }
+				   */
+
+				break;
+			case 'O' : 
+				if (ptr[0] && ptr[1] && ptr[2] && (ptr[2] == ',')) {
+					// We're given offsets, not using inbuilt
+					char *comma = strchr(ptr + 1, ',');
+
+					if (comma) {
+						comma[0] = '\0';
+						if (strlen(ptr+1) && strlen(comma+1)) {
+							config.BlockMap.OffsetCommandLineX = atoi(ptr+1);
+							config.BlockMap.OffsetCommandLineY = atoi(comma + 1);
+							config.BlockMap.OffsetUser = true;
+
+							ptr += strlen(ptr+1) +  strlen(comma+1);
+
+							return false;
+						} else {
+							printf("error (bad offsets)");	
+							return true;
+						}
+					} else {
+						printf("error (missing comma)");
+						return true;
+					}
+
+				}
 
 
-	    break;
-	    case 'O' : 
-	    if (ptr[0] && ptr[1] && ptr[2] && (ptr[2] == ',')) {
-		    // We're given offsets, not using inbuilt
-		    char *comma = strchr(ptr + 1, ',');
+				if (ptr[0] && ptr[1]) {
+					config.BlockMap.OffsetThirtySix = false;
+					if (ptr[1] == '0') {
+						config.BlockMap.OffsetZero = true;
+					} else if (ptr[1] == '1') {
+						config.BlockMap.OffsetEight = true;
+					} else if (ptr[1] == '2') {
+						config.BlockMap.OffsetThirtySix = true;
+					} else if (ptr[1] == '3') {
+						config.BlockMap.OffsetHeuristic = true;
+					} else if (ptr[1] == '4') {
+						config.BlockMap.OffsetBruteForce = true;			
+					} else {
+						printf("error");
+						return true;
+					}
+					ptr += 2;
+				}
+				break;
 
-		    if (comma) {
-			    comma[0] = '\0';
-			    if (strlen(ptr+1) && strlen(comma+1)) {
-				    config.BlockMap.OffsetCommandLineX = atoi(ptr+1);
-				    config.BlockMap.OffsetCommandLineY = atoi(comma + 1);
-				    config.BlockMap.OffsetUser = true;
-
-				    ptr += strlen(ptr+1) +  strlen(comma+1);
-
-				    return false;
-			    } else {
-				    printf("error (bad offsets)");	
-				    return true;
-			    }
-		    } else {
-			    printf("error (missing comma)");
-			    return true;
-		    }
-
-	    }
-
-
-	    if (ptr[0] && ptr[1]) {
-		    config.BlockMap.OffsetThirtySix = false;
-		    if (ptr[1] == '0') {
-			    config.BlockMap.OffsetZero = true;
-		    } else if (ptr[1] == '1') {
-			    config.BlockMap.OffsetEight = true;
-		    } else if (ptr[1] == '2') {
-			    config.BlockMap.OffsetThirtySix = true;
-		    } else if (ptr[1] == '3') {
-			    config.BlockMap.OffsetHeuristic = true;
-		    } else if (ptr[1] == '4') {
-			    config.BlockMap.OffsetBruteForce = true;			
-		    } else {
-			    printf("error");
-			    return true;
-		    }
-		    ptr += 2;
-	    }
-	    break;
-
-	    default  : return true;
+			default  : return true;
+		}
+		config.BlockMap.Rebuild = true;
 	}
-	config.BlockMap.Rebuild = true;
-    }
-    return false;
+	return false;
 }
 
 bool parseNODESArgs ( char *&ptr, bool setting ) {
@@ -319,53 +334,115 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 			case 'I' : config.Nodes.ReduceLineDefs = setting;   break;
 			case 'B' : config.BlockMap.autoDetectBacksideRemoval = setting; break;
 			case 'A' :
+				   if (ptr[0] && ptr[1]) {
+					   if (ptr[1] == 'S') {
+						   config.Nodes.Method = 1;
+					   } else if (ptr[1] == 'D') {
+						   config.Nodes.Method = 2;
+					   } else if (ptr[1] == 'F') {
+						   config.Nodes.Method = 3;
+					   } else if (ptr[1] == 'A') {
+						   config.Nodes.Method = 4;
+					   } else if (ptr[1] == 'P') {
+						   config.Nodes.Method = 5;
+					   } else {
+						   printf("error");
+						   return true;
+					   }
+					   ptr += 2;
+				   } else {
+					   printf("Bad node algorithm\n");
+					   return true;
+				   }
+				   break;
+			case 'T' : 
+				   if (ptr[0] && ptr[1]) {
+					   if (ptr[1] == '0') {
+						   config.Nodes.Thoroughness = 0;
+					   } else if (ptr[1] == '1') {
+						   config.Nodes.Thoroughness = 1;
+					   } else if (ptr[1] == '2') {
+						   config.Nodes.Thoroughness = 2;
+					   } else if (ptr[1] == '3') {
+						   config.Nodes.Thoroughness = 3;
+					   } else if (ptr[1] == '4') {
+						   config.Nodes.Thoroughness = 4;
+					   } else if (ptr[1] == '5') {
+						   config.Nodes.Thoroughness = 5;
+					   } else if (ptr[1] == '6') {
+						   config.Nodes.Thoroughness = 6;
+					   } else if (ptr[1] == '7') {
+						   config.Nodes.Thoroughness = 7;
+					   } else if (ptr[1] == 'X') {
+						   config.Nodes.Thoroughness = 999;
+					   }
+					   ptr += 2;
+				   }
+				   break;
+			default  : return true;
+		}
+
+		config.Nodes.Rebuild = true;
+	}
+	return false;
+}
+
+bool parseGEOMETRYArgs (char *&ptr, bool setting ) {
+	FUNCTION_ENTRY ( NULL, "parseGeometryArgs", true );
+
+	while ( *ptr ) {
+		int option = *ptr++;
+		bool setting = true;
+		if (( *ptr == '+' ) || ( *ptr == '-' )) {
+			setting = ( *ptr++ == '+' ) ? true : false;
+		}
+		switch ( option ) {
+			case 'S' :
 				if (ptr[0] && ptr[1]) {
-					if (ptr[1] == 'S') {
-						config.Nodes.Method = 1;
-					} else if (ptr[1] == 'D') {
-						config.Nodes.Method = 2;
-					} else if (ptr[1] == 'F') {
-						config.Nodes.Method = 3;
-					} else if (ptr[1] == 'A') {
-						config.Nodes.Method = 4;
+
+					if (ptr[1] == '0') {
+						config.BlockMap.GeometrySimplification = 0;
+					} else if (ptr[1] == '1') {
+						config.BlockMap.GeometrySimplification = 1;
+					} else if (ptr[1] == '2') {
+						config.BlockMap.GeometrySimplification = 2;
 					} else {
 						printf("error");
 						return true;
 					}
-					ptr += 2;
-				} else {
-					printf("Bad node algorithm\n");
-					return true;
-				}
-				break;
-			case 'T' : 
-				if (ptr[0] && ptr[1]) {
-					if (ptr[1] == '0') {
-						config.Nodes.Thoroughness = 0;
-					} else if (ptr[1] == '1') {
-						config.Nodes.Thoroughness = 1;
-					} else if (ptr[1] == '2') {
-						config.Nodes.Thoroughness = 2;
-					} else if (ptr[1] == '3') {
-						config.Nodes.Thoroughness = 3;
-					} else if (ptr[1] == '4') {
-						config.Nodes.Thoroughness = 4;
-					} else if (ptr[1] == '5') {
-						config.Nodes.Thoroughness = 5;
-					} else if (ptr[1] == '6') {
-						config.Nodes.Thoroughness = 6;
-					} else if (ptr[1] == '7') {
-						config.Nodes.Thoroughness = 7;
-					} else if (ptr[1] == 'X') {
-						config.Nodes.Thoroughness = 999;
+					if (config.BlockMap.GeometrySimplification) {
+						config.Statistics.ShowLineDefs = true;
 					}
 					ptr += 2;
 				}
 				break;
 			default  : return true;
 		}
+		// config.Reject.Rebuild = true;
+	}
+	return false;
 
-		config.Nodes.Rebuild = true;
+
+}
+
+bool parseSTATISTICSArgs (char *&ptr, bool setting ) {
+	FUNCTION_ENTRY ( NULL, "parseSTATISTICSArgs", true );
+	
+	while ( *ptr ) {
+		int option = *ptr++;
+		bool setting = true;
+		if (( *ptr == '+' ) || ( *ptr == '-' )) {
+			setting = ( *ptr++ == '+' ) ? true : false;
+		}
+		switch ( option ) {
+			case 'L' : config.Statistics.ShowLineDefs = setting;	break;
+			case 'M' : config.Statistics.ShowTotals = setting;	break;
+			case 'S' : config.Statistics.ShowSectors = setting;	break;
+			case 'T' : config.Statistics.ShowThings = setting; 	break;
+			case 'V' : config.Statistics.ShowVertices = setting;	break;
+			default  : return true;
+		}
+		// config.Reject.Rebuild = true;
 	}
 	return false;
 }
@@ -423,8 +500,10 @@ int parseArgs ( int index, const char *argv [] )
 			}
 			switch ( option ) {
 				case 'B' : localError = parseBLOCKMAPArgs ( ptr, setting );     break;
+				case 'G' : localError = parseGEOMETRYArgs (ptr, setting );	break;
 				case 'N' : localError = parseNODESArgs ( ptr, setting );        break;
 				case 'R' : localError = parseREJECTArgs ( ptr, setting );       break;
+				case 'S' : localError = parseSTATISTICSArgs (ptr, setting);	break;
 				case 'T' : config.WriteWAD = ! setting;                         break;
 				default  : localError = true;
 			}
@@ -943,35 +1022,41 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		// GotoXY ( startX, startY );
 		//cprintf ( "PREPROCESS - ");
 
-		Status ( (char *) "" );
-		GotoXY ( startX, startY );
+		double pct;
+	
+		if (config.Statistics.ShowLineDefs) {
+			Status ( (char *) "" );
+			GotoXY ( startX, startY );
 
-		cprintf ( "Linedefs: %6d => %6d ", (int) oldLineCount,  curLevel->LineDefCount ());
+			cprintf ( "LineDefs: %6d => %6d ", (int) oldLineCount,  curLevel->LineDefCount ());
 
-		if ( oldLineCount ) {
-			cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->LineDefCount () / (float) oldLineCount ));
-		} else {
-			cprintf ( " - " );
+			if ( oldLineCount ) {
+				cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->LineDefCount () / (float) oldLineCount ));
+			} else {
+				cprintf ( " - " );
+			}
+
+			pct = ((double) curLevel->LineDefCount () / 32768.0) * 100.0;
+			cprintf("   %6.2f%%", pct);
+
+			PrintTime (preTime);
+			cprintf ( "\r\n" );
 		}
+		if (config.Statistics.ShowSectors) {
+			GotoXY ( startX, startY );
 
-		double pct = ((double) curLevel->LineDefCount () / 32768.0) * 100.0;
-		cprintf("   %6.2f%%", pct);
+			cprintf ( "Sectors:  %6d => %6d ", (int) oldSectorCount,  curLevel->SectorCount ());
 
-		PrintTime (preTime);
-		cprintf ( "\r\n" );
-		GotoXY ( startX, startY );
+			if ( oldSectorCount ) {
+				cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->SectorCount () / (float) oldSectorCount ));
+			} else {
+				cprintf ( " - " );
+			}
 
-		cprintf ( "Sectors:  %6d => %6d ", (int) oldSectorCount,  curLevel->SectorCount ());
-
-		if ( oldSectorCount ) {
-			cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->SectorCount () / (float) oldSectorCount ));
-		} else {
-			cprintf ( " - " );
+			pct = ((double) curLevel->SectorCount () / 32768.0) * 100.0;
+			cprintf("   %6.2f%%", pct);
+			cprintf ( "\r\n" );
 		}
-
-		pct = ((double) curLevel->SectorCount () / 32768.0) * 100.0;
-		cprintf("   %6.2f%%", pct);
-		cprintf ( "\r\n" );
 
 		GetXY ( &dummyX, &startY );
 
@@ -1186,7 +1271,6 @@ void PrintStats ( int totalLevels, UINT32 totalTime, int totalUpdates ) {
 }
 
 void printTotals(void) {
-	return ;
 
 	double pct;
 
@@ -1306,11 +1390,13 @@ int main ( int argc, const char *argv [] ) {
 	config.BlockMap.ZeroHeader = 1;
 	config.BlockMap.BlockMerge  = false;
 	config.BlockMap.SubBlockOptimization = false;
-	config.BlockMap.GeometrySimplification = 0;
+	// config.BlockMap.GeometrySimplification = 0;
 	config.BlockMap.IdCompatible = false;
 	config.BlockMap.HTMLOutput = false;
 	config.BlockMap.blockBig = false;
 	config.BlockMap.autoDetectBacksideRemoval = false;
+
+	config.Geometry.Simplification = 0;
 
 	config.Nodes.Rebuild        = true;
 	config.Nodes.Method         = 1;
@@ -1324,6 +1410,12 @@ int main ( int argc, const char *argv [] ) {
 	config.Reject.Force         = false;
 	config.Reject.UseGraphs     = true;
 	config.Reject.UseRMB        = false;
+
+	config.Statistics.ShowVertices = false;
+	config.Statistics.ShowLineDefs = false;
+	config.Statistics.ShowSectors = false;
+	config.Statistics.ShowThings = false;
+	config.Statistics.ShowTotals = false;
 
 	config.WriteWAD             = true;
 	config.OutputWad            = false;
@@ -1375,7 +1467,9 @@ int main ( int argc, const char *argv [] ) {
 
 			} while ( levelNames [noLevels][0] );
 
-			printTotals();
+			if (config.Statistics.ShowTotals) {
+				printTotals();
+			}
 
 			config.Extract = false;
 			argIndex = getOutputFile ( argIndex, argv, wadFileName );

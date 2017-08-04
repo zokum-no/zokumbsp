@@ -1,5 +1,11 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.10-beta2
+- Improved split reduction to favor balanced trees over unbalanced.
+- Added geometry options as a separate sub type, use -g.
+- Added statistics options for more output and totals, use -s.
+- Various minor display fixes for the adaptive algorithm.
+
 ZokumBSP 1.0.10-beta1
 - Renamed structs and methods in doom/level.* and wad.*
 - Converted filenames to lower case.

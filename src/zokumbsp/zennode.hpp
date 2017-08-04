@@ -217,6 +217,20 @@ struct sRejectOptions {
 	const sRejectOptionRMB  *rmb;
 };
 
+struct sGeometryOptions {
+	bool			Perform;
+	int			Simplification;
+};
+
+struct sStatisticsOptions {
+	bool			ShowVertices;
+	bool			ShowLineDefs;
+	bool			ShowSectors;
+	bool			ShowThings;
+	bool			ShowTotals;
+};
+
+
 bool ParseOptionRMB ( int, const char *, sRejectOptionRMB * );
 
 // ----- C99 routines from <math.h> Required by ZenNode -----
@@ -264,6 +278,8 @@ struct sOptions {
 	sBlockMapOptions BlockMap;
 	sNodeOptions     Nodes;
 	sRejectOptions   Reject;
+	sGeometryOptions Geometry;
+	sStatisticsOptions Statistics;
 	bool             WriteWAD;
 	bool             Extract;
 	bool		 OutputWad;
