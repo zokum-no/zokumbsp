@@ -195,6 +195,7 @@ struct sMapExtraData {
 	bool *lineDefsCollidable;
 	bool *lineDefsRendered;
 	bool *lineDefsFrontsideOnly;
+	bool *lineDefsSpecialEffect;
 	bool *sectorsActive;
 	int rightMostVertex;
 	int leftMostVertex;

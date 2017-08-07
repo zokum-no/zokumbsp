@@ -116,6 +116,13 @@ struct SEG {
 	sVertex         end;
 };
 
+struct vertexPair {
+	int startx;
+	int starty;
+	int endx;
+	int endy;
+};
+
 struct sBSPOptions {
 	int       algorithm;
 	int 	thoroughness;

@@ -16,8 +16,6 @@
 
 #include <algorithm>
 
-//void BlockMapExtraData( DoomLevel *level, sMapExtraData *extraData, // const sBlockMapOptions &options) {
-
 // int CrossProduct(
 
 
@@ -38,9 +36,44 @@ void GeometryStatusLine(int orglines, int pairs) {
 	Status( (char *) zokoutput);
 }
 
+void LineDefSpecialSpeedUpScroller (DoomLevel *level, int line, int speed)  {
+	
+	wLineDefInternal *lineDef = level->GetLineDefs();
+	sMapExtraData *extraData = level->extraData;
+
+	if (speed < 1) {
+		speed = 1;
+	}
+
+	for (int j = 1; j < speed; j++) {
+		level->AddLineDef();
+		lineDef = level->GetLineDefs();
+
+		int latestLine = level->LineDefCount() - 1;
+
+		lineDef[latestLine].start = lineDef[line].start;
+		lineDef[latestLine].end = lineDef[line].end;
+
+		extraData->lineDefsCollidable 	[latestLine] = false;
+		extraData->lineDefsRendered	[latestLine] = false;
+		extraData->lineDefsSpecialEffect[latestLine] = true;
+
+		lineDef [latestLine].tag = 0;
+		lineDef [latestLine].type = 48;
+		lineDef [latestLine].sideDef[LEFT_SIDEDEF] = lineDef [line].sideDef[LEFT_SIDEDEF];
+		lineDef [latestLine].sideDef[RIGHT_SIDEDEF] = lineDef [line].sideDef[RIGHT_SIDEDEF];
+		// printf("\n+vegg %d\n", line);
+	}
+}
+float DistanceTwoPoints(int sx, int sy, int ex, int ey) {
+	return sqrtf( pow(sx - ex, 2) + pow(sy - ey, 2));
+}
+
+
+
 void MapExtraData( DoomLevel *level, const sOptions *config) {
 	const sBlockMapOptions options = config->BlockMap; //  sOptions
-	
+
 	char zokoutput[256];
 
 	level->extraData = new sMapExtraData;
@@ -66,6 +99,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 	extraData->lineDefsCollidable = new bool [numberOfLineDefs];
 	extraData->lineDefsRendered = new bool [numberOfLineDefs];
 	extraData->lineDefsFrontsideOnly = new bool [numberOfLineDefs];
+	extraData->lineDefsSpecialEffect = new bool [numberOfLineDefs];
 	extraData->sectorsActive = new bool [numberOfSectors];
 
 	int pairs = 0;
@@ -74,23 +108,26 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 	sprintf(zokoutput, "GEOMETRY - Locating '998'-tag non-render lines.");
 	Status( (char *) zokoutput);
 
+	// Speed up animated walls by using the tag!
+
+
 	for ( int i = 0; i < level->LineDefCount(); i++ ) {
 		extraData->lineDefsCollidable[i] = true;
 
-		
+
 		if (lineDef [i].tag == 998) {
 			extraData->lineDefsRendered[i] = false;
 		} else {
 			extraData->lineDefsRendered[i] = true;
 		}
-		
+
 		if (lineDef [i].type == 1084) {
 			extraData->lineDefsFrontsideOnly[i] = true;
 		} else {
 			extraData->lineDefsFrontsideOnly[i] = false;
 		}
 	}
-	
+
 	for (int i = 0; i < level->SectorCount(); i++) {
 		if (sectors[i].special) {
 			extraData->sectorsActive[i] = true;
@@ -100,11 +137,11 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 			extraData->sectorsActive[i] = false;
 		}
 	}	
-	
+
 	// now for the damn doors that are direct, tagless
-	
+
 	// printf("\n----\n");
-	
+
 	for ( int i = 0; i < level->LineDefCount(); i++ ) {
 		bool active;
 
@@ -167,8 +204,52 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 
 	// Check all linedefs and flag them as false if we don't
 	// need to check for collisions.
-
 	bool removenoncollidable = !options.IdCompatible && options.RemoveNonCollidable;
+
+
+	// Custom new linedef types!
+	for ( int i = 0; i < level->LineDefCount(); i++ ) {
+		bool active;
+		// some types, like 48 invalidate this one
+		lineDef = level->GetLineDefs();
+
+		switch (lineDef [i].type) {
+			case 48: // scrolling wall
+				if (lineDef [i].tag > 1){
+					LineDefSpecialSpeedUpScroller (level, i, lineDef[i].tag);
+				}
+				break;
+			case 1048: // remote scrolling wall, use two last digits of a number
+				if (lineDef [i].tag > 0) {
+					// we find the closest wall, use start-vertex
+					float distance = -1.0; // sentinel value
+					int nearest = -1;
+
+					for ( int j = 0; j < level->LineDefCount(); j++ ) {
+						if (lineDef [j].tag == lineDef [i].tag) {
+							// Distance between start of one linedef to start of another
+							float distanceNew = DistanceTwoPoints(
+								vertex [ lineDef[i].start].x,
+								vertex [ lineDef[i].start].y,
+								vertex [ lineDef[j].start].x,
+								vertex [ lineDef[j].start].y);
+
+							if ((distance < 0.0) || (distanceNew < distance)) {
+								nearest = j;
+							}
+						}
+					}
+					if (nearest != -1) {
+						// We make the "nearest" same tagged line scroll at tag speed.
+						LineDefSpecialSpeedUpScroller (level, nearest, lineDef [i].tag % 100);
+						lineDef = level->GetLineDefs();
+						lineDef [i].type = 48;
+					}
+				}
+				break;
+
+		}
+	}
 
 
 	if (options.GeometrySimplification) { // && (config->OutputWad || !config->WriteWAD )) {

@@ -1146,7 +1146,7 @@ static SEG *AlgorithmFewerSplits ( SEG *segs, int noSegs )
 				count [ WhichSide ( &segs [j] ) + 1 ]++;
 			} else for ( int j = 0; j < noSegs; j++ ) {
 				count [ WhichSide ( &segs [j] ) + 1 ]++;
-				if ( sCount > bestSplits ) goto next;
+				if ( sCount >= bestSplits ) goto next; // Added =
 			}
 
 			// Only consider SEG if it is not a boundary line
@@ -1185,8 +1185,8 @@ static SEG *AlgorithmFewerSplits ( SEG *segs, int noSegs )
 				}
 
 				if ( (metric > bestMetric) 
-					 // || ((metric == bestMetric) && betterBalance)
-					 // || ((metric == bestMetric) && !diagonal && decentBalance)
+					 || ((metric == bestMetric) && betterBalance)
+					 || ((metric == bestMetric) && !diagonal && decentBalance)
 				) {
 					pSeg       = testSeg;
 					bestSplits = sCount + 2;
@@ -1497,6 +1497,130 @@ next:
 
 	return pSeg;
 }
+
+
+
+//static SEG *AlgorithmVertexPair ( SEG *segs, int noSegs ) {
+vertexPair * AlgorithmVertexPair2  (SEG *segs, int noSegs) {
+	FUNCTION_ENTRY ( NULL, "AlgorithmFewerSplits", true );
+
+	SEG *pSeg = NULL, *testSeg = segs;
+	int count [3];
+	int &lCount = count [0], &sCount = count [1], &rCount = count [2];
+	// Compute the maximum value maxMetric can possibly reach
+	long maxMetric = ( noSegs / 2 ) * ( noSegs - noSegs / 2 );
+	long bestMetric = LONG_MIN, bestSplits = LONG_MAX;
+
+	bool diagonal;
+
+	int edgeBalance = noSegs;
+	int bestEdgeBalance = noSegs;
+
+	for ( int i = 0; i < noSegs; i++ ) {
+		if ( showProgress && (( i & 15 ) == 0 )) ShowProgress ();
+		int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+		if (( alias == 0 ) || ( lineChecked [ alias ] == false )) {
+			// lineChecked [ alias ] = -1;
+			// count [0] = count [1] = count [2] = 0;
+			// ComputeStaticVariables ( testSeg );
+			/*
+			if ( bestMetric < 0 ) for ( int j = 0; j < noSegs; j++ ) {
+				count [ WhichSide ( &segs [j] ) + 1 ]++;
+			} else for ( int j = 0; j < noSegs; j++ ) {
+				count [ WhichSide ( &segs [j] ) + 1 ]++;
+				if ( sCount >= bestSplits ) goto next; // Added =
+			}
+			*/
+			// Only consider SEG if it is not a boundary line
+			if ( lCount * rCount + sCount != 0 ) {
+				long metric = ( long ) lCount * ( long ) rCount;
+				if ( sCount ) {
+					long temp = X1 * sCount;
+					if ( X2 < temp ) metric = X2 * metric / temp;
+					metric -= ( X3 * sCount + X4 ) * sCount;
+				}
+				
+				if ( (ANGLE & 0x0000) || ( ANGLE & 0x3FFF) || ( ANGLE & 0x7FFF) || ( ANGLE & 0xAFFF)) {
+					// metric--;
+					diagonal = false;
+				} else {
+					diagonal = true;
+				}
+
+				if ( metric == maxMetric ) {
+					// return testSeg;
+					return NULL;
+				}
+				
+				bool betterBalance;
+				bool decentBalance;
+
+				edgeBalance = abs(lCount - rCount);
+
+				if (edgeBalance < bestEdgeBalance) { // children have more equal amount of edges
+					betterBalance = true;
+					decentBalance = true;
+				} else if (edgeBalance == bestEdgeBalance) { // same amount, maybe not diagonal?
+					decentBalance = true;				
+				} else { // less balanced than our previous best
+					betterBalance = false;
+					decentBalance = false;
+				}
+
+				if ( (metric > bestMetric) 
+					 || ((metric == bestMetric) && betterBalance)
+					 || ((metric == bestMetric) && !diagonal && decentBalance)
+				) {
+					pSeg       = testSeg;
+					bestSplits = sCount + 2;
+					bestMetric = metric;
+					bestEdgeBalance = edgeBalance;
+				}
+			} else if ( alias != 0 ) {
+				// Eliminate outer edges of the map from here & down
+				*convexPtr++ = alias;
+			}
+		}
+#if defined ( DEBUG )
+		else if ( lineChecked [alias] > 0 ) {
+			count [0] = count [1] = count [2] = 0;
+			ComputeStaticVariables ( testSeg );
+			int side = WhichSide ( testSeg );
+			if (( fabs ( DX ) < EPSILON ) && ( fabs ( DY ) < EPSILON )) continue;
+			for ( int j = 0; j < noSegs; j++ ) {
+				switch ( WhichSide ( &segs [j] )) {
+					case SIDE_LEFT :
+						if ( side == SIDE_RIGHT ) {
+							WARNING ( "lineDef " << segs [j].Data.lineDef << " should not to the left of lineDef " << testSeg->Data.lineDef );
+						}
+						break;
+					case SIDE_SPLIT :
+						WARNING ( "lineDef " << segs [j].Data.lineDef << " should not be split by lineDef " << testSeg->Data.lineDef );
+						break;
+					case SIDE_RIGHT :
+						if ( side == SIDE_LEFT ) {
+							WARNING ( "lineDef " << segs [j].Data.lineDef << " should not to the right of lineDef " << testSeg->Data.lineDef );
+						}
+						break;
+					default :
+						break;
+				}
+			}
+		}
+#endif
+
+next:
+		testSeg++;
+	}
+
+	// return pSeg;
+	return NULL;
+}
+
+
+
+
+
 
 
 

@@ -1006,8 +1006,6 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 	int rows = 0;
 
-	// sMapExtraData *extraData = new sMapExtraData;
-
 	startX = 4;
 
 	if ( config.BlockMap.Rebuild || config.Nodes.Rebuild || config.Reject.Rebuild ) {

@@ -433,14 +433,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 	char zokoutput[256];
 
 	// Stuff that works for all blockmaps, no matter what offset.
-	//sBlockMapExtraData *extraData = new (sBlockMapExtraData);
-	
 	sMapExtraData *extraData = level->extraData;
-
-	// populate it with data
-	// BlockMapExtraData(level, extraData, options);
-
-	// one location to set all the DoomBSP-compability options
 
 	bool eight;
 
