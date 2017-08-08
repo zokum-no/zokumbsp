@@ -222,20 +222,23 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 			case 1048: // remote scrolling wall, use two last digits of a number
 				if (lineDef [i].tag > 0) {
 					// we find the closest wall, use start-vertex
-					float distance = -1.0; // sentinel value
+					float distance = -1.0; // impossible value
 					int nearest = -1;
 
 					for ( int j = 0; j < level->LineDefCount(); j++ ) {
-						if (lineDef [j].tag == lineDef [i].tag) {
+						if ((lineDef [j].tag == lineDef [i].tag) && (i != j)) {
 							// Distance between start of one linedef to start of another
 							float distanceNew = DistanceTwoPoints(
 								vertex [ lineDef[i].start].x,
 								vertex [ lineDef[i].start].y,
 								vertex [ lineDef[j].start].x,
 								vertex [ lineDef[j].start].y);
+	
+							// printf("\nDistance %f, %d\n", distanceNew, j);
 
 							if ((distance < 0.0) || (distanceNew < distance)) {
 								nearest = j;
+								distance = distanceNew;
 							}
 						}
 					}
@@ -244,6 +247,8 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 						LineDefSpecialSpeedUpScroller (level, nearest, lineDef [i].tag % 100);
 						lineDef = level->GetLineDefs();
 						lineDef [i].type = 48;
+						lineDef [i].sideDef[RIGHT_SIDEDEF] = lineDef [nearest].sideDef[RIGHT_SIDEDEF];
+						// printf("\nfound %d\n", nearest);
 					}
 				}
 				break;
