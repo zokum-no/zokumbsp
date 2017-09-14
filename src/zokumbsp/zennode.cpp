@@ -142,7 +142,7 @@ static long Y3 = getenv ( "ZEN_Y3" ) ? atol ( getenv ( "ZEN_Y3" )) : 1;
 static long Y4 = getenv ( "ZEN_Y4" ) ? atol ( getenv ( "ZEN_Y4" )) : 0;
 
 static SEG *(*PartitionFunction) ( SEG *, int );
-
+
 //----------------------------------------------------------------------------
 //  Create a list of SEGs from the *important* sidedefs.  A sidedef is
 //    considered important if:
@@ -161,8 +161,12 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
     const wSideDef *sideDef = level->GetSideDefs ();
 
     for ( int i = 0; i < level->LineDefCount (); i++ ) {
-        if ( lineDef [i].sideDef [0] != NO_SIDEDEF ) maxSegs++;
-        if ( lineDef [i].sideDef [1] != NO_SIDEDEF ) maxSegs++;
+        if ( lineDef [i].sideDef [0] != NO_SIDEDEF ) {
+		maxSegs++;
+	}
+        if ( lineDef [i].sideDef [1] != NO_SIDEDEF ) {
+		maxSegs++;
+	}
     }
     tempSeg  = new SEG [ maxSegs ];
     maxSegs  = ( int ) ( maxSegs * FACTOR_SEGS );
@@ -175,14 +179,15 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
 	if (level->extraData->lineDefsRendered[i] == false) {
 		continue;
 	}
-	
 
         wVertex *vertS = &newVertices [ lineDef->start ];
         wVertex *vertE = &newVertices [ lineDef->end ];
         long dx = vertE->x - vertS->x;
         long dy = vertE->y - vertS->y;
 
-        if (( dx == 0 ) && ( dy == 0 )) continue;
+        if (( dx == 0 ) && ( dy == 0 )) {
+		continue;
+	}
 
 	/*
 	if (lineDef->tag == 998) {
@@ -194,7 +199,10 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
         int lSide = lineDef->sideDef [1];
 
 	if (level->extraData->lineDefsFrontsideOnly[i] == true) {
-	        lSide = NO_SIDEDEF;
+		if (lineDef [i].sideDef [1] != NO_SIDEDEF ) {
+			lSide = NO_SIDEDEF;
+			maxSegs--;
+		}
 	}
 
         const wSideDef *sideRight = ( rSide == NO_SIDEDEF ) ? ( const wSideDef * ) NULL : &sideDef [ rSide ];
@@ -202,28 +210,32 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
 
         // Ignore line if both sides point to the same sector & neither side has any visible texture
         if ( options->reduceLineDefs && sideRight && sideLeft && ( sideRight->sector == sideLeft->sector )) {
-            if ( * ( UINT16 * ) sideLeft->text3 == ( UINT16 ) EMPTY_TEXTURE ) {
-                sideLeft = ( const wSideDef * ) NULL;
-            }
-            if ( * ( UINT16 * ) sideRight->text3 == ( UINT16 ) EMPTY_TEXTURE ) {
-                sideRight = ( const wSideDef * ) NULL;
-            }
-            if ( ! sideLeft && ! sideRight ) continue;
-        }
+		if ( * ( UINT16 * ) sideLeft->text3 == ( UINT16 ) EMPTY_TEXTURE ) {
+			sideLeft = ( const wSideDef * ) NULL;
+		}
+		if ( * ( UINT16 * ) sideRight->text3 == ( UINT16 ) EMPTY_TEXTURE ) {
+			sideRight = ( const wSideDef * ) NULL;
+		}
+		if ( ! sideLeft && ! sideRight ) {
+			continue;
+		}
+	}
 
-        if ( options->ignoreLineDef && options->ignoreLineDef [i] ) continue;
+	if ( options->ignoreLineDef && options->ignoreLineDef [i] ) {
+		continue;
+	}
 
 	BAM angle;
 	/*
 	 * These 4 new linedef types allow for arbitrary rotation of the ways walls are rendered compared to
-         * the base linedef. Check docs for more info.
-	*/
+	 * the base linedef. Check docs for more info.
+	 */
 
 	if (lineDef->type == 1081) { // linedef special to force angle to degrees
 		// angle = ((BAM)lineDef->tag * BAM360) / (BAM)360;
 		angle = (BAM) ((lineDef->tag * BAM360) / 360);
 	} else if (lineDef->type == 1083) { // linedef special to force angle to BAM
-			angle = (BAM)lineDef->tag;
+		angle = (BAM)lineDef->tag;
 	} else {
 		angle = (dy == 0) ? (BAM)((dx < 0) ? BAM180 : 0) :
 			(dx == 0) ? (BAM)((dy < 0) ? BAM270 : BAM90) :
@@ -243,17 +255,17 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options )
 			// printf("\n");
 		}
 	}
-/*
-	BAM angle = ( dy == 0 ) ? ( BAM ) (( dx < 0 ) ? BAM180 : 0 ) :
-		( dx == 0 ) ? ( BAM ) (( dy < 0 ) ? BAM270 : BAM90 ) :
-		( BAM ) ( atan2 (( float ) dy, ( float ) dx ) * BAM180 / M_PI + 0.5 * sgn ( dy ));
-*/
+	/*
+	   BAM angle = ( dy == 0 ) ? ( BAM ) (( dx < 0 ) ? BAM180 : 0 ) :
+	   ( dx == 0 ) ? ( BAM ) (( dy < 0 ) ? BAM270 : BAM90 ) :
+	   ( BAM ) ( atan2 (( float ) dy, ( float ) dx ) * BAM180 / M_PI + 0.5 * sgn ( dy ));
+	   */
 	bool split = options->dontSplit ? options->dontSplit [i] : false;
 
 	// we do all the other jazz, except adding the actual segs :)
 	if (level->extraData->lineDefsRendered[i] == false) {
 
-	        continue;
+		continue;
 	}
 
 	if ( sideRight ) {
@@ -310,11 +322,11 @@ static void ComputeStaticVariables ( SEG *pSeg )
 	if ( pSeg->final == false ) {
 
 		/* if (pSeg->Data.lineDef = 0xFFFF) {
-			currentAlias = 0;
-			currentSide = NULL;
-		} else { */
-			currentAlias   = lineDefAlias [ pSeg->Data.lineDef ];
-			currentSide    = sideInfo ? sideInfo [ currentAlias ] : NULL;	
+		   currentAlias = 0;
+		   currentSide = NULL;
+		   } else { */
+		currentAlias   = lineDefAlias [ pSeg->Data.lineDef ];
+		currentSide    = sideInfo ? sideInfo [ currentAlias ] : NULL;	
 		// }
 
 		wVertex *vertS = &newVertices [ pSeg->AliasFlip ? pSeg->Data.end : pSeg->Data.start ];
@@ -992,61 +1004,61 @@ static void SortSegs ( SEG *pSeg, SEG *seg, int noSegs, int *noLeft, int *noRigh
 }
 
 /*
-static bool ChoosePartitionVertexPair ( SEG *seg, int noSegs, int *noLeft, int *noRight )
-{
-	FUNCTION_ENTRY ( NULL, "ChoosePartition", true );
+   static bool ChoosePartitionVertexPair ( SEG *seg, int noSegs, int *noLeft, int *noRight )
+   {
+   FUNCTION_ENTRY ( NULL, "ChoosePartition", true );
 
-	bool check = true;
+   bool check = true;
 
 retry:
 
-	if ( seg->final == false ) {
-		memcpy ( lineChecked, lineUsed, sizeof ( char ) * noAliases );
-	} else {
-		memset ( lineChecked, 0, sizeof ( char ) * noAliases );
-	}
+if ( seg->final == false ) {
+memcpy ( lineChecked, lineUsed, sizeof ( char ) * noAliases );
+} else {
+memset ( lineChecked, 0, sizeof ( char ) * noAliases );
+}
 
-	// Find the best SEG to be used as a partition
-	//  This is no necessarily a seg, we just use the data type due to it having room for vertices
-	SEG *pSeg = PartitionFunction ( seg, noSegs );
+// Find the best SEG to be used as a partition
+//  This is no necessarily a seg, we just use the data type due to it having room for vertices
+SEG *pSeg = PartitionFunction ( seg, noSegs );
 
-	// Resort the SEGS (right followed by left) and do the splits as necessary
-	SortSegs ( pSeg, seg, noSegs, noLeft, noRight );
+// Resort the SEGS (right followed by left) and do the splits as necessary
+SortSegs ( pSeg, seg, noSegs, noLeft, noRight );
 
-	// Make sure the set of SEGs is still convex after we convert to integer coordinates
-	if (( pSeg == NULL ) && ( check == true )) {
-		check = false;
-		double error = 0.0;
-		for ( int i = 0; i < noSegs; i++ ) {
+// Make sure the set of SEGs is still convex after we convert to integer coordinates
+if (( pSeg == NULL ) && ( check == true )) {
+check = false;
+double error = 0.0;
+for ( int i = 0; i < noSegs; i++ ) {
 
-			int startX = lrint ( seg [i].start.x );
-			int startY = lrint ( seg [i].start.y );
-			int endX   = lrint ( seg [i].end.x );
-			int endY   = lrint ( seg [i].end.y );
+int startX = lrint ( seg [i].start.x );
+int startY = lrint ( seg [i].start.y );
+int endX   = lrint ( seg [i].end.x );
+int endY   = lrint ( seg [i].end.y );
 
-			error += fabs ( seg [i].start.x - startX );
-			error += fabs ( seg [i].start.y - startY );
-			error += fabs ( seg [i].end.x - endX );
-			error += fabs ( seg [i].end.y - endY );
+error += fabs ( seg [i].start.x - startX );
+error += fabs ( seg [i].start.y - startY );
+error += fabs ( seg [i].end.x - endX );
+error += fabs ( seg [i].end.y - endY );
 
-			seg [i].start.x = startX;
-			seg [i].start.y = startY;
-			seg [i].end.x   = endX;
-			seg [i].end.y   = endY;
-			seg [i].final   = true;
-		}
-		if ( error > EPSILON ) {
-			// Force a check of each line
-			goto retry;
-		}
-	}
+seg [i].start.x = startX;
+seg [i].start.y = startY;
+seg [i].end.x   = endX;
+seg [i].end.y   = endY;
+seg [i].final   = true;
+}
+if ( error > EPSILON ) {
+// Force a check of each line
+goto retry;
+}
+}
 
-	if (pSeg) {
-		delete pSeg;
-		return true;
-	}
-	return false;
-	// return pSeg ? true : false;
+if (pSeg) {
+delete pSeg;
+return true;
+}
+return false;
+// return pSeg ? true : false;
 }
 */
 
@@ -1059,7 +1071,7 @@ retry:
 //    be split, followed by those that are to the left.
 //----------------------------------------------------------------------------
 
-static bool ChoosePartition ( SEG *seg, int noSegs, int *noLeft, int *noRight )
+static bool ChoosePartition ( SEG *seg, int noSegs, int *noLeft, int *noRight, sBSPOptions *options )
 {
 	FUNCTION_ENTRY ( NULL, "ChoosePartition", true );
 
@@ -1101,7 +1113,8 @@ retry:
 			seg [i].end.y   = endY;
 			seg [i].final   = true;
 		}
-		if ( error > EPSILON ) {
+		if ( (error > EPSILON) && (options->SplitHandling != 0)) {
+			// printf("error!\n");
 			// Force a check of each line
 			goto retry;
 		}
@@ -1157,7 +1170,7 @@ static SEG *AlgorithmFewerSplits ( SEG *segs, int noSegs )
 					if ( X2 < temp ) metric = X2 * metric / temp;
 					metric -= ( X3 * sCount + X4 ) * sCount;
 				}
-				
+
 				if ( (ANGLE & 0x0000) || ( ANGLE & 0x3FFF) || ( ANGLE & 0x7FFF) || ( ANGLE & 0xAFFF)) {
 					// metric--;
 					diagonal = false;
@@ -1168,7 +1181,7 @@ static SEG *AlgorithmFewerSplits ( SEG *segs, int noSegs )
 				if ( metric == maxMetric ) {
 					return testSeg;
 				}
-				
+
 				bool betterBalance;
 				bool decentBalance;
 
@@ -1185,9 +1198,9 @@ static SEG *AlgorithmFewerSplits ( SEG *segs, int noSegs )
 				}
 
 				if ( (metric > bestMetric) 
-					 || ((metric == bestMetric) && betterBalance)
-					 || ((metric == bestMetric) && !diagonal && decentBalance)
-				) {
+						|| ((metric == bestMetric) && betterBalance)
+						|| ((metric == bestMetric) && !diagonal && decentBalance)
+				   ) {
 					pSeg       = testSeg;
 					bestSplits = sCount + 2;
 					bestMetric = metric;
@@ -1444,7 +1457,7 @@ retry:
 					// printf("red\n");
 				}
 				/*if ( ANGLE & 0x7FFF ) metric--;
-				if ( ANGLE & 0xAFFF ) metric--;*/
+				  if ( ANGLE & 0xAFFF ) metric--;*/
 
 				if ( metric == maxMetric ) return testSeg;
 				if ( metric > bestMetric ) {
@@ -1524,13 +1537,13 @@ vertexPair * AlgorithmVertexPair2  (SEG *segs, int noSegs) {
 			// count [0] = count [1] = count [2] = 0;
 			// ComputeStaticVariables ( testSeg );
 			/*
-			if ( bestMetric < 0 ) for ( int j = 0; j < noSegs; j++ ) {
-				count [ WhichSide ( &segs [j] ) + 1 ]++;
-			} else for ( int j = 0; j < noSegs; j++ ) {
-				count [ WhichSide ( &segs [j] ) + 1 ]++;
-				if ( sCount >= bestSplits ) goto next; // Added =
-			}
-			*/
+			   if ( bestMetric < 0 ) for ( int j = 0; j < noSegs; j++ ) {
+			   count [ WhichSide ( &segs [j] ) + 1 ]++;
+			   } else for ( int j = 0; j < noSegs; j++ ) {
+			   count [ WhichSide ( &segs [j] ) + 1 ]++;
+			   if ( sCount >= bestSplits ) goto next; // Added =
+			   }
+			   */
 			// Only consider SEG if it is not a boundary line
 			if ( lCount * rCount + sCount != 0 ) {
 				long metric = ( long ) lCount * ( long ) rCount;
@@ -1539,7 +1552,7 @@ vertexPair * AlgorithmVertexPair2  (SEG *segs, int noSegs) {
 					if ( X2 < temp ) metric = X2 * metric / temp;
 					metric -= ( X3 * sCount + X4 ) * sCount;
 				}
-				
+
 				if ( (ANGLE & 0x0000) || ( ANGLE & 0x3FFF) || ( ANGLE & 0x7FFF) || ( ANGLE & 0xAFFF)) {
 					// metric--;
 					diagonal = false;
@@ -1551,7 +1564,7 @@ vertexPair * AlgorithmVertexPair2  (SEG *segs, int noSegs) {
 					// return testSeg;
 					return NULL;
 				}
-				
+
 				bool betterBalance;
 				bool decentBalance;
 
@@ -1568,9 +1581,9 @@ vertexPair * AlgorithmVertexPair2  (SEG *segs, int noSegs) {
 				}
 
 				if ( (metric > bestMetric) 
-					 || ((metric == bestMetric) && betterBalance)
-					 || ((metric == bestMetric) && !diagonal && decentBalance)
-				) {
+						|| ((metric == bestMetric) && betterBalance)
+						|| ((metric == bestMetric) && !diagonal && decentBalance)
+				   ) {
 					pSeg       = testSeg;
 					bestSplits = sCount + 2;
 					bestMetric = metric;
@@ -1659,9 +1672,9 @@ static SEG *AlgorithmVertexPair ( SEG *segs, int noSegs )
 	SEG *vSeg = new SEG;
 	wLineDefInternal vLineDef; //  = new wLineDefInternal;
 	//
-	
+
 	// level->AddLineDef();
-	
+
 	// const wLineDefInternal *vLineDef = level->GetLineDefs ();
 	// int cnt = level->LineDefCount();
 
@@ -1687,26 +1700,26 @@ static SEG *AlgorithmVertexPair ( SEG *segs, int noSegs )
 			vSeg->Split = false;
 			vSeg->final = false;
 			vSeg->AliasFlip = false;
-			
+
 			// vLineDef[cnt]->
 
 			// vSeg->CurrentSide = NULL;
-			
-/*
-			UINT16      start;   
-			UINT16      end;     
-			UINT16      angle;   
-			UINT16      lineDef; 
-			UINT16      flip;    
-			UINT16      offset;
-			*/
+
+			/*
+			   UINT16      start;   
+			   UINT16      end;     
+			   UINT16      angle;   
+			   UINT16      lineDef; 
+			   UINT16      flip;    
+			   UINT16      offset;
+			   */
 
 			vLevelSeg->start = outerSeg->Data.start;
 			vLevelSeg->end = innerSeg->Data.end;
 			vLevelSeg->angle = (dy == 0) ? (BAM)((dx < 0) ? BAM180 : 0) :
 				(dx == 0) ? (BAM)((dy < 0) ? BAM270 : BAM90) :
 				(BAM)(atan2((float)dy, (float)dx) * BAM180 / M_PI + 0.5 * sgn(dy));
-			
+
 			// vLevelSeg->lineDef = vLineDef; // dummy!
 			vLevelSeg->lineDef = 0xFFFF; // sentinel value...
 			vLevelSeg->flip = false;
@@ -2174,14 +2187,14 @@ static UINT16 GenerateUniqueSectors ( SEG *segs, int noSegs )
 //    - Similarly, the alias chosen as the partition is marked as convex
 //      since it will be convex for all children.
 //----------------------------------------------------------------------------
-static UINT16 CreateNode ( SEG *segs, int *noSegs )
+static UINT16 CreateNode ( SEG *segs, int *noSegs, sBSPOptions *options)
 {
 	FUNCTION_ENTRY ( NULL, "CreateNode", true );
 
 	int noLeft, noRight;
 	int *cptr = convexPtr;
 
-	if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight ) == false )) {
+	if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight, options ) == false )) {
 		convexPtr = cptr;
 		if ( KeepUniqueSubsectors ( segs, *noSegs ) == true ) {
 			ArrangeSegs ( segs, *noSegs );
@@ -2218,11 +2231,11 @@ static UINT16 CreateNode ( SEG *segs, int *noSegs )
 
 	if ( showProgress ) GoRight ();
 
-	UINT16 rNode = CreateNode ( segs, &noRight );
+	UINT16 rNode = CreateNode ( segs, &noRight, options );
 
 	if ( showProgress ) GoLeft ();
 
-	UINT16 lNode = CreateNode ( segs + noRight, &noLeft );
+	UINT16 lNode = CreateNode ( segs + noRight, &noLeft, options );
 
 	if ( showProgress ) Backup ();
 
@@ -2407,9 +2420,9 @@ restart:
 	if ( options->algorithm == 5 ) {
 		// Our fake reusable linedef :)
 		// level->AddLineDef();
-		
+
 		// fakeLineDef = level->LineDefCount() -1 ;
-		
+
 		// wLineDefInternal *lineDef = level->GetLineDefs ();
 
 		// level->extraData->lineDefsRendered[fakeLineDef] = false;
@@ -2488,8 +2501,8 @@ restart:
 	ssectorPool  = ( wSSector * ) malloc ( sizeof ( wSSector ) * ssectorsLeft );
 
 	int noSegs = segCount;
-	
-	CreateNode ( segStart, &noSegs );
+
+	CreateNode ( segStart, &noSegs, options );
 
 	delete [] convexList;
 	if ( score ) delete [] score;

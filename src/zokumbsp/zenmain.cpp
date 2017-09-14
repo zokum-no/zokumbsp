@@ -76,7 +76,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10-beta2"
+#define ZOKVERSION		"1.0.10-beta3"
 #define ZOKVERSIONSHORT		"1.0.10"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2017 Kim Roar Foldøy Hauge";
@@ -355,6 +355,26 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 					   return true;
 				   }
 				   break;
+			case 'S' :
+				if (ptr[0] && ptr[1]) {
+					if (ptr[1] == 'Z') {	// do not care if it causes slime trilas
+						config.Nodes.SplitHandling = 0;
+					} else if (ptr[1] == 'A') { // Avoid slime trails based on epsilon value
+						config.Nodes.SplitHandling = 1;
+					} else if (ptr[1] == 'R') { // rotate segs to try to fudge!
+						config.Nodes.SplitHandling = 2;
+					} else {
+						printf("Bad node seg split algorithm\n");
+						return true;
+					}
+					ptr += 2;
+
+				} else {
+					printf("Bad node seg split algorithm\n");
+					return true;
+				}
+				break;
+
 			case 'T' : 
 				   if (ptr[0] && ptr[1]) {
 					   if (ptr[1] == '0') {
@@ -1111,6 +1131,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		options.ignoreLineDef  = NULL;
 		options.dontSplit      = NULL;
 		options.keepUnique     = keep;
+		options.SplitHandling = config.Nodes.SplitHandling;
 
 		ReadCustomFile ( curLevel, myList, &options );
 
@@ -1402,6 +1423,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Nodes.Quiet          = isatty ( fileno ( stdout )) ? false : true;
 	config.Nodes.Unique         = false;
 	config.Nodes.ReduceLineDefs = false;
+	config.Nodes.SplitHandling = 1;
 
 	config.Reject.Rebuild       = true;
 	config.Reject.Empty         = false;

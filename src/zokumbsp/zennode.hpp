@@ -69,8 +69,8 @@ struct sNodeOptions {
 	bool  Quiet;
 	bool  Unique;
 	bool  ReduceLineDefs;
+	int   SplitHandling;
 };
-
 
 struct sBlockList {
 	int     firstIndex;			// Index of 1st blockList element matching this one
@@ -131,6 +131,7 @@ struct sBSPOptions {
 	bool     *ignoreLineDef;		// linedefs that can be left out
 	bool     *dontSplit;		// linedefs that can't be split
 	bool     *keepUnique;		// unique sector requirements
+	int	SplitHandling;
 };
 
 struct sScoreInfo {
@@ -237,6 +238,19 @@ struct sStatisticsOptions {
 	bool			ShowTotals;
 };
 
+struct sSegPcikTree;
+
+// Node build specific decision tree
+struct sSegPickTree {
+	SEG		*segs; 		// Pointer to n amount of segs, NULL-terminated
+	sSegPickTree 	*picks;		// pointer to the result of the various picks
+	double		*score;		// the 'score' of the various picks
+	int 		*splits;	// how many segs does this solution split
+	int 		algorithm; 	// Which algorithm did we use to pick these segs
+	int 		bestSeg;   	// Which element is the currently best one, this may not be the first one!
+	int		subSplits;	
+	sSegPickTree	*parent; 	
+};
 
 bool ParseOptionRMB ( int, const char *, sRejectOptionRMB * );
 

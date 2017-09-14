@@ -1,10 +1,18 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.10-beta3
+- Fixed a problem with non-twosided walls with 2s flag on.
+- Built win32 version as static, forgot that last time.
+- New node build paramter s=[z,a] to toggle seg split roundoff error handling.
+  s=z turns off checks, allows for faster node builds and possibly fewer segs.
+  s=a avoid seg splits that lead to 'slime trails'.
+
 ZokumBSP 1.0.10-beta2
 - Improved split reduction to favor balanced trees over unbalanced.
 - Added geometry options as a separate sub type, use -g.
 - Added statistics options for more output and totals, use -s.
 - Various minor display fixes for the adaptive algorithm.
+- Minor tweaks of the split algorithm.
 
 ZokumBSP 1.0.10-beta1
 - Renamed structs and methods in doom/level.* and wad.*
