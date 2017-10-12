@@ -70,6 +70,10 @@ struct sNodeOptions {
 	bool  Unique;
 	bool  ReduceLineDefs;
 	int   SplitHandling;
+	int   SplitReduction;
+	int   MultipleSplitMethods;
+	int   Cache;
+	int   Metric;
 };
 
 struct sBlockList {
@@ -132,6 +136,10 @@ struct sBSPOptions {
 	bool     *dontSplit;		// linedefs that can't be split
 	bool     *keepUnique;		// unique sector requirements
 	int	SplitHandling;
+	int	SplitReduction;
+	int     MultipleSplitMethods;
+	int     Cache;
+	int	Metric;
 };
 
 struct sScoreInfo {
@@ -141,6 +149,12 @@ struct sScoreInfo {
 	int       invalid;
 	int       total;
 };
+
+#define TREE_METRIC_SUBSECTORS 0
+#define TREE_METRIC_SEGS 1
+#define TREE_METRIC_DEPTH 2 // not added yet
+
+#define TREE_METRIC_NODES 99 // useless, same as subsector in practice
 
 #define sgn(a)		((0<(a))-((a)<0))
 
@@ -236,6 +250,9 @@ struct sStatisticsOptions {
 	bool			ShowSectors;
 	bool			ShowThings;
 	bool			ShowTotals;
+	bool			ShowTopSummary;
+	bool			ShowSubSectors;
+	bool			ShowNodes;
 };
 
 struct sSegPcikTree;
