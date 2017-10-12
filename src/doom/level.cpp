@@ -300,7 +300,7 @@ void DoomLevel::CleanUp ()
 
 	delete [] this->extraData->lineDefsCollidable;
 	delete [] this->extraData->lineDefsRendered;
-	delete [] this->extraData->lineDefsFrontsideOnly;
+	delete [] this->extraData->lineDefsSegProperties;
 	delete this->extraData;
 
     m_ThingData   = NULL;
@@ -823,7 +823,7 @@ void DoomLevel::AddLineDef(void) {
 	// add a new entry to the extraData structures
 
 	bool *lineDefsRenderedNew = new bool [m_LineDef.elementCount];
-	bool *lineDefsFrontsideOnlyNew = new bool [m_LineDef.elementCount];
+	int *lineDefsSegPropertiesNew = new int [m_LineDef.elementCount];
 	bool *lineDefsCollidableNew = new bool [m_LineDef.elementCount];
 	bool *lineDefsSpecialEffectNew = new bool [m_LineDef.elementCount];
 /*
@@ -832,7 +832,7 @@ void DoomLevel::AddLineDef(void) {
 */
 	for (int i = 0; i != m_LineDef.elementCount - 1 ; i++) {
 		lineDefsRenderedNew[i] = this->extraData->lineDefsRendered[i];
-		lineDefsFrontsideOnlyNew[i] = this->extraData->lineDefsFrontsideOnly[i];
+		lineDefsSegPropertiesNew[i] = this->extraData->lineDefsSegProperties[i];
 		lineDefsCollidableNew[i] = this->extraData->lineDefsCollidable[i];
 		lineDefsSpecialEffectNew[i] = this->extraData->lineDefsSpecialEffect[i];
 	}
@@ -842,7 +842,7 @@ void DoomLevel::AddLineDef(void) {
 	delete [] this->extraData->lineDefsSpecialEffect;
 
 	this->extraData->lineDefsRendered = lineDefsRenderedNew;
-	this->extraData->lineDefsFrontsideOnly = lineDefsFrontsideOnlyNew;
+	this->extraData->lineDefsSegProperties = lineDefsSegPropertiesNew;
 	this->extraData->lineDefsCollidable = lineDefsCollidableNew;
 	this->extraData->lineDefsSpecialEffect = lineDefsSpecialEffectNew;
 
@@ -882,7 +882,7 @@ void DoomLevel::TrimLineDefs(void) {
 
 			this->extraData->lineDefsCollidable[i - adjust] = this->extraData->lineDefsCollidable[i];
 			this->extraData->lineDefsRendered[i - adjust] = this->extraData->lineDefsRendered[i];
-			this->extraData->lineDefsFrontsideOnly[i - adjust] = this->extraData->lineDefsFrontsideOnly[i];
+			this->extraData->lineDefsSegProperties[i - adjust] = this->extraData->lineDefsSegProperties[i];
 			this->extraData->lineDefsSpecialEffect[i - adjust] = this->extraData->lineDefsSpecialEffect[i];
 		}
 		if ((this->extraData->lineDefsRendered[i] == false) && (this->extraData->lineDefsCollidable[i] == false) ) {
