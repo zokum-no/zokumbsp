@@ -98,7 +98,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 	// For simplicity we set them all to true, then to false if needed :)
 	extraData->lineDefsCollidable = new bool [numberOfLineDefs];
 	extraData->lineDefsRendered = new bool [numberOfLineDefs];
-	extraData->lineDefsFrontsideOnly = new bool [numberOfLineDefs];
+	extraData->lineDefsSegProperties = new int [numberOfLineDefs];
 	extraData->lineDefsSpecialEffect = new bool [numberOfLineDefs];
 	extraData->sectorsActive = new bool [numberOfSectors];
 
@@ -122,10 +122,13 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 		}
 
 		if (lineDef [i].type == 1084) {
-			extraData->lineDefsFrontsideOnly[i] = true;
+			extraData->lineDefsSegProperties[i] = 0x1;
+		} else if (lineDef [i].type == 1086) {
+			extraData->lineDefsSegProperties[i] = 0x2;
 		} else {
-			extraData->lineDefsFrontsideOnly[i] = false;
+			extraData->lineDefsSegProperties[i] = 0x0;
 		}
+
 	}
 
 	for (int i = 0; i < level->SectorCount(); i++) {
@@ -499,7 +502,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 
 				if (sectors[backSector].floorh == sectors[backSector].ceilh) {
 					// printf("found one: %d\n", i);
-					extraData->lineDefsFrontsideOnly[i] = true;	
+					extraData->lineDefsSegProperties[i] = 0x01;	
 				}
 
 
@@ -526,7 +529,12 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 					&& !(lineDef [i].flags & LDF_IMPASSABLE)  
 					&& !(lineDef [i].flags & LDF_BLOCK_MONSTERS)
 					&& (lineDef [i].type == 0)
+					&& (lineDef [i].sideDef[LEFT_SIDEDEF] != 0xffff)
+					&& (lineDef [i].sideDef[RIGHT_SIDEDEF] != 0xffff )
+
 				  ) {
+
+				
 
 				int sectorL = sideDef [lineDef [i].sideDef[LEFT_SIDEDEF]].sector;
 				int sectorR = sideDef [lineDef [i].sideDef[RIGHT_SIDEDEF]].sector;
