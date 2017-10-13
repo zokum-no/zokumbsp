@@ -76,7 +76,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10-beta4"
+#define ZOKVERSION		"1.0.10-beta6"
 #define ZOKVERSIONSHORT		"1.0.10"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2017 Kim Roar Foldøy Hauge";
@@ -178,11 +178,11 @@ void printHelp () {
 	fprintf ( stdout, "%c     s   Minimize splits.\n", ( config.Nodes.Method == 1 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     d   Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     f   Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
-	fprintf ( stdout, "%c     a   Adaptive, depth then splits.\n\n", ( config.Nodes.Method == 4 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "%c     m   Build mixed split/depth tree. Width support.\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
 
 	fprintf ( stdout, "    m=    Metric, what kind of node tree do you favor.\n" );
-	fprintf ( stdout, "%c     l   Favor low amount of SEGs.\n", ( config.Nodes.Metric == 1 ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     s   Favor low amount of subsectors.\n\n", ( config.Nodes.Metric == 0 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     s   Favor fewer SEG splits.\n", ( config.Nodes.Metric == 1 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     u   Favor fewer subsectors.\n\n", ( config.Nodes.Metric == 0 ) ? DEFAULT_CHAR : ' ' );
 
 	fprintf ( stdout, "    p=    Favor certain node selection picks for depth algorithm.\n");
 	fprintf ( stdout, "%c     z   No favoring, use old algorithm.\n", ( config.Nodes.SplitReduction == 0 ) ? DEFAULT_CHAR : ' ' );
@@ -195,12 +195,9 @@ void printHelp () {
 	fprintf ( stdout, "%c     z   Ignore rounding problems.\n", ( config.Nodes.SplitHandling == 0 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     a   Avoid slime trail rounding problems.\n", ( config.Nodes.SplitHandling == 1 ) ? DEFAULT_CHAR : ' ' );
 
-	fprintf ( stdout, "    t=    Thoroughness, tweak how many variations to test.\n" );
-	fprintf ( stdout, "%c     0   Try 1 variation.\n", ( config.Nodes.Thoroughness == 0 ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     1   Try some variations.\n", ( config.Nodes.Thoroughness == 1 ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     2-7 Try more variations.\n", ( config.Nodes.Thoroughness == 2 ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     x   Try all variations.\n\n", ( config.Nodes.Thoroughness == 999 ) ? DEFAULT_CHAR : ' ' );
-
+	fprintf ( stdout, "    w=    How many sub trees to try wide-algorithms.\n" );
+	fprintf ( stdout, "%c     2   Default width and also minimum.\n", ( config.Nodes.Width == 2 ) ? DEFAULT_CHAR : ' ');
+	
 	// Reject
 	fprintf ( stdout, "\nSwitches to control REJECT resouce in a map.\n\n");
 
@@ -220,8 +217,8 @@ void printHelp () {
 
 	// Misc
 	fprintf ( stdout, " level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN.\n\n" );
-	fprintf ( stdout, "Example: zokumbsp -b- -r- -sm -na=at=2qi file.wad map01+map03\n");
-	fprintf ( stdout, "This rebuild nodes only, adaptive, quiet, ignore non-visible lindefs.\n");
+	fprintf ( stdout, "Example: zokumbsp -b- -r- -sm -na=mqi file.wad map01+map03\n");
+	fprintf ( stdout, "This rebuild nodes only, mixed tree, quiet, ignore non-visible lindefs.\n");
 	fprintf ( stdout, "It reads from file.wad, but only builds map01 and map03.\n");
 }
 
@@ -389,9 +386,7 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 						   }
 					   } else if (ptr[1] == 'F') {
 						   config.Nodes.Method = 3;
-					   } else if (ptr[1] == 'A') {
-						   config.Nodes.Method = 4;
-					   } else if (ptr[1] == 'P') {
+					   } else if (ptr[1] == 'M') {
 						   config.Nodes.Method = 5;
 					   } else {
 						   printf("error");
@@ -403,6 +398,19 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 					   return true;
 				   }
 				   break;
+			case 'M' :
+				if (ptr[0] && ptr[1]) {
+					if (ptr[1] == 'S') {
+						config.Nodes.Metric = TREE_METRIC_SEGS;
+					} else if (ptr[1] == 'U') {
+						config.Nodes.Metric = TREE_METRIC_SUBSECTORS;
+					} else {
+						printf("Unsupported metric\n");
+					}
+					ptr += 2;
+				}
+				break;
+
 			case 'S' :
 				   if (ptr[0] && ptr[1]) {
 					   if (ptr[1] == 'Z') {	// do not care if it causes slime trilas
@@ -422,31 +430,13 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 					   return true;
 				   }
 				   break;
-
-			case 'T' : 
-				   if (ptr[0] && ptr[1]) {
-					   if (ptr[1] == '0') {
-						   config.Nodes.Thoroughness = 0;
-					   } else if (ptr[1] == '1') {
-						   config.Nodes.Thoroughness = 1;
-					   } else if (ptr[1] == '2') {
-						   config.Nodes.Thoroughness = 2;
-					   } else if (ptr[1] == '3') {
-						   config.Nodes.Thoroughness = 3;
-					   } else if (ptr[1] == '4') {
-						   config.Nodes.Thoroughness = 4;
-					   } else if (ptr[1] == '5') {
-						   config.Nodes.Thoroughness = 5;
-					   } else if (ptr[1] == '6') {
-						   config.Nodes.Thoroughness = 6;
-					   } else if (ptr[1] == '7') {
-						   config.Nodes.Thoroughness = 7;
-					   } else if (ptr[1] == 'X') {
-						   config.Nodes.Thoroughness = 999;
-					   }
-					   ptr += 2;
-				   }
-				   break;
+			case 'W' :
+				if (ptr[0] && ptr[1]) {
+					config.Nodes.Width = atoi(ptr+1);
+					ptr +=2;
+				}
+				break;
+				
 			default  : return true;
 		}
 
@@ -1188,7 +1178,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		options.SplitReduction = config.Nodes.SplitReduction;
 		options.MultipleSplitMethods = config.Nodes.MultipleSplitMethods;
 		options.Cache =		config.Nodes.Cache;
-		options.Metric 		= config.Nodes.Metric;
+		options.Metric = 	config.Nodes.Metric;
+		options.Width =		config.Nodes.Width;
 
 		ReadCustomFile ( curLevel, myList, &options );
 
@@ -1498,9 +1489,8 @@ int main ( int argc, const char *argv [] ) {
 	config.Nodes.SplitReduction = 3;
 	config.Nodes.MultipleSplitMethods = 0;
 	config.Nodes.Cache 	    = 1;
-	// config.Nodes.Metric         = TREE_METRIC_SUBSECTORS;
-	config.Nodes.Metric	= TREE_METRIC_SEGS;
-	
+	config.Nodes.Metric         = TREE_METRIC_SUBSECTORS;
+	config.Nodes.Width          = 2;
 
 	config.Reject.Rebuild       = true;
 	config.Reject.Empty         = false;

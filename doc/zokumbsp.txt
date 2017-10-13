@@ -302,8 +302,17 @@ reject maps are done. It will find the basic dimensions of the map and will
 also apply some geometry changes used by later steps like the blockmap, nodes
 and reject steps to produce a smaller blockmap and better node tree etc.
 
+06:01 Geometry pass command line options
+----------------------------------------
+
 Currently the only geometry change possible is the collission geometry step,
 which is outlined in the blockmap builder chapter.
+
+06:02 What does the geometry pass do?
+-------------------------------------
+
+Many of the extended linedef specials that affects segs and scrolling walls
+are handled at this step.
 
 Section 07: Blockmap builder
 ============================
