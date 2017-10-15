@@ -2420,17 +2420,21 @@ static UINT16 CreateNode ( SEG *segs, int *noSegs, sBSPOptions *options, DoomLev
 	SEG *segsBackup = segs;
 	SEG *CNbestSegs = NULL;
 
-	SEG *segsStartBackup = new SEG [maxSegs];
-	memcpy ( segsStartBackup, segStart, sizeof ( SEG) * (maxSegs) );
+	//SEG *segsStartBackup = new SEG [maxSegs];
+	//memcpy ( segsStartBackup, segStart, sizeof ( SEG) * (maxSegs) );
+	
+	SEG *segsStartBackup = new SEG [segCount];
+	memcpy ( segsStartBackup, segStart, sizeof ( SEG) * (segCount) );
 
-	wSSector *ssectorPoolBackup = new wSSector [ssectorPoolEntries];
-	memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
+	//wSSector *ssectorPoolBackup = new wSSector [ssectorPoolEntries];
+	//memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
 
-	wNode *nodePoolBackup = new wNode [nodePoolEntries];
-	memcpy (nodePoolBackup, nodePool, sizeof ( wNode) * (nodePoolEntries));
+	// wNode *nodePoolBackup = new wNode [nodePoolEntries];
+	// memcpy (nodePoolBackup, nodePool, sizeof ( wNode) * (nodePoolEntries));
 
-	wVertex *newVerticesBackup = new wVertex[maxVertices];
+	/*wVertex *newVerticesBackup = new wVertex[maxVertices];
 	memcpy (newVerticesBackup, newVertices, sizeof (wVertex) * maxVertices);
+	*/
 
 	nodeDepth++;
 /*
@@ -2490,7 +2494,6 @@ differentpartition:
 		*noSegs = noSegsBackup;
 		ssectorCount = ssectorCountBackup;
 		ssectorsLeft = ssectorsLeftBackup;
-		segCount = segCountBackup;
 		noVertices = noVerticesBackup;
 		// maxVertices = maxVerticesBackup;
 		maxSegs = maxSegsBackup;
@@ -2500,14 +2503,22 @@ differentpartition:
 		ssectorPoolEntries = ssectorPoolEntriesBackup;
 
 		segs = segsBackup;
-
-		memcpy ( segStart, segsStartBackup, sizeof ( SEG) * (maxSegs) );
-		memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
-		memcpy ( nodePool, nodePoolBackup, sizeof ( wNode) * (nodePoolEntriesBackup));
-		if (maxVerticesBackup != maxVertices) {
+		
+		/*
+		if (memcmp(segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup) )) {
+			printf("forskjell\n");
+		}
+		*/
+		segCount = segCountBackup;
+		
+		memcpy ( segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup) );
+		// memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
+		// memcpy ( nodePool, nodePoolBackup, sizeof ( wNode) * (nodePoolEntriesBackup));
+		/*if (maxVerticesBackup != maxVertices) {
 			memcpy ( newVertices, newVerticesBackup, sizeof ( wVertex) * (maxVerticesBackup));
 			//memcpy ( newVertices, newVerticesBackup, sizeof ( wVertex) * (noVerticesBackup));
-		} 
+		}
+		*/
 
 		maxVertices = maxVerticesBackup;
 
@@ -2519,9 +2530,9 @@ differentpartition:
 
 		// cleanup!
 		delete [] segsStartBackup;
-		delete [] ssectorPoolBackup;
-		delete [] nodePoolBackup;
-		delete [] newVerticesBackup;
+		// delete [] ssectorPoolBackup;
+		// delete [] nodePoolBackup;
+		// delete [] newVerticesBackup;
 
 		nodeDepth--;
 
@@ -2637,17 +2648,15 @@ differentpartition:
 			delete [] bestVertices;
 		}
 		
-		//bestSegs = new SEG [maxSegs];
 		bestSegs = new SEG [segCount];
-
-		bestSSectors = new wSSector [ssectorPoolEntries];
+		//bestSSectors = new wSSector [ssectorPoolEntries];
+		bestSSectors = new wSSector [ssectorCount];
 		bestNodes = new wNode [nodePoolEntries];
 		bestVertices = new wVertex[maxVertices];
 
-		//memcpy (bestSegs, segStart, sizeof ( SEG) * (maxSegs) ); // was 32k
 		memcpy (bestSegs, segStart, sizeof ( SEG) * (segCount) );
-
-		memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
+		//memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
+		memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
 		memcpy (bestVertices, newVertices, sizeof (wVertex) * maxVertices);
 		memcpy (bestNodes, nodePool, sizeof ( wNode) * (nodesLeft));
 
@@ -2681,9 +2690,9 @@ differentpartition:
 
 	// Cleanup!
 	delete [] segsStartBackup;
-	delete [] ssectorPoolBackup;
-	delete [] nodePoolBackup;
-	delete [] newVerticesBackup;
+	// delete [] ssectorPoolBackup;
+	// delete [] nodePoolBackup;
+	// delete [] newVerticesBackup;
 
 	// Turns out the last tree we did was not the best one, so we got to restore
 	if (betterTree == false) {
