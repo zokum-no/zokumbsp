@@ -617,7 +617,7 @@ static int AddVertex ( int x, int y )
 	// printf("added\n");
 
 	if ( noVertices == maxVertices ) {
-		maxVertices = ( 110 * maxVertices ) / 100 + 1;
+		maxVertices = ( 102 * maxVertices ) / 100 + 1;
 		// Memory handling error, very unlikely :D
 		// newVertices = ( wVertex * ) realloc ( newVertices, sizeof ( wVertex ) * maxVertices );
 		wVertex  *newVerticesReallocated = ( wVertex * ) realloc ( newVertices, sizeof ( wVertex ) * maxVertices );
@@ -662,7 +662,7 @@ static UINT16 CreateSSector ( SEG *segs, int noSegs )
 	FUNCTION_ENTRY ( NULL, "CreateSSector", true );
 
 	if ( ssectorsLeft-- == 0 ) {
-		int delta     = ( 10 * ssectorCount ) / 100 + 1;
+		int delta     = ( 3 * ssectorCount ) / 100 + 1;
 
 		// mem error fix
 		wSSector *ssectorPoolRealloc = ( wSSector * ) realloc ( ssectorPool, sizeof ( wSSector ) * ( ssectorCount + delta ));
@@ -2321,7 +2321,7 @@ static UINT16 GenerateUniqueSectors ( SEG *segs, int noSegs )
 	if ( showProgress ) Backup ();
 
 	if ( nodesLeft-- == 0 ) {
-		int delta  = ( 10 * nodeCount ) / 100 + 1;
+		int delta  = ( 3 * nodeCount ) / 100 + 1;
 		// nodePool   = ( wNode * ) realloc ( nodePool, sizeof ( wNode ) * ( nodeCount + delta ));
 
 		wNode *nodePoolRealloc = ( wNode * ) realloc ( nodePool, sizeof ( wNode ) * ( nodeCount + delta ));
@@ -2492,7 +2492,7 @@ differentpartition:
 		ssectorsLeft = ssectorsLeftBackup;
 		segCount = segCountBackup;
 		noVertices = noVerticesBackup;
-		maxVertices = maxVerticesBackup;
+		// maxVertices = maxVerticesBackup;
 		maxSegs = maxSegsBackup;
 
 		nodesLeft =  nodesLeftBackup;
@@ -2504,7 +2504,13 @@ differentpartition:
 		memcpy ( segStart, segsStartBackup, sizeof ( SEG) * (maxSegs) );
 		memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
 		memcpy ( nodePool, nodePoolBackup, sizeof ( wNode) * (nodePoolEntriesBackup));
-		memcpy ( newVertices, newVerticesBackup, sizeof ( wVertex) * (maxVerticesBackup));
+		if (maxVerticesBackup != maxVertices) {
+			memcpy ( newVertices, newVerticesBackup, sizeof ( wVertex) * (maxVerticesBackup));
+			//memcpy ( newVertices, newVerticesBackup, sizeof ( wVertex) * (noVerticesBackup));
+		} 
+
+		maxVertices = maxVerticesBackup;
+
 	}
 
 	if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight, options, level, &width, wideSegs) == false )) {
@@ -2576,7 +2582,7 @@ differentpartition:
 	lineUsed [ alias ] = false;
 
 	if ( nodesLeft-- == 0 ) {
-		int delta  = ( 10 * nodeCount ) / 100 + 1;
+		int delta  = ( 3 * nodeCount ) / 100 + 1;
 		// nodePool   = ( wNode * ) realloc ( nodePool, sizeof ( wNode ) * ( nodeCount + delta ));
 
 		wNode *nodePoolRealloc = ( wNode * ) realloc ( nodePool, sizeof ( wNode ) * ( nodeCount + delta ));
@@ -2631,12 +2637,16 @@ differentpartition:
 			delete [] bestVertices;
 		}
 		
-		bestSegs = new SEG [maxSegs];
+		//bestSegs = new SEG [maxSegs];
+		bestSegs = new SEG [segCount];
+
 		bestSSectors = new wSSector [ssectorPoolEntries];
 		bestNodes = new wNode [nodePoolEntries];
 		bestVertices = new wVertex[maxVertices];
 
-		memcpy (bestSegs, segStart, sizeof ( SEG) * (maxSegs) ); // was 32k
+		//memcpy (bestSegs, segStart, sizeof ( SEG) * (maxSegs) ); // was 32k
+		memcpy (bestSegs, segStart, sizeof ( SEG) * (segCount) );
+
 		memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
 		memcpy (bestVertices, newVertices, sizeof (wVertex) * maxVertices);
 		memcpy (bestNodes, nodePool, sizeof ( wNode) * (nodesLeft));
@@ -2659,6 +2669,10 @@ differentpartition:
 
 	width++;
 
+	if ((options->Width - (nodeDepth / 2)) > width  ) {
+		goto differentpartition;
+	}
+
 	if (nodeDepth > 4) {
 		width = options->Width + 1;
 	} else if (width < options->Width) {
@@ -2676,13 +2690,26 @@ differentpartition:
 	
 		if (CNbestNodePoolEntries != nodePoolEntries) {
 			nodePool = ( wNode * ) realloc ( nodePool, sizeof ( wNode ) * ( CNbestNodePoolEntries));
+			memcpy (nodePool, bestNodes, sizeof ( wNode) * (CNbestNodePoolEntries) );
 		}
-		if ((CNbestMaxVertices != maxVertices)) {
+		
+		//if (maxVertices != CNbestMaxVertices) {
+		if (noVertices != CNbestNoVertices) {
 			newVertices = ( wVertex * ) realloc ( newVertices, sizeof ( wVertex ) * ( CNbestMaxVertices));
+			memcpy (newVertices,    bestVertices,   sizeof ( wVertex) *     (CNbestMaxVertices) );
+		}
+		
+		if (CNbestSsectorPoolEntries != CNbestSsectorPoolEntries) {
+			wSSector *ssectorPool = ( wSSector * ) realloc ( ssectorPool, sizeof ( wSSector ) * ( CNbestSsectorPoolEntries));
+			memcpy (ssectorPool,  bestSSectors,   sizeof ( wSSector) *    (CNbestSsectorsCount));
+		}
+		
+		if (maxSegs != CNbestMaxSegs) {
+			delete [] segStart;
+			segStart = new SEG [CNbestMaxSegs];
+			memcpy (segStart, bestSegs, sizeof ( SEG) * CNbestSegsCount);
 		}
 
-		memcpy (newVertices, 	bestVertices, 	sizeof ( wVertex) * 	(CNbestMaxVertices) );
-		memcpy (ssectorPool,  bestSSectors,   sizeof ( wSSector) *    (CNbestSsectorPoolEntries) );
 
 		nodesLeft = CNbestNodesLeft;
 		nodeCount = CNbestNodesCount;
@@ -2702,8 +2729,7 @@ differentpartition:
 
 		segs = CNbestSegs;
 
-		memcpy (segStart, bestSegs, sizeof ( SEG) * maxSegs);
-		memcpy (nodePool, bestNodes, sizeof ( wNode) * (nodesLeft) );
+		// memcpy (segStart, bestSegs, sizeof ( SEG) * maxSegs);
 	}
 
 	nodeDepth--;

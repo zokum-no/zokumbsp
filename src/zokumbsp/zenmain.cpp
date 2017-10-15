@@ -185,9 +185,9 @@ void printHelp () {
 	fprintf ( stdout, "%c     u   Favor fewer subsectors.\n\n", ( config.Nodes.Metric == 0 ) ? DEFAULT_CHAR : ' ' );
 
 	fprintf ( stdout, "    p=    Favor certain node selection picks for depth algorithm.\n");
-	fprintf ( stdout, "%c     z   No favoring, use old algorithm.\n", ( config.Nodes.SplitReduction == 0 ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     l   Favor nodes that do not split segs.\n", ( config.Nodes.SplitReduction == 1 ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     s   Favor nodes that do not create subsectors.\n", ( config.Nodes.SplitReduction == 2 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     z   No favoring, use old algorithm for a balanced tree.\n", ( config.Nodes.SplitReduction == 0 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     s   Favor nodes that do not split segs.\n", ( config.Nodes.SplitReduction == 1 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     u   Favor nodes that do not create subsectors.\n", ( config.Nodes.SplitReduction == 2 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     b   Favor both of the above equally.\n", (config.Nodes.SplitReduction == 3 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     m   Try all of the above.\n\n", (config.Nodes.MultipleSplitMethods == 1 ) ? DEFAULT_CHAR : ' ' );
 
@@ -367,23 +367,6 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 						   config.Nodes.Method = 1;
 					   } else if (ptr[1] == 'D') { // minimize depths
 						   config.Nodes.Method = 2;
-						   if (ptr[2] && ptr[3]) {
-							   if (ptr[2] == '=') {
-								   if (ptr[3] == 'L') {
-									   config.Nodes.SplitReduction = 0x01;
-								   } else if (ptr[3] == 'S') {
-									   config.Nodes.SplitReduction = 0x02;
-								   } else if (ptr[3] == 'B') {
-									   config.Nodes.SplitReduction = 0x03;
-								   } else if (ptr[3] == 'A') { // all
-									   config.Nodes.SplitReduction = 0x04;
-								   } else if (ptr[3] == 'Z') {
-									   config.Nodes.SplitReduction = 0x00;
-								   }
-								   ptr += 2;
-							   }
-
-						   }
 					   } else if (ptr[1] == 'F') {
 						   config.Nodes.Method = 3;
 					   } else if (ptr[1] == 'M') {
@@ -406,6 +389,20 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 						config.Nodes.Metric = TREE_METRIC_SUBSECTORS;
 					} else {
 						printf("Unsupported metric\n");
+					}
+					ptr += 2;
+				}
+				break;
+			case 'P' :
+				if (ptr[0] && ptr[1]) {
+					if (ptr[1] == 'Z') {
+						config.Nodes.SplitReduction = 0x00;
+					} else if (ptr[1] == 'S') {
+						config.Nodes.SplitReduction = 0x01;
+					} else if (ptr[1] == 'U') {
+						config.Nodes.SplitReduction = 0x02;
+					} else if (ptr[1] == 'B') {
+						config.Nodes.SplitReduction = 0x03;
 					}
 					ptr += 2;
 				}
@@ -1280,7 +1277,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			GotoXY ( startX, startY );
 			//cprintf ( "Reject:  %3ld.%1ld%% =>%3ld.%1ld%%  Sectors: %5d", newEfficiency / 100, newEfficiency % 100,
 			//		oldEfficiency / 100, oldEfficiency % 100, curLevel->SectorCount ());
-			cprintf ( "Reject:  %3ld.%1ld%% =>%3ld.%1ld%%", newEfficiency / 100, newEfficiency % 100, oldEfficiency / 100, oldEfficiency % 100);
+			cprintf ( "Reject:  %3ld.%02ld%% =>%3ld.%02ld%%", newEfficiency / 100, newEfficiency % 100, oldEfficiency / 100, oldEfficiency % 100);
 
 			cprintf ( "    %6.2f%%         -", ((double) newEfficiency / (double) oldEfficiency) * 100.0);
 
@@ -1316,6 +1313,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	}
 	// delete [] curLevel->extraData->lineDefsUsed;
 	// delete curLevel->extraData;
+	
 	delete curLevel;
 
 	return changed;
@@ -1603,7 +1601,7 @@ int main ( int argc, const char *argv [] ) {
 
 	} while ( argv [argIndex] );
 
-	PrintStats ( totalLevels, totalTime, totalUpdates );
+	PrintStats ( totalLevels, totalTime, totalUpdates - 1 );// Why -1?
 	RestoreConsoleSettings ();
 
 	return 0;
