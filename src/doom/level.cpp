@@ -301,6 +301,8 @@ void DoomLevel::CleanUp ()
 	delete [] this->extraData->lineDefsCollidable;
 	delete [] this->extraData->lineDefsRendered;
 	delete [] this->extraData->lineDefsSegProperties;
+	delete [] this->extraData->lineDefsSpecialEffect;
+	delete [] this->extraData->sectorsActive;
 	delete this->extraData;
 
     m_ThingData   = NULL;
