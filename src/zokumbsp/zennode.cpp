@@ -2420,21 +2420,17 @@ static UINT16 CreateNode ( SEG *segs, int *noSegs, sBSPOptions *options, DoomLev
 	SEG *segsBackup = segs;
 	SEG *CNbestSegs = NULL;
 
-	//SEG *segsStartBackup = new SEG [maxSegs];
-	//memcpy ( segsStartBackup, segStart, sizeof ( SEG) * (maxSegs) );
-	
 	SEG *segsStartBackup = new SEG [segCount];
 	memcpy ( segsStartBackup, segStart, sizeof ( SEG) * (segCount) );
 
-	//wSSector *ssectorPoolBackup = new wSSector [ssectorPoolEntries];
-	//memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
+	// wSSector *ssectorPoolBackup = new wSSector [ssectorPoolEntries];
+	// memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
 
 	// wNode *nodePoolBackup = new wNode [nodePoolEntries];
 	// memcpy (nodePoolBackup, nodePool, sizeof ( wNode) * (nodePoolEntries));
 
-	/*wVertex *newVerticesBackup = new wVertex[maxVertices];
-	memcpy (newVerticesBackup, newVertices, sizeof (wVertex) * maxVertices);
-	*/
+	// wVertex *newVerticesBackup = new wVertex[maxVertices];
+	// memcpy (newVerticesBackup, newVertices, sizeof (wVertex) * maxVertices);
 
 	nodeDepth++;
 /*
@@ -2494,6 +2490,7 @@ differentpartition:
 		*noSegs = noSegsBackup;
 		ssectorCount = ssectorCountBackup;
 		ssectorsLeft = ssectorsLeftBackup;
+		segCount = segCountBackup;
 		noVertices = noVerticesBackup;
 		// maxVertices = maxVerticesBackup;
 		maxSegs = maxSegsBackup;
@@ -2503,22 +2500,14 @@ differentpartition:
 		ssectorPoolEntries = ssectorPoolEntriesBackup;
 
 		segs = segsBackup;
-		
-		/*
-		if (memcmp(segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup) )) {
-			printf("forskjell\n");
-		}
-		*/
-		segCount = segCountBackup;
-		
-		memcpy ( segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup) );
+
+		memcpy ( segStart, segsStartBackup, sizeof ( SEG) * (segCount) );
 		// memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
 		// memcpy ( nodePool, nodePoolBackup, sizeof ( wNode) * (nodePoolEntriesBackup));
 		/*if (maxVerticesBackup != maxVertices) {
 			memcpy ( newVertices, newVerticesBackup, sizeof ( wVertex) * (maxVerticesBackup));
 			//memcpy ( newVertices, newVerticesBackup, sizeof ( wVertex) * (noVerticesBackup));
-		}
-		*/
+		} */
 
 		maxVertices = maxVerticesBackup;
 
@@ -2648,15 +2637,17 @@ differentpartition:
 			delete [] bestVertices;
 		}
 		
+		//bestSegs = new SEG [maxSegs];
 		bestSegs = new SEG [segCount];
-		//bestSSectors = new wSSector [ssectorPoolEntries];
-		bestSSectors = new wSSector [ssectorCount];
+
+		bestSSectors = new wSSector [ssectorPoolEntries];
 		bestNodes = new wNode [nodePoolEntries];
 		bestVertices = new wVertex[maxVertices];
 
+		//memcpy (bestSegs, segStart, sizeof ( SEG) * (maxSegs) ); // was 32k
 		memcpy (bestSegs, segStart, sizeof ( SEG) * (segCount) );
-		//memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
-		memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
+
+		memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
 		memcpy (bestVertices, newVertices, sizeof (wVertex) * maxVertices);
 		memcpy (bestNodes, nodePool, sizeof ( wNode) * (nodesLeft));
 
@@ -2696,28 +2687,36 @@ differentpartition:
 
 	// Turns out the last tree we did was not the best one, so we got to restore
 	if (betterTree == false) {
-	
-		if (CNbestNodePoolEntries != nodePoolEntries) {
+
+		//if (CNbestNodePoolEntries != nodePoolEntries) {
+		//	nodePool = ( wNode * ) realloc ( nodePool, sizeof ( wNode ) * ( CNbestNodePoolEntries));
+
+		if (nodeCount > nodePoolEntries) {
 			nodePool = ( wNode * ) realloc ( nodePool, sizeof ( wNode ) * ( CNbestNodePoolEntries));
-			memcpy (nodePool, bestNodes, sizeof ( wNode) * (CNbestNodePoolEntries) );
 		}
-		
+
+		// memcpy (nodePool, bestNodes, sizeof ( wNode) * (CNbestNodePoolEntries) );
+		memcpy (nodePool, bestNodes, sizeof ( wNode) * (CNbestNodesCount) );
+		//}
+
 		//if (maxVertices != CNbestMaxVertices) {
-		if (noVertices != CNbestNoVertices) {
+		//if (noVertices != CNbestNoVertices) {
+		// newVertices = ( wVertex * ) realloc ( newVertices, sizeof ( wVertex ) * ( CNbestMaxVertices));
+		if (CNbestNoVertices > maxVertices) {
 			newVertices = ( wVertex * ) realloc ( newVertices, sizeof ( wVertex ) * ( CNbestMaxVertices));
-			memcpy (newVertices,    bestVertices,   sizeof ( wVertex) *     (CNbestMaxVertices) );
+			maxVertices = CNbestMaxVertices;
 		}
-		
-		if (CNbestSsectorPoolEntries != CNbestSsectorPoolEntries) {
-			wSSector *ssectorPool = ( wSSector * ) realloc ( ssectorPool, sizeof ( wSSector ) * ( CNbestSsectorPoolEntries));
-			memcpy (ssectorPool,  bestSSectors,   sizeof ( wSSector) *    (CNbestSsectorsCount));
-		}
-		
-		if (maxSegs != CNbestMaxSegs) {
-			delete [] segStart;
-			segStart = new SEG [CNbestMaxSegs];
-			memcpy (segStart, bestSegs, sizeof ( SEG) * CNbestSegsCount);
-		}
+		memcpy (newVertices,    bestVertices,   sizeof ( wVertex) *     (CNbestNoVertices) );
+		//}
+
+		//if (CNbestSsectorPoolEntries != CNbestSsectorPoolEntries) {
+		//wSSector *ssectorPool = ( wSSector * ) realloc ( ssectorPool, sizeof ( wSSector ) * ( CNbestSsectorPoolEntries));
+		memcpy (ssectorPool,  bestSSectors,   sizeof ( wSSector) *    (CNbestSsectorsCount));
+		//}
+
+		//delete [] segStart;
+		//segStart = new SEG [CNbestMaxSegs];
+		memcpy (segStart, bestSegs, sizeof ( SEG) * CNbestSegsCount);
 
 
 		nodesLeft = CNbestNodesLeft;
@@ -2730,9 +2729,9 @@ differentpartition:
 		segCount = CNbestSegsCount;
 
 		noVertices = CNbestNoVertices;
-		maxVertices = CNbestMaxVertices;
+		// maxVertices = CNbestMaxVertices;
 		maxSegs = CNbestMaxSegs;
-	
+
 		nodePoolEntries = CNbestNodePoolEntries;
 		ssectorPoolEntries = CNbestSsectorPoolEntries;
 
@@ -2749,7 +2748,7 @@ differentpartition:
 	delete [] bestVertices;
 
 	static int cleanCounter = 0;
-	
+
 	counter++;
 	if (newVerticesClean) {
 		cleanCounter++;
@@ -2759,305 +2758,305 @@ differentpartition:
 	}
 
 	return ( UINT16 ) nodeCount++;
-}
-
-wVertex  *GetVertices ()
-{
-	FUNCTION_ENTRY ( NULL, "GetVertices", true );
-
-	wVertex *vert = new wVertex [ noVertices ];
-	memcpy ( vert, newVertices, sizeof ( wVertex ) * noVertices );
-
-	return vert;
-}
-
-wNode *GetNodes ( wNode *nodeList, int noNodes )
-{
-	FUNCTION_ENTRY ( NULL, "GetNodes", true );
-
-	wNode *nodes = new wNode [ noNodes ];
-
-	for ( int i = 0; i < noNodes; i++ ) {
-		nodes [i] = nodeList [i];
 	}
 
-	return nodes;
-}
+	wVertex  *GetVertices ()
+	{
+		FUNCTION_ENTRY ( NULL, "GetVertices", true );
 
-static wSegs *finalSegs;
+		wVertex *vert = new wVertex [ noVertices ];
+		memcpy ( vert, newVertices, sizeof ( wVertex ) * noVertices );
 
-wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors )
-{
-	FUNCTION_ENTRY ( NULL, "GetSSectors", true );
+		return vert;
+	}
 
-	wSegs *segs = finalSegs = new wSegs [ segCount ];
+	wNode *GetNodes ( wNode *nodeList, int noNodes )
+	{
+		FUNCTION_ENTRY ( NULL, "GetNodes", true );
 
-	for ( int i = 0; i < noSSectors; i++ ) {
+		wNode *nodes = new wNode [ noNodes ];
 
-		int start = ssectorList[i].first;
-		ssectorList[i].first = ( UINT16 ) ( segs - finalSegs );
-
-		// Copy the used SEGs to the final SEGs list
-		for ( int x = 0; x < ssectorList [i].num; x++ ) {
-			segs [x] = segStart [start+x].Data;
+		for ( int i = 0; i < noNodes; i++ ) {
+			nodes [i] = nodeList [i];
 		}
 
-		segs += ssectorList [i].num;
+		return nodes;
 	}
 
-	delete [] segStart;
-	segCount = segs - finalSegs;
+	static wSegs *finalSegs;
 
-	wSSector *ssector = new wSSector [ noSSectors ];
-	memcpy ( ssector, ssectorList, sizeof ( wSSector ) * noSSectors );
+	wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors )
+	{
+		FUNCTION_ENTRY ( NULL, "GetSSectors", true );
 
-	return ssector;
-}
+		wSegs *segs = finalSegs = new wSegs [ segCount ];
 
-wSegs *GetSegs ()
-{
-	FUNCTION_ENTRY ( NULL, "GetSegs", true );
+		for ( int i = 0; i < noSSectors; i++ ) {
 
-	// The list of wSegs is generated in GetSSectors
+			int start = ssectorList[i].first;
+			ssectorList[i].first = ( UINT16 ) ( segs - finalSegs );
 
-	return finalSegs;
-}
-
-//----------------------------------------------------------------------------
-//  Wrapper function that calls all the necessary functions to prepare the
-//    BSP tree and insert the new data into the level.  All screen I/O is
-//    done in this routine (with the exception of progress indication).
-//----------------------------------------------------------------------------
-/*
-   bool lowestSegCountFound = false;
-   */
-void CreateNODES ( DoomLevel *level, sBSPOptions *options )
-{
-	FUNCTION_ENTRY ( NULL, "CreateNODES", true );
+			// Copy the used SEGs to the final SEGs list
+			for ( int x = 0; x < ssectorList [i].num; x++ ) {
+				segs [x] = segStart [start+x].Data;
+			}
 
-	TRACE ( "Processing " << level->Name ());
+			segs += ssectorList [i].num;
+		}
 
-	// Sanity check on environment variables
-	if ( X2 <= 0 ) X2 = 1;
-	if ( Y2 <= 0 ) Y2 = 1;
+		delete [] segStart;
+		segCount = segs - finalSegs;
 
-	// Copy options to global variables
-	showProgress     = options->showProgress;
-	uniqueSubsectors = options->keepUnique ? true : false;
+		wSSector *ssector = new wSSector [ noSSectors ];
+		memcpy ( ssector, ssectorList, sizeof ( wSSector ) * noSSectors );
 
-	if ( options->algorithm == 2 ) {
-		PartitionFunction = AlgorithmBalancedTree;
-	} else if ( options->algorithm == 3 ) {
-		PartitionFunction = AlgorithmQuick;
-	} else if ( options->algorithm == 5 ) {
-		PartitionFunction = AlgorithmMulti;
-	} else { // usually == 1
-		PartitionFunction = AlgorithmFewerSplits;
+		return ssector;
 	}
+
+	wSegs *GetSegs ()
+	{
+		FUNCTION_ENTRY ( NULL, "GetSegs", true );
+
+		// The list of wSegs is generated in GetSSectors
+
+		return finalSegs;
+	}
+	
+		//----------------------------------------------------------------------------
+		//  Wrapper function that calls all the necessary functions to prepare the
+		//    BSP tree and insert the new data into the level.  All screen I/O is
+		//    done in this routine (with the exception of progress indication).
+		//----------------------------------------------------------------------------
+		/*
+		   bool lowestSegCountFound = false;
+		   */
+		void CreateNODES ( DoomLevel *level, sBSPOptions *options )
+		{
+			FUNCTION_ENTRY ( NULL, "CreateNODES", true );
+
+			TRACE ( "Processing " << level->Name ());
+
+			// Sanity check on environment variables
+			if ( X2 <= 0 ) X2 = 1;
+			if ( Y2 <= 0 ) Y2 = 1;
+
+			// Copy options to global variables
+			showProgress     = options->showProgress;
+			uniqueSubsectors = options->keepUnique ? true : false;
+
+			if ( options->algorithm == 2 ) {
+				PartitionFunction = AlgorithmBalancedTree;
+			} else if ( options->algorithm == 3 ) {
+				PartitionFunction = AlgorithmQuick;
+			} else if ( options->algorithm == 5 ) {
+				PartitionFunction = AlgorithmMulti;
+			} else { // usually == 1
+				PartitionFunction = AlgorithmFewerSplits;
+			}
 
 
 restart:
 
-	earlyExit = false;
+			earlyExit = false;
 
-	nodeCount    = 0;
-	ssectorCount = 0;
+			nodeCount    = 0;
+			ssectorCount = 0;
 
-	// Get rid of old SEGS and associated vertices
-	level->NewSegs ( 0, NULL );
-	level->TrimVertices ();
-	level->PackVertices ();
+			// Get rid of old SEGS and associated vertices
+			level->NewSegs ( 0, NULL );
+			level->TrimVertices ();
+			level->PackVertices ();
 
-	// Put em here after vertex packing etc
-	if ( options->algorithm == 5 ) {
-		// Our fake reusable linedef :)
-		// level->AddLineDef();
+			// Put em here after vertex packing etc
+			if ( options->algorithm == 5 ) {
+				// Our fake reusable linedef :)
+				// level->AddLineDef();
 
-		// fakeLineDef = level->LineDefCount() -1 ;
+				// fakeLineDef = level->LineDefCount() -1 ;
 
-		// wLineDefInternal *lineDef = level->GetLineDefs ();
+				// wLineDefInternal *lineDef = level->GetLineDefs ();
 
-		// level->extraData->lineDefsRendered[fakeLineDef] = false;
+				// level->extraData->lineDefsRendered[fakeLineDef] = false;
 
-		// lineDef [fakeLineDef].sideDef [0] = NO_SIDEDEF;
-		// lineDef [fakeLineDef].sideDef [1] = 1; // dummy
-		// lineDef [fakeLineDef].sideDef [1] = NO_SIDEDEF;
-	}
-
-	noVertices  = level->VertexCount ();
-	sectorCount = level->SectorCount ();
-	usedSector  = new UINT8 [ sectorCount ];
-	keepUnique  = new bool [ sectorCount ];
-	if ( options->keepUnique ) {
-		uniqueSubsectors = true;
-		memcpy ( keepUnique, options->keepUnique, sizeof ( bool ) * sectorCount );
-	} else {
-		memset ( keepUnique, true, sizeof ( bool ) * sectorCount );
-	}
-	maxVertices = ( int ) ( noVertices * FACTOR_VERTEX );
-	newVertices = ( wVertex * ) malloc ( sizeof ( wVertex ) * maxVertices );
-	memcpy ( newVertices, level->GetVertices (), sizeof ( wVertex ) * noVertices );
-
-	Status ( (char *) "Creating SEGS ... " );
-	segStart = CreateSegs ( level, options );
-
-	Status ( (char *) "Getting LineDef Aliases ... " );
-	noAliases = GetLineDefAliases ( level, segStart, segCount );
-
-	lineChecked = new char [ noAliases ];
-	lineUsed    = new char [ noAliases ];
-	memset ( lineUsed, false, sizeof ( char ) * noAliases );
-
-	Status ( (char *) "Creating Side Info ... " );
-	CreateSideInfo ( level );
-
-	// Score is used by balanced and multi
-	if ((options->algorithm == 2) || (options->algorithm == 5) ) {
-		score = new sScoreInfo [ noAliases ] ;
-	} else {
-		score = NULL;
-	}
-
-	convexList = new int [ noAliases ];
-	convexPtr  = convexList;
-
-	// reset progressWide %
-	progressWide = 0;
-
-	if ( options->algorithm == 1 ) {
-		Status ( (char *) "Nodes (split): " );
-	} else if ( options->algorithm == 2 ) {
-		Status ( (char *) "Nodes (balance): " );
-	} else if ( options->algorithm == 3 ) {
-		Status ( (char *) "Nodes (quick): " );
-	} /* else if ( options->algorithm == 4 ) {
-		char zokoutput [256];
-
-		int max = maxAdaptiveCutoff;
-
-		if (segCount < maxAdaptiveCutoff) {
-			max = segCount;
-			maxAdaptiveCutoff = max;
-		}
-		char sr[16];
-		if ((options->SplitReduction % 4) == 3) {
-			strcpy(sr, "b");
-		} else if ((options->SplitReduction % 4) == 2) {
-			strcpy(sr, "s");
-		} else if ((options->SplitReduction % 4) == 1) {
-			strcpy(sr, "l");
-		} else {
-			strcpy(sr, "n");
-		}
-
-
-
-		sprintf(zokoutput, "Nodes (adaptive) %s %d => %-d, best: %d:%d, Segs: %d SS: %d N: %d: ", sr, adaptiveCutoff, max, bestAdaptiveCutoff, bestSplitReduction, bestSegCount, bestSubSectorCount, bestNodeCount  );
-		Status (zokoutput);
-		
-	}*/ else if (options->algorithm == 5 ) {
-		// Status ( (char *) "Nodes (v-pair): " );
-		// level->AddLineDef();
-		// fakeLineDef = level->LineDefCount();
-	}
-
-
-
-	nodesLeft   = ( int ) ( FACTOR_NODE * level->SideDefCount ());
-	nodePool    = ( wNode * ) malloc( sizeof ( wNode ) * nodesLeft );
-	//nodePool = ( wNode * ) malloc( sizeof ( wNode ) * 32767 );
-	nodePoolEntries = nodesLeft; // zokum 2017
-
-
-	ssectorsLeft = ( int ) ( FACTOR_NODE * level->SideDefCount ());
-	ssectorPool  = ( wSSector * ) malloc ( sizeof ( wSSector ) * ssectorsLeft );
-	ssectorPoolEntries = ssectorsLeft;
-
-	int noSegs = segCount;
-
-	CreateNode ( segStart, &noSegs, options, level); 
-
-	delete [] convexList;
-	if ( score ) delete [] score;
-
-	// Clean up temporary buffers
-	Status ( (char *) "Cleaning up ... " );
-	delete [] sideInfo;
-	delete [] lineDefAlias;
-	delete [] lineChecked;
-	delete [] lineUsed;
-	delete [] keepUnique;
-	delete [] usedSector;
-
-	sideInfo = NULL;
-
-	level->NewVertices ( noVertices, GetVertices ());
-	level->NewNodes ( nodeCount, GetNodes ( nodePool, nodeCount ));
-	level->NewSubSectors ( ssectorCount, GetSSectors ( ssectorPool, ssectorCount ));
-	level->NewSegs ( segCount, GetSegs ());
-
-	free ( newVertices );
-	free ( ssectorPool );
-	free ( nodePool );
-
-	delete [] tempSeg;
-/*
-	if (options->algorithm == 4) {
-
-		if (lowestSegCountFound) {
-			return;
-		}
-
-		bool worse = false;
-
-		if (options->Metric == TREE_METRIC_SEGS) {
-			if (noSegs > bestSegCount) {	// abort if more segs than best
-				worse = true;
-			} else if (noSegs == bestSegCount) {
-				if (level->SubSectorCount() > bestSubSectorCount) { // abort if segs same and more subsectors
-					worse = true;
-				} else if (level->SubSectorCount() == bestSubSectorCount) { // abort if same segs, subsectors, but more nodes
-					if (level->NodeCount() >= bestNodeCount) {
-						worse = true;
-					}
-				}
-			}
-		} else if (options->Metric == TREE_METRIC_SUBSECTORS) {
-			if (level->SubSectorCount() > bestSubSectorCount) {
-				worse = true;
-			} else if (level->SubSectorCount() == bestSubSectorCount) {
-				if (noSegs > bestSegCount) {
-					worse = true;
-				} else if (noSegs == bestSegCount) {
-					if (level->NodeCount() >= bestNodeCount) {
-						worse = true;
-					}
-				}
+				// lineDef [fakeLineDef].sideDef [0] = NO_SIDEDEF;
+				// lineDef [fakeLineDef].sideDef [1] = 1; // dummy
+				// lineDef [fakeLineDef].sideDef [1] = NO_SIDEDEF;
 			}
 
-		} else if (options->Metric == TREE_METRIC_NODES) {
-			if (level->NodeCount() > bestNodeCount) {
-				worse = true;
-			} else if (level->NodeCount() == bestNodeCount) {
-				if (level->SubSectorCount() > bestSubSectorCount) {
-					worse = true;
-				} else if (level->SubSectorCount() == bestSubSectorCount) {
-					if (noSegs >= bestSegCount) {
-						worse = true;
-					}
-				}
-
+			noVertices  = level->VertexCount ();
+			sectorCount = level->SectorCount ();
+			usedSector  = new UINT8 [ sectorCount ];
+			keepUnique  = new bool [ sectorCount ];
+			if ( options->keepUnique ) {
+				uniqueSubsectors = true;
+				memcpy ( keepUnique, options->keepUnique, sizeof ( bool ) * sectorCount );
+			} else {
+				memset ( keepUnique, true, sizeof ( bool ) * sectorCount );
 			}
-		}
+			maxVertices = ( int ) ( noVertices * FACTOR_VERTEX );
+			newVertices = ( wVertex * ) malloc ( sizeof ( wVertex ) * maxVertices );
+			memcpy ( newVertices, level->GetVertices (), sizeof ( wVertex ) * noVertices );
 
-		if ((worse == false) && !earlyExit) {
-			bestSegCount = 		level->SegCount();
-			bestSubSectorCount = 	level->SubSectorCount();
-			bestNodeCount = 	level->NodeCount();
-			bestAdaptiveCutoff = 	adaptiveCutoff;
-			bestSplitReduction = 	options->SplitReduction;
-		}
-*/
+			Status ( (char *) "Creating SEGS ... " );
+			segStart = CreateSegs ( level, options );
+
+			Status ( (char *) "Getting LineDef Aliases ... " );
+			noAliases = GetLineDefAliases ( level, segStart, segCount );
+
+			lineChecked = new char [ noAliases ];
+			lineUsed    = new char [ noAliases ];
+			memset ( lineUsed, false, sizeof ( char ) * noAliases );
+
+			Status ( (char *) "Creating Side Info ... " );
+			CreateSideInfo ( level );
+
+			// Score is used by balanced and multi
+			if ((options->algorithm == 2) || (options->algorithm == 5) ) {
+				score = new sScoreInfo [ noAliases ] ;
+			} else {
+				score = NULL;
+			}
+
+			convexList = new int [ noAliases ];
+			convexPtr  = convexList;
+
+			// reset progressWide %
+			progressWide = 0;
+
+			if ( options->algorithm == 1 ) {
+				Status ( (char *) "Nodes (split): " );
+			} else if ( options->algorithm == 2 ) {
+				Status ( (char *) "Nodes (balance): " );
+			} else if ( options->algorithm == 3 ) {
+				Status ( (char *) "Nodes (quick): " );
+			} /* else if ( options->algorithm == 4 ) {
+			     char zokoutput [256];
+
+			     int max = maxAdaptiveCutoff;
+
+			     if (segCount < maxAdaptiveCutoff) {
+			     max = segCount;
+			     maxAdaptiveCutoff = max;
+			     }
+			     char sr[16];
+			     if ((options->SplitReduction % 4) == 3) {
+			     strcpy(sr, "b");
+			     } else if ((options->SplitReduction % 4) == 2) {
+			     strcpy(sr, "s");
+			     } else if ((options->SplitReduction % 4) == 1) {
+			     strcpy(sr, "l");
+			     } else {
+			     strcpy(sr, "n");
+			     }
+
+
+
+			     sprintf(zokoutput, "Nodes (adaptive) %s %d => %-d, best: %d:%d, Segs: %d SS: %d N: %d: ", sr, adaptiveCutoff, max, bestAdaptiveCutoff, bestSplitReduction, bestSegCount, bestSubSectorCount, bestNodeCount  );
+			     Status (zokoutput);
+
+			     }*/ else if (options->algorithm == 5 ) {
+				     // Status ( (char *) "Nodes (v-pair): " );
+				     // level->AddLineDef();
+				     // fakeLineDef = level->LineDefCount();
+			     }
+
+
+
+		nodesLeft   = ( int ) ( FACTOR_NODE * level->SideDefCount ());
+		nodePool    = ( wNode * ) malloc( sizeof ( wNode ) * nodesLeft );
+		//nodePool = ( wNode * ) malloc( sizeof ( wNode ) * 32767 );
+		nodePoolEntries = nodesLeft; // zokum 2017
+
+
+		ssectorsLeft = ( int ) ( FACTOR_NODE * level->SideDefCount ());
+		ssectorPool  = ( wSSector * ) malloc ( sizeof ( wSSector ) * ssectorsLeft );
+		ssectorPoolEntries = ssectorsLeft;
+
+		int noSegs = segCount;
+
+		CreateNode ( segStart, &noSegs, options, level); 
+
+		delete [] convexList;
+		if ( score ) delete [] score;
+
+		// Clean up temporary buffers
+		Status ( (char *) "Cleaning up ... " );
+		delete [] sideInfo;
+		delete [] lineDefAlias;
+		delete [] lineChecked;
+		delete [] lineUsed;
+		delete [] keepUnique;
+		delete [] usedSector;
+
+		sideInfo = NULL;
+
+		level->NewVertices ( noVertices, GetVertices ());
+		level->NewNodes ( nodeCount, GetNodes ( nodePool, nodeCount ));
+		level->NewSubSectors ( ssectorCount, GetSSectors ( ssectorPool, ssectorCount ));
+		level->NewSegs ( segCount, GetSegs ());
+
+		free ( newVertices );
+		free ( ssectorPool );
+		free ( nodePool );
+
+		delete [] tempSeg;
+		/*
+		   if (options->algorithm == 4) {
+
+		   if (lowestSegCountFound) {
+		   return;
+		   }
+
+		   bool worse = false;
+
+		   if (options->Metric == TREE_METRIC_SEGS) {
+		   if (noSegs > bestSegCount) {	// abort if more segs than best
+		   worse = true;
+		   } else if (noSegs == bestSegCount) {
+		   if (level->SubSectorCount() > bestSubSectorCount) { // abort if segs same and more subsectors
+		   worse = true;
+		   } else if (level->SubSectorCount() == bestSubSectorCount) { // abort if same segs, subsectors, but more nodes
+		   if (level->NodeCount() >= bestNodeCount) {
+		   worse = true;
+		   }
+		   }
+		   }
+		   } else if (options->Metric == TREE_METRIC_SUBSECTORS) {
+		   if (level->SubSectorCount() > bestSubSectorCount) {
+		   worse = true;
+		   } else if (level->SubSectorCount() == bestSubSectorCount) {
+		   if (noSegs > bestSegCount) {
+		   worse = true;
+		   } else if (noSegs == bestSegCount) {
+		   if (level->NodeCount() >= bestNodeCount) {
+		   worse = true;
+		   }
+		   }
+		   }
+
+		   } else if (options->Metric == TREE_METRIC_NODES) {
+		   if (level->NodeCount() > bestNodeCount) {
+		   worse = true;
+		   } else if (level->NodeCount() == bestNodeCount) {
+		   if (level->SubSectorCount() > bestSubSectorCount) {
+		   worse = true;
+		   } else if (level->SubSectorCount() == bestSubSectorCount) {
+		   if (noSegs >= bestSegCount) {
+		   worse = true;
+		   }
+		   }
+
+		   }
+		   }
+
+		   if ((worse == false) && !earlyExit) {
+		   bestSegCount = 		level->SegCount();
+		   bestSubSectorCount = 	level->SubSectorCount();
+		   bestNodeCount = 	level->NodeCount();
+		   bestAdaptiveCutoff = 	adaptiveCutoff;
+		   bestSplitReduction = 	options->SplitReduction;
+		   }
+		   */
 		/*
 		// if (level->SegCount() < bestSegCount) {
 		if (level->SubSectorCount() < bestSegCount) {
@@ -3070,7 +3069,7 @@ restart:
 		}
 		}
 		*/
-	
+
 
 
 
@@ -3080,35 +3079,35 @@ restart:
 		  }*/
 
 
-/*
+		/*
 
 
-		if (adaptiveCutoff < maxAdaptiveCutoff) {
+		   if (adaptiveCutoff < maxAdaptiveCutoff) {
 
-			adaptiveCutoff++;
-			goto restart;
-		} else {
+		   adaptiveCutoff++;
+		   goto restart;
+		   } else {
 
-			if (options->MultipleSplitMethods == 1) {
-				if (options->SplitReduction == 0) {
-					options->SplitReduction = 1;
-					goto clearCache;
-				} else if (options->SplitReduction == 1) {
-					options->SplitReduction = 2;
-					goto clearCache;
-				} else if (options->SplitReduction == 3) {
-					options->SplitReduction = 4;
-					goto clearCache;
-				}
-			}
-			lowestSegCountFound = true;
-			adaptiveCutoff = bestAdaptiveCutoff;
-			options->SplitReduction = bestSplitReduction;
+		   if (options->MultipleSplitMethods == 1) {
+		   if (options->SplitReduction == 0) {
+		   options->SplitReduction = 1;
+		   goto clearCache;
+		   } else if (options->SplitReduction == 1) {
+		   options->SplitReduction = 2;
+		   goto clearCache;
+		   } else if (options->SplitReduction == 3) {
+		   options->SplitReduction = 4;
+		   goto clearCache;
+		   }
+		   }
+		   lowestSegCountFound = true;
+		   adaptiveCutoff = bestAdaptiveCutoff;
+		   options->SplitReduction = bestSplitReduction;
 
-			bestSegCount = bestSubSectorCount = bestNodeCount = 32767;
+		   bestSegCount = bestSubSectorCount = bestNodeCount = 32767;
 
-			goto clearCache;
+		   goto clearCache;
+		   }
+		   }*/
+
 		}
-	}*/
-
-}

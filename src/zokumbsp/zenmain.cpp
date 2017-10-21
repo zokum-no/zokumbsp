@@ -181,8 +181,8 @@ void printHelp () {
 	fprintf ( stdout, "%c     m   Build mixed split/depth tree. Width support.\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
 
 	fprintf ( stdout, "    m=    Metric, what kind of node tree do you favor.\n" );
-	fprintf ( stdout, "%c     s   Favor fewer SEG splits.\n", ( config.Nodes.Metric == 1 ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     u   Favor fewer subsectors.\n\n", ( config.Nodes.Metric == 0 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     s   Favor fewer SEG splits.\n", ( config.Nodes.Metric == TREE_METRIC_SEGS ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     u   Favor fewer subsectors.\n\n", ( config.Nodes.Metric == TREE_METRIC_SUBSECTORS ) ? DEFAULT_CHAR : ' ' );
 
 	fprintf ( stdout, "    p=    Favor certain node selection picks for depth algorithm.\n");
 	fprintf ( stdout, "%c     z   No favoring, use old algorithm for a balanced tree.\n", ( config.Nodes.SplitReduction == 0 ) ? DEFAULT_CHAR : ' ' );
@@ -389,6 +389,7 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 						config.Nodes.Metric = TREE_METRIC_SUBSECTORS;
 					} else {
 						printf("Unsupported metric\n");
+						return true;
 					}
 					ptr += 2;
 				}
