@@ -241,6 +241,8 @@ struct sRejectOptions {
 	const sRejectOptionRMB  *rmb;
 };
 
+<<<<<<< HEAD
+=======
 struct sGeometryOptions {
 	bool			Perform;
 	int			Simplification;
@@ -271,6 +273,7 @@ struct sSegPickTree {
 	sSegPickTree	*parent; 	
 };
 
+>>>>>>> zokum-no/master
 bool ParseOptionRMB ( int, const char *, sRejectOptionRMB * );
 
 // ----- C99 routines from <math.h> Required by ZenNode -----
@@ -318,8 +321,6 @@ struct sOptions {
 	sBlockMapOptions BlockMap;
 	sNodeOptions     Nodes;
 	sRejectOptions   Reject;
-	sGeometryOptions Geometry;
-	sStatisticsOptions Statistics;
 	bool             WriteWAD;
 	bool             Extract;
 	bool		 OutputWad;

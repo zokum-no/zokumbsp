@@ -1,5 +1,7 @@
 Changelog for ZokumBSP
 
+<<<<<<< HEAD
+=======
 ZokumBSP 1.0.10-beta6
 - New algorithm for testing multiple split lines recursively!
 - Minor tweaks to improve balanced algorithm metrics.
@@ -31,6 +33,7 @@ ZokumBSP 1.0.10-beta2
 - Various minor display fixes for the adaptive algorithm.
 - Minor tweaks of the split algorithm.
 
+>>>>>>> zokum-no/master
 ZokumBSP 1.0.10-beta1
 - Renamed structs and methods in doom/level.* and wad.*
 - Converted filenames to lower case.
