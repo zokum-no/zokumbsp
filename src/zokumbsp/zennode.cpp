@@ -1769,341 +1769,6 @@ next:
 	// return pSeg;
 }
 
-
-
-//static SEG *AlgorithmVertexPair ( SEG *segs, int noSegs ) {
-vertexPair * AlgorithmVertexPair2  (SEG *segs, int noSegs, DoomLevel *level, int *width, int *wideSegs) {
-	FUNCTION_ENTRY ( NULL, "AlgorithmFewerSplits", true );
-
-	SEG *pSeg = NULL, *testSeg = segs;
-	int count [3];
-	int &lCount = count [0], &sCount = count [1], &rCount = count [2];
-	// Compute the maximum value maxMetric can possibly reach
-	long maxMetric = ( noSegs / 2 ) * ( noSegs - noSegs / 2 );
-	long bestMetric = LONG_MIN, bestSplits = LONG_MAX;
-
-	bool diagonal;
-
-	int edgeBalance = noSegs;
-	int bestEdgeBalance = noSegs;
-
-	for ( int i = 0; i < noSegs; i++ ) {
-		// if ( showProgress && (( i & 15 ) == 0 )) ShowProgress (); // spammy
-		int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
-		if (( alias == 0 ) || ( lineChecked [ alias ] == false )) {
-			// lineChecked [ alias ] = -1;
-			// count [0] = count [1] = count [2] = 0;
-			// ComputeStaticVariables ( testSeg );
-			/*
-			   if ( bestMetric < 0 ) for ( int j = 0; j < noSegs; j++ ) {
-			   count [ WhichSide ( &segs [j] ) + 1 ]++;
-			   } else for ( int j = 0; j < noSegs; j++ ) {
-			   count [ WhichSide ( &segs [j] ) + 1 ]++;
-			   if ( sCount >= bestSplits ) goto next; // Added =
-			   }
-			   */
-			// Only consider SEG if it is not a boundary line
-			if ( lCount * rCount + sCount != 0 ) {
-				long metric = ( long ) lCount * ( long ) rCount;
-				if ( sCount ) {
-					long temp = X1 * sCount;
-					if ( X2 < temp ) metric = X2 * metric / temp;
-					metric -= ( X3 * sCount + X4 ) * sCount;
-				}
-
-				if ( (ANGLE & 0x0000) || ( ANGLE & 0x3FFF) || ( ANGLE & 0x7FFF) || ( ANGLE & 0xAFFF)) {
-					// metric--;
-					diagonal = false;
-				} else {
-					diagonal = true;
-				}
-
-				if ( metric == maxMetric ) {
-					// return testSeg;
-					return NULL;
-				}
-
-				bool betterBalance;
-				bool decentBalance;
-
-				edgeBalance = abs(lCount - rCount);
-
-				if (edgeBalance < bestEdgeBalance) { // children have more equal amount of edges
-					betterBalance = true;
-					decentBalance = true;
-				} else if (edgeBalance == bestEdgeBalance) { // same amount, maybe not diagonal?
-					decentBalance = true;				
-				} else { // less balanced than our previous best
-					betterBalance = false;
-					decentBalance = false;
-				}
-
-				if ( (metric > bestMetric) 
-						|| ((metric == bestMetric) && betterBalance)
-						|| ((metric == bestMetric) && !diagonal && decentBalance)
-				   ) {
-					pSeg       = testSeg;
-					bestSplits = sCount + 2;
-					bestMetric = metric;
-					bestEdgeBalance = edgeBalance;
-				}
-			} else if ( alias != 0 ) {
-				// Eliminate outer edges of the map from here & down
-				*convexPtr++ = alias;
-			}
-		}
-#if defined ( DEBUG )
-		else if ( lineChecked [alias] > 0 ) {
-			count [0] = count [1] = count [2] = 0;
-			ComputeStaticVariables ( testSeg );
-			int side = WhichSide ( testSeg, options );
-			if (( fabs ( DX ) < EPSILON ) && ( fabs ( DY ) < EPSILON )) continue;
-			for ( int j = 0; j < noSegs; j++ ) {
-				switch ( WhichSide ( &segs [j], options )) {
-					case SIDE_LEFT :
-						if ( side == SIDE_RIGHT ) {
-							WARNING ( "lineDef " << segs [j].Data.lineDef << " should not to the left of lineDef " << testSeg->Data.lineDef );
-						}
-						break;
-					case SIDE_SPLIT :
-						WARNING ( "lineDef " << segs [j].Data.lineDef << " should not be split by lineDef " << testSeg->Data.lineDef );
-						break;
-					case SIDE_RIGHT :
-						if ( side == SIDE_LEFT ) {
-							WARNING ( "lineDef " << segs [j].Data.lineDef << " should not to the right of lineDef " << testSeg->Data.lineDef );
-						}
-						break;
-					default :
-						break;
-				}
-			}
-		}
-#endif
-
-next:
-		testSeg++;
-	}
-
-	// return pSeg;
-	return NULL;
-}
-
-
-
-
-
-
-
-
-// static SEG *AlgorithmVertexPair ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs )
-static int AlgorithmVertexPair ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs )
-{
-	FUNCTION_ENTRY ( NULL, "AlgorithmFewerSplits", true );
-
-	SEG *pSeg = NULL, *testSeg = segs;
-	SEG *outerSeg = segs, *innerSeg = segs;
-	int count [3];
-	int &lCount = count [0], &sCount = count [1], &rCount = count [2];
-	// Compute the maximum value maxMetric can possibly reach
-	long maxMetric = ( noSegs / 2 ) * ( noSegs - noSegs / 2 );
-	long bestMetric = LONG_MIN, bestSplits = LONG_MAX;
-
-	bool diagonal, bestDiagonal;
-	int halfDistance = noSegs / 2;
-	int bestHalf = 32768;
-
-	// bool array that works as a vertex lookup table
-
-	bool vertxInUse[noVertices];
-
-
-	// we mark all of them as false, for now
-	/*	for (int i = 0; i != noVertices; i++) {
-		vertxInUse[i] = false;
-		} */
-
-	/*	SEG *iSeg = segs;
-		for (int i = 0; i < noSegs; i++ ) {
-	// iSeg->
-	}
-	*/
-
-	SEG *vSeg = new SEG;
-	wLineDefInternal vLineDef; //  = new wLineDefInternal;
-	//
-
-	// level->AddLineDef();
-
-	// const wLineDefInternal *vLineDef = level->GetLineDefs ();
-	// int cnt = level->LineDefCount();
-
-	wSegs *vLevelSeg = new wSegs;
-
-
-	for ( int i = 0; i < noSegs; i++ ) {
-
-		innerSeg = segs;
-		for ( int inner = i; inner < noSegs; inner++ ) {
-
-			// fill in details in our virtual seg, make tSeg point to that one
-
-			long dx = outerSeg->start.x - innerSeg->end.x;
-			long dy = outerSeg->start.y - innerSeg->end.y;
-
-
-			vSeg->start.x = outerSeg->start.x;
-			vSeg->start.y = outerSeg->start.y;
-
-			vSeg->end.x = innerSeg->end.x;
-			vSeg->end.y = innerSeg->end.y;
-			vSeg->Split = false;
-			vSeg->final = false;
-			vSeg->AliasFlip = false;
-
-			// vLineDef[cnt]->
-
-			// vSeg->CurrentSide = NULL;
-
-			/*
-			   UINT16      start;   
-			   UINT16      end;     
-			   UINT16      angle;   
-			   UINT16      lineDef; 
-			   UINT16      flip;    
-			   UINT16      offset;
-			   */
-
-			vLevelSeg->start = outerSeg->Data.start;
-			vLevelSeg->end = innerSeg->Data.end;
-			vLevelSeg->angle = (dy == 0) ? (BAM)((dx < 0) ? BAM180 : 0) :
-				(dx == 0) ? (BAM)((dy < 0) ? BAM270 : BAM90) :
-				(BAM)(atan2((float)dy, (float)dx) * BAM180 / M_PI + 0.5 * sgn(dy));
-
-			// vLevelSeg->lineDef = vLineDef; // dummy!
-			vLevelSeg->lineDef = 0xFFFF; // sentinel value...
-			vLevelSeg->flip = false;
-			vLevelSeg->offset = 0;
-
-			vSeg->Data.start = 	vLevelSeg->start;
-			vSeg->Data.end = 	vLevelSeg->end;
-			vSeg->Data.angle = 	vLevelSeg->angle;
-			vSeg->Data.flip = 	vLevelSeg->flip;
-			vSeg->Data.offset = 	vLevelSeg->offset;
-			vSeg->Data.lineDef = 	vLevelSeg->lineDef;
-
-
-			if (( (int) vSeg->start.x == (int) vSeg->end.x) && (( (int) vSeg->start.y == (int) vSeg->end.y))) {
-				// printf("abort");
-				continue;
-			}
-
-			testSeg = vSeg;
-
-			// go through all vertex pairs, make a fake seg
-
-			// if ( showProgress && (( i & 15 ) == 0 )) ShowProgress (); // obsolete, spammy
-			int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
-
-			alias = 0;
-
-			if (( alias == 0 ) || ( lineChecked [ alias ] == false )) {
-				lineChecked [ alias ] = -1;
-				count [0] = count [1] = count [2] = 0;
-
-				// ComputeStaticVariables ( testSeg );
-				// ComputeStaticVariables( // ERROR!
-
-				if (( fabs ( DX ) < EPSILON ) && ( fabs ( DY ) < EPSILON )) goto next;
-				if ( bestMetric < 0 ) for ( int j = 0; j < noSegs; j++ ) {
-					count [ WhichSide ( &segs [j], options ) + 1 ]++;
-				} else for ( int j = 0; j < noSegs; j++ ) {
-					count [ WhichSide ( &segs [j], options ) + 1 ]++;
-					if ( sCount > bestSplits ) goto next;
-				}
-
-				// Only consider SEG if it is not a boundary line
-				if ( lCount * rCount + sCount != 0 ) {
-					long metric = ( long ) lCount * ( long ) rCount;
-					if ( sCount ) {
-						long temp = X1 * sCount;
-						if ( X2 < temp ) metric = X2 * metric / temp;
-						metric -= ( X3 * sCount + X4 ) * sCount;
-					}
-
-					if ( (ANGLE & 0x0000) || ( ANGLE & 0x3FFF) || ( ANGLE & 0x7FFF) || ( ANGLE & 0xAFFF)) {
-						// metric--;
-						diagonal = false;
-					} else {
-						diagonal = true;
-					}
-
-					if ( metric == maxMetric ) {
-						// return testSeg;
-						return i;
-					}
-					if ( (metric > bestMetric) 
-							|| ((metric == bestMetric) && !diagonal) 
-							|| ((metric == bestMetric) && (bestHalf > (halfDistance - i)) ) 
-					   ) {
-						pSeg       = testSeg;
-						bestSplits = sCount + 2;
-						bestMetric = metric;
-						// bestHalf = halfDistance - i;
-					}
-				} else if ( alias != 0 ) {
-					// Eliminate outer edges of the map from here & down
-					*convexPtr++ = alias;
-				}
-			}
-#if defined ( DEBUG )
-			else if ( lineChecked [alias] > 0 ) {
-				count [0] = count [1] = count [2] = 0;
-				ComputeStaticVariables ( testSeg );
-				int side = WhichSide ( testSeg, options );
-				if (( fabs ( DX ) < EPSILON ) && ( fabs ( DY ) < EPSILON )) continue;
-				for ( int j = 0; j < noSegs; j++ ) {
-					switch ( WhichSide ( &segs [j], options  )) {
-						case SIDE_LEFT :
-							if ( side == SIDE_RIGHT ) {
-								WARNING ( "lineDef " << segs [j].Data.lineDef << " should not to the left of lineDef " << testSeg->Data.lineDef );
-							}
-							break;
-						case SIDE_SPLIT :
-							WARNING ( "lineDef " << segs [j].Data.lineDef << " should not be split by lineDef " << testSeg->Data.lineDef );
-							break;
-						case SIDE_RIGHT :
-							if ( side == SIDE_LEFT ) {
-								WARNING ( "lineDef " << segs [j].Data.lineDef << " should not to the right of lineDef " << testSeg->Data.lineDef );
-							}
-							break;
-						default :
-							break;
-					}
-				}
-			}
-#endif
-
-next:
-			// testSeg++;
-			innerSeg++;
-		}
-		outerSeg++;
-	}
-	// printf("split at %d,%d to %d,%d\n", (int) pSeg->start.x, (int) pSeg->start.y, (int) pSeg->end.x, (int) pSeg->end.y);
-
-	// return pSeg;
-
-	return 0; // WRONG!
-
-
-}
-
-/*
-   int initialAdaptiveCutoff = 7;
-   int adaptiveCutoff = initialAdaptiveCutoff;
-   int bestAdaptiveCutoff = initialAdaptiveCutoff;
-   */
-bool lowestSegCountFound = false;
 int bestSplitReduction = 3;
 int maxAdaptiveCutoff = 14;
 
@@ -3040,20 +2705,6 @@ restart:
 	level->PackVertices ();
 
 	// Put em here after vertex packing etc
-	if ( options->algorithm == 5 ) {
-		// Our fake reusable linedef :)
-		// level->AddLineDef();
-
-		// fakeLineDef = level->LineDefCount() -1 ;
-
-		// wLineDefInternal *lineDef = level->GetLineDefs ();
-
-		// level->extraData->lineDefsRendered[fakeLineDef] = false;
-
-		// lineDef [fakeLineDef].sideDef [0] = NO_SIDEDEF;
-		// lineDef [fakeLineDef].sideDef [1] = 1; // dummy
-		// lineDef [fakeLineDef].sideDef [1] = NO_SIDEDEF;
-	}
 
 	noVertices  = level->VertexCount ();
 	sectorCount = level->SectorCount ();
@@ -3102,189 +2753,49 @@ restart:
 		Status ( (char *) "Nodes (balance): " );
 	} else if ( options->algorithm == 3 ) {
 		Status ( (char *) "Nodes (quick): " );
-		/*} else if ( options->algorithm == 4 ) {
-		  char zokoutput [256];
-
-		  int max = maxAdaptiveCutoff;
-
-		  if (segCount < maxAdaptiveCutoff) {
-		  max = segCount;
-		  maxAdaptiveCutoff = max;
-		  }
-		  char sr[16];
-		  if ((options->SplitReduction % 4) == 3) {
-		  strcpy(sr, "b");
-		  } else if ((options->SplitReduction % 4) == 2) {
-		  strcpy(sr, "s");
-		  } else if ((options->SplitReduction % 4) == 1) {
-		  strcpy(sr, "l");
-		  } else {
-		  strcpy(sr, "n");
-		  }
+	} else if (options->algorithm == 5 ) {
+		Status ( (char *) "Nodes (wide): " );
+	}
 
 
-
-		  sprintf(zokoutput, "Nodes (adaptive) %s %d => %-d, best: %d:%d, Segs: %d SS: %d N: %d: ", sr, adaptiveCutoff, max, bestAdaptiveCutoff, bestSplitReduction, bestSegCount, bestSubSectorCount, bestNodeCount  );
-		  Status (zokoutput);
-
-		  }*/ 
-} else if (options->algorithm == 5 ) {
-	// Status ( (char *) "Nodes (v-pair): " );
-	// level->AddLineDef();
-	// fakeLineDef = level->LineDefCount();
-}
+	nodesLeft   = ( int ) ( FACTOR_NODE * level->SideDefCount ());
+	nodePool    = ( wNode * ) malloc( sizeof ( wNode ) * nodesLeft );
+	nodePoolEntries = nodesLeft; // zokum 2017
 
 
-nodesLeft   = ( int ) ( FACTOR_NODE * level->SideDefCount ());
-nodePool    = ( wNode * ) malloc( sizeof ( wNode ) * nodesLeft );
-//nodePool = ( wNode * ) malloc( sizeof ( wNode ) * 32767 );
-nodePoolEntries = nodesLeft; // zokum 2017
+	ssectorsLeft = ( int ) ( FACTOR_NODE * level->SideDefCount ());
+	ssectorPool  = ( wSSector * ) malloc ( sizeof ( wSSector ) * ssectorsLeft );
+	ssectorPoolEntries = ssectorsLeft;
 
+	int noSegs = segCount;
 
-ssectorsLeft = ( int ) ( FACTOR_NODE * level->SideDefCount ());
-ssectorPool  = ( wSSector * ) malloc ( sizeof ( wSSector ) * ssectorsLeft );
-ssectorPoolEntries = ssectorsLeft;
+	DepthProgress(-1, options);	
 
-int noSegs = segCount;
+	CreateNode ( 0, &noSegs, options, level);
 
-// CreateNode ( segStart, &noSegs, options, level); 
+	delete [] convexList;
+	if ( score ) delete [] score;
 
-DepthProgress(-1, options);	
+	// Clean up temporary buffers
+	Status ( (char *) "Cleaning up ... " );
+	delete [] sideInfo;
+	delete [] lineDefAlias;
+	delete [] lineChecked;
+	delete [] lineUsed;
+	delete [] keepUnique;
+	delete [] usedSector;
 
-CreateNode ( 0, &noSegs, options, level);
+	sideInfo = NULL;
 
-delete [] convexList;
-if ( score ) delete [] score;
+	level->NewVertices ( noVertices, GetVertices ());
+	level->NewNodes ( nodeCount, GetNodes ( nodePool, nodeCount ));
+	level->NewSubSectors ( ssectorCount, GetSSectors ( ssectorPool, ssectorCount ));
+	level->NewSegs ( segCount, GetSegs ());
 
-// Clean up temporary buffers
-Status ( (char *) "Cleaning up ... " );
-delete [] sideInfo;
-delete [] lineDefAlias;
-delete [] lineChecked;
-delete [] lineUsed;
-delete [] keepUnique;
-delete [] usedSector;
+	free ( newVertices );
+	free ( ssectorPool );
+	free ( nodePool );
 
-sideInfo = NULL;
-
-level->NewVertices ( noVertices, GetVertices ());
-level->NewNodes ( nodeCount, GetNodes ( nodePool, nodeCount ));
-level->NewSubSectors ( ssectorCount, GetSSectors ( ssectorPool, ssectorCount ));
-level->NewSegs ( segCount, GetSegs ());
-
-free ( newVertices );
-free ( ssectorPool );
-free ( nodePool );
-
-delete [] tempSeg;
-/*
-   if (options->algorithm == 4) {
-
-   if (lowestSegCountFound) {
-   return;
-   }
-
-   bool worse = false;
-
-   if (options->Metric == TREE_METRIC_SEGS) {
-   if (noSegs > bestSegCount) {	// abort if more segs than best
-   worse = true;
-   } else if (noSegs == bestSegCount) {
-   if (level->SubSectorCount() > bestSubSectorCount) { // abort if segs same and more subsectors
-   worse = true;
-   } else if (level->SubSectorCount() == bestSubSectorCount) { // abort if same segs, subsectors, but more nodes
-   if (level->NodeCount() >= bestNodeCount) {
-   worse = true;
-   }
-   }
-   }
-   } else if (options->Metric == TREE_METRIC_SUBSECTORS) {
-   if (level->SubSectorCount() > bestSubSectorCount) {
-   worse = true;
-   } else if (level->SubSectorCount() == bestSubSectorCount) {
-   if (noSegs > bestSegCount) {
-   worse = true;
-   } else if (noSegs == bestSegCount) {
-   if (level->NodeCount() >= bestNodeCount) {
-   worse = true;
-   }
-   }
-   }
-
-   } else if (options->Metric == TREE_METRIC_NODES) {
-   if (level->NodeCount() > bestNodeCount) {
-   worse = true;
-   } else if (level->NodeCount() == bestNodeCount) {
-   if (level->SubSectorCount() > bestSubSectorCount) {
-   worse = true;
-   } else if (level->SubSectorCount() == bestSubSectorCount) {
-   if (noSegs >= bestSegCount) {
-   worse = true;
-   }
-   }
-
-   }
-   }
-
-   if ((worse == false) && !earlyExit) {
-   bestSegCount = 		level->SegCount();
-   bestSubSectorCount = 	level->SubSectorCount();
-   bestNodeCount = 	level->NodeCount();
-   bestAdaptiveCutoff = 	adaptiveCutoff;
-   bestSplitReduction = 	options->SplitReduction;
-   }
-   */
-/*
-// if (level->SegCount() < bestSegCount) {
-if (level->SubSectorCount() < bestSegCount) {
-// bestSegCount = level->SegCount();
-bestSegCount = level->SubSectorCount();
-bestNod
-bestAdaptiveCutoff = adaptiveCutoff;
-bestSplitReduction = options->SplitReduction;
-// printf("Debug: best found: %d\n", bestAdaptiveCutoff);
-}
-}
-*/
-
-
-
-
-// no more restarts
-/*if (lowestSegCountFound) {
-  return;
-  }*/
-
-
-/*
-
-
-   if (adaptiveCutoff < maxAdaptiveCutoff) {
-
-   adaptiveCutoff++;
-   goto restart;
-   } else {
-
-   if (options->MultipleSplitMethods == 1) {
-   if (options->SplitReduction == 0) {
-   options->SplitReduction = 1;
-   goto clearCache;
-   } else if (options->SplitReduction == 1) {
-   options->SplitReduction = 2;
-   goto clearCache;
-   } else if (options->SplitReduction == 3) {
-   options->SplitReduction = 4;
-   goto clearCache;
-   }
-   }
-   lowestSegCountFound = true;
-   adaptiveCutoff = bestAdaptiveCutoff;
-   options->SplitReduction = bestSplitReduction;
-
-   bestSegCount = bestSubSectorCount = bestNodeCount = 32767;
-
-   goto clearCache;
-   }
-   }*/
+	delete [] tempSeg;
 
 }
