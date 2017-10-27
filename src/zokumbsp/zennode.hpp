@@ -160,10 +160,10 @@ struct sScoreInfo {
 
 #define sgn(a)		((0<(a))-((a)<0))
 
-#define BAM90		(( BAM ) 0x4000 )	// BAM:  90ψ ( «γ)
-#define BAM180		(( BAM ) 0x8000 )	// BAM: 180ψ ( ργ)
-#define BAM270		(( BAM ) 0xC000 )	// BAM: 270ψ (-«γ)
-#define BAM360		         0x10000 // one bit more than a 16bit 0xFFFF BAM
+#define BAM90		(( BAM ) 0x4000 )	// BAM:  90 degrees 
+#define BAM180		(( BAM ) 0x8000 )	// BAM: 180 degrees
+#define BAM270		(( BAM ) 0xC000 )	// BAM: 270 degrees
+#define BAM360		(( BAM ) 0xFFFF )       // BAM: inaccurate 360?
 #define M_PI        	3.14159265358979323846
 
 #define SIDE_UNKNOWN		-2

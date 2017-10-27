@@ -1199,6 +1199,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		totalSegs += curLevel->SegCount ();
 		oldTotalSegs += oldSegCount;
 
+		/*
 		cprintf ( "Nodes: %9d => %6d    ", oldNodeCount,  curLevel->NodeCount ());
 		if ( oldNodeCount ) {
 			double pct = ( 100.0 * (curLevel->NodeCount () / (double) oldNodeCount) );
@@ -1208,13 +1209,14 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		else {
 			cprintf ( "     -" );
 		}
+	
 		pct = ((double) curLevel->NodeCount() / 32878.0) * 100.0;
 		cprintf("   %6.2f%%", pct);
-
-		PrintTime ( nodeTime );
+		
 
 		//cprintf("\r\n");
 		cprintf("\r\n");
+		*/
 		GotoXY ( startX, startY );
 
 		cprintf ( "Segs: %10d => %6d ",  oldSegCount, curLevel->SegCount ());
@@ -1255,6 +1257,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		}
 		pct = ((double) curLevel->SubSectorCount() / 32768.0) * 100.0;
 		cprintf("   %6.2f%%", pct);
+
+		PrintTime ( nodeTime );
 
 		cprintf("\r\n");
 		GotoXY ( startX, startY );
