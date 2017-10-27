@@ -120,7 +120,6 @@ long long oldTotalBlockmap = 0;
 
 
 void printHelp () {
-<<<<<<< HEAD
     FUNCTION_ENTRY ( NULL, "printHelp", true );
 
     fprintf ( stdout, "Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}\n" );
