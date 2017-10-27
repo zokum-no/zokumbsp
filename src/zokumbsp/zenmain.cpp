@@ -76,7 +76,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10-beta2"
+#define ZOKVERSION		"1.0.10-beta6"
 #define ZOKVERSIONSHORT		"1.0.10"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2017 Kim Roar Foldøy Hauge";
@@ -120,6 +120,7 @@ long long oldTotalBlockmap = 0;
 
 
 void printHelp () {
+<<<<<<< HEAD
     FUNCTION_ENTRY ( NULL, "printHelp", true );
 
     fprintf ( stdout, "Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}\n" );
@@ -178,6 +179,108 @@ void printHelp () {
     fprintf ( stdout, " -t                %c - Don't write output file (test mode).\n", ! config.WriteWAD ? DEFAULT_CHAR : ' ' );
     fprintf ( stdout, "\n" );
     fprintf ( stdout, " level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN.\n" );
+=======
+	FUNCTION_ENTRY ( NULL, "printHelp", true );
+
+	fprintf ( stdout, "Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}\n" );
+	fprintf ( stdout, "\n" );
+	fprintf ( stdout, " -x+ turn on option   -x- turn off option  %c = default\n", DEFAULT_CHAR );
+	fprintf ( stdout, "\n" );
+// Geometry	
+
+	fprintf ( stdout, "Switches to change level geometry and optimize geometry.\n\n");
+	
+	fprintf ( stdout, "%c -g      Geometry pass, 1 suboption.\n\n", config.Geometry.Perform ? DEFAULT_CHAR : ' ' );
+
+	fprintf ( stdout, "    s=    Simplify collision geometry.\n");
+	fprintf ( stdout, "%c     0   No simplification.\n", (config.Geometry.Simplification == 0) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     1   Only if same sector.\n", (config.Geometry.Simplification == 1) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     2   Also 1-sided lines in different sectors.\n", (config.Geometry.Simplification == 2) ? DEFAULT_CHAR : ' ' );
+// Blockmap	
+	fprintf ( stdout, "\nSwitches to control BLOCKMAP strucure in a map.\n");
+
+//
+	fprintf ( stdout, "%c -b      Rebuild BLOCKMAP, 8 suboptions.\n", config.BlockMap.Rebuild ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   b     Build big 32bit BLOCKMAP, N/A.\n", config.BlockMap.blockBig ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   c     Compress BLOCKMAP.\n", config.BlockMap.Compress ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   h     Output BLOCKMAP data as HTML.\n", config.BlockMap.HTMLOutput ?  DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   i     Id-compatible BLOCKMAP. Sets 'o=1n=2g=0' and 's-r-'.\n\n", config.BlockMap.IdCompatible ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    o=    Offset configuration.\n");
+	fprintf ( stdout, "%c     0   ZenNode 0,0 offset BLOCKMAP.\n", config.BlockMap.OffsetZero ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     1   DooMBSP / BSP 8,8 offset BLOCKMAP.\n", config.BlockMap.OffsetEight ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     2   Best of 36 offset combinations.\n", config.BlockMap.OffsetThirtySix ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     3   Heuristic method to reduce from 65536 offsets.\n", config.BlockMap.OffsetHeuristic ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     4   Best of all 65536 offset combinations.\n", config.BlockMap.OffsetBruteForce ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     x,y Specify specific offsets.\n\n", config.BlockMap.OffsetUser ? DEFAULT_CHAR : ' ' );
+
+	fprintf ( stdout, "%c   r     Remove non-collidable lines from BLOCKMAP.\n\n", config.BlockMap.RemoveNonCollidable ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   s     Subset compress BLOCKMAP.\n\n", config.BlockMap.SubBlockOptimization ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    z=    Zero header configuration.\n");
+	fprintf ( stdout, "%c     0   No zero header.\n", (config.BlockMap.ZeroHeader == 0) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     1   Conventional zero header.\n", (config.BlockMap.ZeroHeader == 1) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     2   Zero footer.\n", (config.BlockMap.ZeroHeader == 2) ? DEFAULT_CHAR : ' ' );
+// Nodes
+
+	fprintf ( stdout, "\nSwitches to control node tree and related structures in a map.\n\n");
+
+	fprintf ( stdout, "%c -n      Rebuild NODES.\n\n", config.Nodes.Rebuild ? DEFAULT_CHAR : ' ' );
+	
+	fprintf ( stdout, "%c   b     Remove backside seg on on some linedefs.\n", config.BlockMap.autoDetectBacksideRemoval ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   c     Use unsafe cache to lower build time.\n", ( config.Nodes.Cache == 1 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   i     Ignore non-visible lineDefs.\n", config.Nodes.ReduceLineDefs ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   q     Don't display progress bar.\n", config.Nodes.Quiet ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   u     Ensure all sub-sectors contain only 1 sector.\n", config.Nodes.Unique ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    1     Alias for a=s.\n" );
+	fprintf ( stdout, "    2     Alias for a=d.\n" );
+	fprintf ( stdout, "    3     Alias for a=f.\n\n" );
+
+	fprintf ( stdout, "    a=    Partition Selection Algorithm.\n" );
+	fprintf ( stdout, "%c     s   Minimize splits.\n", ( config.Nodes.Method == 1 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     d   Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     f   Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "%c     m   Build mixed split/depth tree. Width support.\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
+
+	fprintf ( stdout, "    m=    Metric, what kind of node tree do you favor.\n" );
+	fprintf ( stdout, "%c     s   Favor fewer SEG splits.\n", ( config.Nodes.Metric == TREE_METRIC_SEGS ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     u   Favor fewer subsectors.\n\n", ( config.Nodes.Metric == TREE_METRIC_SUBSECTORS ) ? DEFAULT_CHAR : ' ' );
+
+	fprintf ( stdout, "    p=    Favor certain node selection picks for depth algorithm.\n");
+	fprintf ( stdout, "%c     z   No favoring, use old algorithm for a balanced tree.\n", ( config.Nodes.SplitReduction == 0 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     s   Favor nodes that do not split segs.\n", ( config.Nodes.SplitReduction == 1 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     u   Favor nodes that do not create subsectors.\n", ( config.Nodes.SplitReduction == 2 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     b   Favor both of the above equally.\n", (config.Nodes.SplitReduction == 3 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     m   Try all of the above.\n\n", (config.Nodes.MultipleSplitMethods == 1 ) ? DEFAULT_CHAR : ' ' );
+
+	fprintf ( stdout, "    s=    Split handling algorithm.\n" );
+	fprintf ( stdout, "%c     z   Ignore rounding problems.\n", ( config.Nodes.SplitHandling == 0 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     a   Avoid slime trail rounding problems.\n", ( config.Nodes.SplitHandling == 1 ) ? DEFAULT_CHAR : ' ' );
+
+	fprintf ( stdout, "    w=    How many sub trees to try wide-algorithms.\n" );
+	fprintf ( stdout, "%c     2   Default width and also minimum.\n", ( config.Nodes.Width == 2 ) ? DEFAULT_CHAR : ' ');
+	
+	// Reject
+	fprintf ( stdout, "\nSwitches to control REJECT resouce in a map.\n\n");
+
+	fprintf ( stdout, "%c -r      Rebuild REJECT resource.\n\n", config.Reject.Rebuild ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   z     Insert empty REJECT resource.\n", config.Reject.Empty  ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   f     Rebuild even if REJECT effects are detected.\n", config.Reject.Force ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   g     Use graphs to reduce LOS calculations.\n", config.Reject.UseGraphs ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   m{b}  Process RMB option file (.rej).\n", config.Reject.UseRMB ? DEFAULT_CHAR : ' ' );
+
+	fprintf ( stdout, "\nSwitches to control other options.\n\n");
+
+	fprintf ( stdout, "%c -t      Don't write output file (test mode).\n\n", ! config.WriteWAD ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "  -s=     Which output stats to show.\n");
+	fprintf ( stdout, "%c    m    Show a total for all computed levels.\n", config.Reject.UseRMB ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "\n" );
+	// Statistics
+
+	// Misc
+	fprintf ( stdout, " level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN.\n\n" );
+	fprintf ( stdout, "Example: zokumbsp -b- -r- -sm -na=mqi file.wad map01+map03\n");
+	fprintf ( stdout, "This rebuild nodes only, mixed tree, quiet, ignore non-visible lindefs.\n");
+	fprintf ( stdout, "It reads from file.wad, but only builds map01 and map03.\n");
+>>>>>>> zokum-no/master
 }
 
 bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
@@ -319,6 +422,101 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 			case 'I' : config.Nodes.ReduceLineDefs = setting;   break;
 			case 'B' : config.BlockMap.autoDetectBacksideRemoval = setting; break;
 			case 'A' :
+<<<<<<< HEAD
+=======
+				   if (ptr[0] && ptr[1]) {
+					   if (ptr[1] == 'S') {	// minimize splits
+						   config.Nodes.Method = 1;
+					   } else if (ptr[1] == 'D') { // minimize depths
+						   config.Nodes.Method = 2;
+					   } else if (ptr[1] == 'F') {
+						   config.Nodes.Method = 3;
+					   } else if (ptr[1] == 'M') {
+						   config.Nodes.Method = 5;
+					   } else {
+						   printf("error");
+						   return true;
+					   }
+					   ptr += 2;
+				   } else {
+					   printf("Bad node algorithm\n");
+					   return true;
+				   }
+				   break;
+			case 'M' :
+				if (ptr[0] && ptr[1]) {
+					if (ptr[1] == 'S') {
+						config.Nodes.Metric = TREE_METRIC_SEGS;
+					} else if (ptr[1] == 'U') {
+						config.Nodes.Metric = TREE_METRIC_SUBSECTORS;
+					} else {
+						printf("Unsupported metric\n");
+						return true;
+					}
+					ptr += 2;
+				}
+				break;
+			case 'P' :
+				if (ptr[0] && ptr[1]) {
+					if (ptr[1] == 'Z') {
+						config.Nodes.SplitReduction = 0x00;
+					} else if (ptr[1] == 'S') {
+						config.Nodes.SplitReduction = 0x01;
+					} else if (ptr[1] == 'U') {
+						config.Nodes.SplitReduction = 0x02;
+					} else if (ptr[1] == 'B') {
+						config.Nodes.SplitReduction = 0x03;
+					}
+					ptr += 2;
+				}
+				break;
+
+			case 'S' :
+				   if (ptr[0] && ptr[1]) {
+					   if (ptr[1] == 'Z') {	// do not care if it causes slime trilas
+						   config.Nodes.SplitHandling = 0;
+					   } else if (ptr[1] == 'A') { // Avoid slime trails based on epsilon value
+						   config.Nodes.SplitHandling = 1;
+					   } else if (ptr[1] == 'R') { // rotate segs to try to fudge!
+						   config.Nodes.SplitHandling = 2;
+					   } else {
+						   printf("Bad node seg split algorithm\n");
+						   return true;
+					   }
+					   ptr += 2;
+
+				   } else {
+					   printf("Bad node seg split algorithm\n");
+					   return true;
+				   }
+				   break;
+			case 'W' :
+				if (ptr[0] && ptr[1]) {
+					config.Nodes.Width = atoi(ptr+1);
+					ptr +=2;
+				}
+				break;
+				
+			default  : return true;
+		}
+
+		config.Nodes.Rebuild = true;
+	}
+	return false;
+}
+
+bool parseGEOMETRYArgs (char *&ptr, bool setting ) {
+	FUNCTION_ENTRY ( NULL, "parseGeometryArgs", true );
+
+	while ( *ptr ) {
+		int option = *ptr++;
+		bool setting = true;
+		if (( *ptr == '+' ) || ( *ptr == '-' )) {
+			setting = ( *ptr++ == '+' ) ? true : false;
+		}
+		switch ( option ) {
+			case 'S' :
+>>>>>>> zokum-no/master
 				if (ptr[0] && ptr[1]) {
 					if (ptr[1] == 'S') {
 						config.Nodes.Method = 1;
@@ -365,7 +563,34 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 			default  : return true;
 		}
 
+<<<<<<< HEAD
 		config.Nodes.Rebuild = true;
+=======
+
+}
+
+bool parseSTATISTICSArgs (char *&ptr, bool setting ) {
+	FUNCTION_ENTRY ( NULL, "parseSTATISTICSArgs", true );
+
+	while ( *ptr ) {
+		int option = *ptr++;
+		bool setting = true;
+		if (( *ptr == '+' ) || ( *ptr == '-' )) {
+			setting = ( *ptr++ == '+' ) ? true : false;
+		}
+		switch ( option ) {
+			case 'E' : config.Statistics.ShowSectors = setting;     break;
+			case 'L' : config.Statistics.ShowLineDefs = setting;	break;
+			case 'M' : config.Statistics.ShowTotals = setting;	break;
+			case 'N' : config.Statistics.ShowNodes = setting;	break;
+			case 'S' : config.Statistics.ShowSubSectors = setting;  break;
+			case 'T' : config.Statistics.ShowThings = setting; 	break;
+			case 'U' : config.Statistics.ShowTopSummary = setting;	break;
+			case 'V' : config.Statistics.ShowVertices = setting;	break;
+			default  : return true;
+		}
+		// config.Reject.Rebuild = true;
+>>>>>>> zokum-no/master
 	}
 	return false;
 }
@@ -927,14 +1152,13 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 	int rows = 0;
 
-	// sMapExtraData *extraData = new sMapExtraData;
-
 	startX = 4;
 
 	if ( config.BlockMap.Rebuild || config.Nodes.Rebuild || config.Reject.Rebuild ) {
 		UINT32 preTime = CurrentTime ();
 
 		int oldSectorCount = curLevel->SectorCount ();
+		// int oldSubSectorCount = curLevel->SubSectorCount ();
 		int oldLineCount = curLevel->LineDefCount();
 
 		MapExtraData(curLevel, &config);
@@ -943,8 +1167,24 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		// GotoXY ( startX, startY );
 		//cprintf ( "PREPROCESS - ");
 
+<<<<<<< HEAD
 		Status ( (char *) "" );
 		GotoXY ( startX, startY );
+=======
+		double pct;
+
+		if (config.Statistics.ShowLineDefs) {
+			Status ( (char *) "" );
+			GotoXY ( startX, startY );
+
+			cprintf ( "LineDefs: %6d => %6d ", (int) oldLineCount,  curLevel->LineDefCount ());
+
+			if ( oldLineCount ) {
+				cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->LineDefCount () / (float) oldLineCount ));
+			} else {
+				cprintf ( " - " );
+			}
+>>>>>>> zokum-no/master
 
 		cprintf ( "Linedefs: %6d => %6d ", (int) oldLineCount,  curLevel->LineDefCount ());
 
@@ -1016,6 +1256,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		int oldNodeCount = curLevel->NodeCount ();
 		int oldSegCount  = curLevel->SegCount ();
+		int oldSubSectorCount = curLevel->SubSectorCount ();
 
 		bool *keep = new bool [ curLevel->SectorCount ()];
 		memset ( keep, config.Nodes.Unique, sizeof ( bool ) * curLevel->SectorCount ());
@@ -1028,6 +1269,12 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		options.ignoreLineDef  = NULL;
 		options.dontSplit      = NULL;
 		options.keepUnique     = keep;
+		options.SplitHandling = config.Nodes.SplitHandling;
+		options.SplitReduction = config.Nodes.SplitReduction;
+		options.MultipleSplitMethods = config.Nodes.MultipleSplitMethods;
+		options.Cache =		config.Nodes.Cache;
+		options.Metric = 	config.Nodes.Metric;
+		options.Width =		config.Nodes.Width;
 
 		ReadCustomFile ( curLevel, myList, &options );
 
@@ -1049,6 +1296,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		totalSegs += curLevel->SegCount ();
 		oldTotalSegs += oldSegCount;
 
+		/*
 		cprintf ( "Nodes: %9d => %6d    ", oldNodeCount,  curLevel->NodeCount ());
 		if ( oldNodeCount ) {
 			double pct = ( 100.0 * (curLevel->NodeCount () / (double) oldNodeCount) );
@@ -1058,13 +1306,14 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		else {
 			cprintf ( "     -" );
 		}
+	
 		pct = ((double) curLevel->NodeCount() / 32878.0) * 100.0;
 		cprintf("   %6.2f%%", pct);
-
-		PrintTime ( nodeTime );
+		
 
 		//cprintf("\r\n");
 		cprintf("\r\n");
+		*/
 		GotoXY ( startX, startY );
 
 		cprintf ( "Segs: %10d => %6d ",  oldSegCount, curLevel->SegCount ());
@@ -1094,7 +1343,23 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		// PrintTime ( nodeTime );
 		cprintf ( "\r\n" );
-		GetXY ( &dummyX, &startY );
+		GotoXY ( startX, startY );
+
+		cprintf ( "Subsecs: %7d => %6d ",  oldSubSectorCount, curLevel->SubSectorCount());
+		if ( oldSubSectorCount ) {
+			pct = ( 100.0 * ( (double) curLevel->SubSectorCount () / (double) oldSubSectorCount) );
+			cprintf ( "   %6.2f%%", pct);
+		} else {
+			cprintf ( "     -" );
+		}
+		pct = ((double) curLevel->SubSectorCount() / 32768.0) * 100.0;
+		cprintf("   %6.2f%%", pct);
+
+		PrintTime ( nodeTime );
+
+		cprintf("\r\n");
+		GotoXY ( startX, startY );
+
 	}
 
 	if ( config.Reject.Rebuild ) {
@@ -1114,7 +1379,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			GotoXY ( startX, startY );
 			//cprintf ( "Reject:  %3ld.%1ld%% =>%3ld.%1ld%%  Sectors: %5d", newEfficiency / 100, newEfficiency % 100,
 			//		oldEfficiency / 100, oldEfficiency % 100, curLevel->SectorCount ());
-			cprintf ( "Reject:  %3ld.%1ld%% =>%3ld.%1ld%%", newEfficiency / 100, newEfficiency % 100, oldEfficiency / 100, oldEfficiency % 100);
+			cprintf ( "Reject:  %3ld.%02ld%% =>%3ld.%02ld%%", newEfficiency / 100, newEfficiency % 100, oldEfficiency / 100, oldEfficiency % 100);
 
 			cprintf ( "    %6.2f%%         -", ((double) newEfficiency / (double) oldEfficiency) * 100.0);
 
@@ -1150,6 +1415,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	}
 	// delete [] curLevel->extraData->lineDefsUsed;
 	// delete curLevel->extraData;
+	
 	delete curLevel;
 
 	return changed;
@@ -1313,11 +1579,17 @@ int main ( int argc, const char *argv [] ) {
 	config.BlockMap.autoDetectBacksideRemoval = false;
 
 	config.Nodes.Rebuild        = true;
-	config.Nodes.Method         = 1;
+	config.Nodes.Method         = 2;
 	config.Nodes.Thoroughness   = 1;
 	config.Nodes.Quiet          = isatty ( fileno ( stdout )) ? false : true;
 	config.Nodes.Unique         = false;
 	config.Nodes.ReduceLineDefs = false;
+	config.Nodes.SplitHandling  = 1;
+	config.Nodes.SplitReduction = 3;
+	config.Nodes.MultipleSplitMethods = 0;
+	config.Nodes.Cache 	    = 1;
+	config.Nodes.Metric         = TREE_METRIC_SUBSECTORS;
+	config.Nodes.Width          = 2;
 
 	config.Reject.Rebuild       = true;
 	config.Reject.Empty         = false;
@@ -1422,7 +1694,7 @@ int main ( int argc, const char *argv [] ) {
 
 	} while ( argv [argIndex] );
 
-	PrintStats ( totalLevels, totalTime, totalUpdates );
+	PrintStats ( totalLevels, totalTime, totalUpdates - 1 );// Why -1?
 	RestoreConsoleSettings ();
 
 	return 0;

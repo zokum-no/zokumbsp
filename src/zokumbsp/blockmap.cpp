@@ -433,14 +433,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 	char zokoutput[256];
 
 	// Stuff that works for all blockmaps, no matter what offset.
-	//sBlockMapExtraData *extraData = new (sBlockMapExtraData);
-	
 	sMapExtraData *extraData = level->extraData;
-
-	// populate it with data
-	// BlockMapExtraData(level, extraData, options);
-
-	// one location to set all the DoomBSP-compability options
 
 	bool eight;
 
@@ -717,6 +710,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 				blockSize = sizeof ( wBlockMap ) + totalSize * sizeof ( INT16 ) + blockListSize * sizeof ( INT16 );
 			}
 
+			// Is the new blockmap smaller than the old best one?
 			if (bestBlockSize > blockSize) {
 				earlyExitSize = blockListSize + totalSize;
 				if (bestBlockMap) {
@@ -742,7 +736,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 				bestBlockList = blockList;
 				bestBlockSize = blockSize;
 				bestBlockListSize = blockListSize;
-			} else {
+			} else { // new blockmap was bigger, discard it.
 				if (oldBlockMap) {
 					DeleteBLOCKMAP (oldBlockMap, oldBlockListSize);
 				}

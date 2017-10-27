@@ -213,7 +213,17 @@ Section 05: Linedef specials
 ============================
 
 ZokumBSP has additional linedef specials that change how the map is rendered
-and plays.
+and plays. This is a quick list of all the specials and their numeric value.
+The sections further down will describe them in more detail.
+
+Numeric Effect
+48      Exactly like regular doom, except tag decides scroll speed.
+1048    Remote scroll nearest wall with same tag.
+1080    Rotate the rendered wall N degrees, where degrees is taken from tag.
+1081    Set the wall rotation to a hardcoded degree, degree taken from tag.
+1082    Rotate the rendered wall N BAMs, BAMs taken from tag.
+1083    Set the wall rotation to a hardoced BAM, taken from tag.
+1084    Do not render seg on the second side of a linedef.
 
 05:01 Seg manipulation specials
 -------------------------------
@@ -239,7 +249,27 @@ Numeric Effect
 
 1084    Do not render seg on the second side of a linedef.
 
-05:02 Floor specials speed differences
+05:02 Scrolling wall specials / changes
+---------------------------------------
+
+This feature is available in version 1.0.10+ It should be noted that there is
+a maximum limit of 64 scrolling walls in a map. Speeding it up to 3x uses
+three times as many of the 64 maximum entries.
+
+'48' Scrolling wall, in addition tag sets speed.
+
+In addition to the normal behaviour of a scrolling wall, one can now adjust
+the scrool speed by setting the tag of the wall. Setting it to two will make
+it scroll twice as fast as a normal scroller, 3x 3 times as fast etc.
+
+'1048' Remote scroll nearest wall with same tag.
+
+This one works similar to the regular scroller, 48, except it allows for that
+wall to have an special. One can make scrolling doors, switches etc. The
+chosen lindef is the one that is nearest the linedef with the 1048 type. The
+distance is the absolute distance from the starting vertex.
+
+05:03 Floor specials speed differences
 --------------------------------------
 
 The normal speed is the speed most floors move up or down at, however, some
@@ -272,8 +302,17 @@ reject maps are done. It will find the basic dimensions of the map and will
 also apply some geometry changes used by later steps like the blockmap, nodes
 and reject steps to produce a smaller blockmap and better node tree etc.
 
+06:01 Geometry pass command line options
+----------------------------------------
+
 Currently the only geometry change possible is the collission geometry step,
 which is outlined in the blockmap builder chapter.
+
+06:02 What does the geometry pass do?
+-------------------------------------
+
+Many of the extended linedef specials that affects segs and scrolling walls
+are handled at this step.
 
 Section 07: Blockmap builder
 ============================

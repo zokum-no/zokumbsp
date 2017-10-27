@@ -194,7 +194,8 @@ struct wBlockMap32 {
 struct sMapExtraData {
 	bool *lineDefsCollidable;
 	bool *lineDefsRendered;
-	bool *lineDefsFrontsideOnly;
+	int *lineDefsSegProperties;
+	bool *lineDefsSpecialEffect;
 	bool *sectorsActive;
 	int rightMostVertex;
 	int leftMostVertex;

@@ -300,7 +300,9 @@ void DoomLevel::CleanUp ()
 
 	delete [] this->extraData->lineDefsCollidable;
 	delete [] this->extraData->lineDefsRendered;
-	delete [] this->extraData->lineDefsFrontsideOnly;
+	delete [] this->extraData->lineDefsSegProperties;
+	delete [] this->extraData->lineDefsSpecialEffect;
+	delete [] this->extraData->sectorsActive;
 	delete this->extraData;
 
     m_ThingData   = NULL;
@@ -823,24 +825,28 @@ void DoomLevel::AddLineDef(void) {
 	// add a new entry to the extraData structures
 
 	bool *lineDefsRenderedNew = new bool [m_LineDef.elementCount];
-	bool *lineDefsFrontsideOnlyNew = new bool [m_LineDef.elementCount];
-	bool *lineDefsCollidableNew =  new bool [m_LineDef.elementCount];
+	int *lineDefsSegPropertiesNew = new int [m_LineDef.elementCount];
+	bool *lineDefsCollidableNew = new bool [m_LineDef.elementCount];
+	bool *lineDefsSpecialEffectNew = new bool [m_LineDef.elementCount];
 /*
 	memcpy(lineDefsRenderedNew, this->extraData->lineDefsRendered, m_LineDef.elementCount -1 );
 	memcpy(lineDefsCollidableNew, this->extraData->lineDefsCollidable, m_LineDef.elementCount -1 );
 */
 	for (int i = 0; i != m_LineDef.elementCount - 1 ; i++) {
 		lineDefsRenderedNew[i] = this->extraData->lineDefsRendered[i];
-		lineDefsFrontsideOnlyNew[i] = this->extraData->lineDefsFrontsideOnly[i];
+		lineDefsSegPropertiesNew[i] = this->extraData->lineDefsSegProperties[i];
 		lineDefsCollidableNew[i] = this->extraData->lineDefsCollidable[i];
+		lineDefsSpecialEffectNew[i] = this->extraData->lineDefsSpecialEffect[i];
 	}
 
 	delete [] this->extraData->lineDefsRendered;
 	delete [] this->extraData->lineDefsCollidable;
+	delete [] this->extraData->lineDefsSpecialEffect;
 
 	this->extraData->lineDefsRendered = lineDefsRenderedNew;
-	this->extraData->lineDefsFrontsideOnly = lineDefsFrontsideOnlyNew;
+	this->extraData->lineDefsSegProperties = lineDefsSegPropertiesNew;
 	this->extraData->lineDefsCollidable = lineDefsCollidableNew;
+	this->extraData->lineDefsSpecialEffect = lineDefsSpecialEffectNew;
 
 	m_LineDef.dataSize = m_LineDef.elementCount * m_LineDef.elementSize;
 
@@ -851,6 +857,14 @@ void DoomLevel::AddLineDef(void) {
 	m_LineDef.rawData = new char [ LineDefCount () * m_LineDef.elementSize ];
 
 	m_LineDef.changed = true;
+
+	// Zero out some of the new fields...
+	wLineDefInternal *lineDef = this->GetLineDefs();
+	int latestLine = this->LineDefCount() - 1;
+
+	lineDef[latestLine].tag = 0;
+	lineDef[latestLine].type = 0;
+	lineDef[latestLine].flags = 0;
 
 }
 
@@ -870,9 +884,15 @@ void DoomLevel::TrimLineDefs(void) {
 
 			this->extraData->lineDefsCollidable[i - adjust] = this->extraData->lineDefsCollidable[i];
 			this->extraData->lineDefsRendered[i - adjust] = this->extraData->lineDefsRendered[i];
-			this->extraData->lineDefsFrontsideOnly[i - adjust] = this->extraData->lineDefsFrontsideOnly[i];
+			this->extraData->lineDefsSegProperties[i - adjust] = this->extraData->lineDefsSegProperties[i];
+			this->extraData->lineDefsSpecialEffect[i - adjust] = this->extraData->lineDefsSpecialEffect[i];
 		}
 		if ((this->extraData->lineDefsRendered[i] == false) && (this->extraData->lineDefsCollidable[i] == false) ) {
+			
+			// Certain lines aren't rendered or added to the segs list, but are still used for linedef type fx.
+			if (this->extraData->lineDefsSpecialEffect[i]) {
+				continue;
+			}
 			adjust++;
 			// printf("removing %d\n", i);
 		} else {

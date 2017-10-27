@@ -69,8 +69,13 @@ struct sNodeOptions {
 	bool  Quiet;
 	bool  Unique;
 	bool  ReduceLineDefs;
+	int   SplitHandling;
+	int   SplitReduction;
+	int   MultipleSplitMethods;
+	int   Cache;
+	int   Metric;
+	int 	Width;
 };
-
 
 struct sBlockList {
 	int     firstIndex;			// Index of 1st blockList element matching this one
@@ -116,6 +121,13 @@ struct SEG {
 	sVertex         end;
 };
 
+struct vertexPair {
+	int startx;
+	int starty;
+	int endx;
+	int endy;
+};
+
 struct sBSPOptions {
 	int       algorithm;
 	int 	thoroughness;
@@ -124,6 +136,12 @@ struct sBSPOptions {
 	bool     *ignoreLineDef;		// linedefs that can be left out
 	bool     *dontSplit;		// linedefs that can't be split
 	bool     *keepUnique;		// unique sector requirements
+	int	SplitHandling;
+	int	SplitReduction;
+	int     MultipleSplitMethods;
+	int     Cache;
+	int	Metric;
+	int	Width;
 };
 
 struct sScoreInfo {
@@ -134,12 +152,18 @@ struct sScoreInfo {
 	int       total;
 };
 
+#define TREE_METRIC_SUBSECTORS 0
+#define TREE_METRIC_SEGS 1
+#define TREE_METRIC_DEPTH 2 // not added yet
+
+#define TREE_METRIC_NODES 99 // useless, same as subsector in practice
+
 #define sgn(a)		((0<(a))-((a)<0))
 
-#define BAM90		(( BAM ) 0x4000 )	// BAM:  90ψ ( «γ)
-#define BAM180		(( BAM ) 0x8000 )	// BAM: 180ψ ( ργ)
-#define BAM270		(( BAM ) 0xC000 )	// BAM: 270ψ (-«γ)
-#define BAM360		         0x10000 // one bit more than a 16bit 0xFFFF BAM
+#define BAM90		(( BAM ) 0x4000 )	// BAM:  90 degrees 
+#define BAM180		(( BAM ) 0x8000 )	// BAM: 180 degrees
+#define BAM270		(( BAM ) 0xC000 )	// BAM: 270 degrees
+#define BAM360		(( BAM ) 0xFFFF )       // BAM: inaccurate 360?
 #define M_PI        	3.14159265358979323846
 
 #define SIDE_UNKNOWN		-2
@@ -217,6 +241,39 @@ struct sRejectOptions {
 	const sRejectOptionRMB  *rmb;
 };
 
+<<<<<<< HEAD
+=======
+struct sGeometryOptions {
+	bool			Perform;
+	int			Simplification;
+};
+
+struct sStatisticsOptions {
+	bool			ShowVertices;
+	bool			ShowLineDefs;
+	bool			ShowSectors;
+	bool			ShowThings;
+	bool			ShowTotals;
+	bool			ShowTopSummary;
+	bool			ShowSubSectors;
+	bool			ShowNodes;
+};
+
+struct sSegPcikTree;
+
+// Node build specific decision tree
+struct sSegPickTree {
+	SEG		*segs; 		// Pointer to n amount of segs, NULL-terminated
+	sSegPickTree 	*picks;		// pointer to the result of the various picks
+	double		*score;		// the 'score' of the various picks
+	int 		*splits;	// how many segs does this solution split
+	int 		algorithm; 	// Which algorithm did we use to pick these segs
+	int 		bestSeg;   	// Which element is the currently best one, this may not be the first one!
+	int		subSplits;	
+	sSegPickTree	*parent; 	
+};
+
+>>>>>>> zokum-no/master
 bool ParseOptionRMB ( int, const char *, sRejectOptionRMB * );
 
 // ----- C99 routines from <math.h> Required by ZenNode -----
