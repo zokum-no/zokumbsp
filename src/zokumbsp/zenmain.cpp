@@ -56,7 +56,7 @@
 #elif defined ( __LINUX__ )
     #include <unistd.h>
 #else
-    #error This platform is not supported
+    // #error This platform is not supported
 #endif
 
 #if defined ( __BORLANDC__ )
@@ -76,12 +76,12 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10-beta6"
+#define ZOKVERSION		"1.0.10-beta7"
 #define ZOKVERSIONSHORT		"1.0.10"
 
-const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2017 Kim Roar Foldøy Hauge";
+const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2018 Kim Roar Foldøy Hauge";
 const char BANNER []            = "Based on: ZenNode Version " ZENVERSION " (c) 1994-2004 Marc Rousseau";
-const char CONFIG_FILENAME []   = "ZenNode.cfg";
+const char CONFIG_FILENAME []   = "zokumbsp.cfg";
 const int  MAX_LEVELS           = 99;
 const int  MAX_OPTIONS          = 256;
 const int  MAX_WADS             = 32;
@@ -178,7 +178,8 @@ void printHelp () {
 	fprintf ( stdout, "%c     s   Minimize splits.\n", ( config.Nodes.Method == 1 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     d   Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     f   Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
-	fprintf ( stdout, "%c     m   Build mixed split/depth tree. Width support.\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "%c     a   Adaptive tree. N/A\n", ( config.Nodes.Method == 4 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "%c     m   Multiple trees. N/A\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
 
 	fprintf ( stdout, "    m=    Metric, what kind of node tree do you favor.\n" );
 	fprintf ( stdout, "%c     s   Favor fewer SEG splits.\n", ( config.Nodes.Metric == TREE_METRIC_SEGS ) ? DEFAULT_CHAR : ' ' );
@@ -192,8 +193,11 @@ void printHelp () {
 	fprintf ( stdout, "%c     m   Try all of the above.\n\n", (config.Nodes.MultipleSplitMethods == 1 ) ? DEFAULT_CHAR : ' ' );
 
 	fprintf ( stdout, "    s=    Split handling algorithm.\n" );
-	fprintf ( stdout, "%c     z   Ignore rounding problems.\n", ( config.Nodes.SplitHandling == 0 ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     a   Avoid slime trail rounding problems.\n", ( config.Nodes.SplitHandling == 1 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     z   Ignore rounding problems. N/A\n", ( config.Nodes.SplitHandling == 0 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     a   Avoid slime trail rounding problems. N/A\n", ( config.Nodes.SplitHandling == 1 ) ? DEFAULT_CHAR : ' ' );
+
+	fprintf ( stdout, "    t=    Tuning factor, varies from algorith to algorithm.\n" );
+	fprintf ( stdout, "      100 Default for adaptive tree.\n");
 
 	fprintf ( stdout, "    w=    How many sub trees to try wide-algorithms.\n" );
 	fprintf ( stdout, "%c     2   Default width and also minimum.\n", ( config.Nodes.Width == 2 ) ? DEFAULT_CHAR : ' ');
@@ -369,6 +373,8 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 						   config.Nodes.Method = 2;
 					   } else if (ptr[1] == 'F') {
 						   config.Nodes.Method = 3;
+					   } else if (ptr[1] == 'A') {
+                                                   config.Nodes.Method = 4;
 					   } else if (ptr[1] == 'M') {
 						   config.Nodes.Method = 5;
 					   } else {
@@ -428,10 +434,31 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 					   return true;
 				   }
 				   break;
+			case 'T' :
+				if (ptr[0] && ptr[1]) {
+					config.Nodes.Tuning = atoi(ptr+1);
+					if (config.Nodes.Tuning > 9) {
+                                                ptr+=3;
+                                        } else if (config.Nodes.Tuning > 99) {
+                                                ptr+=4;
+					} else if (config.Nodes.Tuning > 999) {
+						ptr+=5;
+                                        } else {
+                                                ptr+=2;
+                                        }
+				}
+				break;
+
 			case 'W' :
 				if (ptr[0] && ptr[1]) {
 					config.Nodes.Width = atoi(ptr+1);
-					ptr +=2;
+					if (config.Nodes.Width > 9) {
+						ptr+=3;
+					} else if (config.Nodes.Width > 99) {
+						ptr+=4;
+					} else {
+						ptr+=2;
+					}
 				}
 				break;
 				
@@ -1178,6 +1205,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		options.Cache =		config.Nodes.Cache;
 		options.Metric = 	config.Nodes.Metric;
 		options.Width =		config.Nodes.Width;
+		options.Tuning = 	config.Nodes.Tuning;
 
 		ReadCustomFile ( curLevel, myList, &options );
 
@@ -1494,6 +1522,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Nodes.Cache 	    = 1;
 	config.Nodes.Metric         = TREE_METRIC_SUBSECTORS;
 	config.Nodes.Width          = 2;
+	config.Nodes.Tuning		= 100;
 
 	config.Reject.Rebuild       = true;
 	config.Reject.Empty         = false;

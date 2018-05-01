@@ -74,7 +74,8 @@ struct sNodeOptions {
 	int   MultipleSplitMethods;
 	int   Cache;
 	int   Metric;
-	int 	Width;
+	int  	Width;
+	int 	Tuning;
 };
 
 struct sBlockList {
@@ -142,6 +143,7 @@ struct sBSPOptions {
 	int     Cache;
 	int	Metric;
 	int	Width;
+	int 	Tuning;
 };
 
 struct sScoreInfo {

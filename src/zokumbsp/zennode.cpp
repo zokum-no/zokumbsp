@@ -197,7 +197,7 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 	FUNCTION_ENTRY ( NULL, "CreateSegs", true );
 
 
-	printf("\n");
+	// printf("\n");
 
 	// Get a rough count of how many SideDefs we're starting with
 	segCount = maxSegs = 0;
@@ -1183,7 +1183,10 @@ retry:
 	   */
 	// Resort the SEGS (right followed by left) and do the splits as necessary
 	//SortSegs ( pSeg, seg, noSegs, noLeft, noRight, options );
-	SortSegs ( partitionOffset, seg, noSegs, noLeft, noRight, options );
+	
+	if (partitionOffset != -1) {
+		SortSegs ( partitionOffset, seg, noSegs, noLeft, noRight, options );
+	}
 
 	// Make sure the set of SEGs is still convex after we convert to integer coordinates
 	//if (( pSeg == NULL ) && ( check == true )) {
@@ -1567,12 +1570,9 @@ next:
 	}
 
 	// SEG *pSeg = noScores ? &segs [ score [0].index ] : NULL;
-
 	// SEG *pSeg = noScores ? &segs [ score [*width].index ] : NULL;
 
 	if (noScores == 0) {
-		*width = 999;
-		wideSegs[0] = -1;
 		return -1;
 	}
 	
@@ -1582,14 +1582,27 @@ next:
 	}
 	*/
 
-
-	if (noScores == (*width + 1)) {
-		*width = 999;
+/*
+	if (noScores == (*width)) {
+		// *width = 999;
+		printf("returning %d\n", score [0].index);
+		return score [0].index;
+	}
+*/
+	if (noScores < (*width)) {
 		return score [0].index;
 	}
 
 
-	return score [*width].index;
+
+	if (*width != 1) {
+		// printf("ooops %d !", *width);
+	}
+
+
+	// printf("returning %d\n", score [*width - 1 ].index); // arrays start at 0, unlike width
+	return score [*width - 1].index;
+
 
 	// cache this!
 	int j = 0;
@@ -1604,8 +1617,9 @@ next:
 		j++;
 	}
 
-	if ((*width + 1) == noScores) {
-		*width = options->Width /*MAX_WIDTH*/ + 1;
+	if ((*width) == noScores) {
+		// *width = options->Width /*MAX_WIDTH*/ + 1;
+		*width = options->Width +1;
 	}
 
 	// zokum 2017, sept
@@ -1773,17 +1787,24 @@ static int AlgorithmMulti( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 
 	int returnSeg;
 	static wLineDefInternal *oldLine;
-
-	if (*width == 0) {
-		returnSeg = AlgorithmBalancedTree (segs, noSegs, options, level, width, wideSegs );
-	/*} else if (*width == 1) {
+/*
+	if (*width == 2) {
 		returnSeg = AlgorithmFewerSplits (segs, noSegs, options, level, width, wideSegs );
-	*/ } else {
-		int widthSmaller = *width;
-		returnSeg = AlgorithmBalancedTree (segs, noSegs, options, level, &widthSmaller, wideSegs );	
 	}
+*/
+	returnSeg = AlgorithmBalancedTree (segs, noSegs, options, level, width, wideSegs );
+
 	return returnSeg;
 }
+
+static int AlgorithmAdaptive( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs) {
+	if (noSegs > options->Tuning) {
+		return AlgorithmBalancedTree (segs, noSegs, options, level, width, wideSegs );
+	} else {
+		return AlgorithmFewerSplits (segs, noSegs, options, level, width, wideSegs );
+	}
+}
+
 
 //----------------------------------------------------------------------------
 //  Check to see if the list of segs contains more than one sector and at least
@@ -2127,17 +2148,11 @@ int nodeDepth = 0;
 int depthProgress[PROGRESS_DEPTH] = {0, 0, 0, 0, 0, 0, 0};
 
 long progMax = 0;
-int cutoff = 3;
+int cutoff = 1;
 
 int MaxWidth(int depth, sBSPOptions *options) {
 
-	int ret = options->Width - (depth / cutoff);
-
-	if (ret > 0) {
-		return ret;
-	} else {
-		return 1;
-	}
+	return options->Width;
 }
 
 
@@ -2199,8 +2214,8 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 
 	// insert code here to try different partitions?
 
-	int width = 0; // we do at least one sub tree :)
-	int maxWidth = MaxWidth(nodeDepth, options );
+	int width = 1; // we start at tree 1, not 0
+	int maxWidth = MaxWidth(nodeDepth, options ); // 1 or higher :)
 
 	// backup our nodes, segs and sub sectors
 
@@ -2311,9 +2326,9 @@ differentpartition:
 
 	segs = &segStart[inSeg];
 
-	if (width != 0) {
+	if (width != 1) {
 		// restore data from our saved backup
-		
+
 		nodeCount = nodeCountBackup;
 		*noSegs = noSegsBackup;
 		ssectorCount = ssectorCountBackup;
@@ -2354,44 +2369,31 @@ differentpartition:
 
 	if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight, options, level, &width, wideSegs) == false )) {
 
-		if ((width > 0) && (width != 999)) {
-			printf("\nerror %d\n", width);
-			width = -1;
-		} else {
-
-			// cleanup!
-			if (maxWidth > 1) {
-				delete [] segsStartBackup;
-				delete [] convexListBackup;
-				delete [] lineUsedBackup;
-				delete [] lineCheckedBackup;
-				delete [] tempSegBackup;
-				delete [] sideInfoBackup;
-			}
-
-			nodeDepth--;
-
-			/*
-			   if (earlyExit) {
-
-			   return 0;
-			   }
-			   */
-
-			convexPtr = cptr;
-			if ( KeepUniqueSubsectors ( segs, *noSegs ) == true ) {
-				ArrangeSegs ( segs, *noSegs );
-				return ( UINT16 )  GenerateUniqueSectors ( segs, *noSegs );
-			}
-			// if ( showProgress ) ShowDone ();
-			return ( UINT16 ) ( 0x8000 | CreateSSector ( segs, *noSegs ));
+		// cleanup!
+		if (maxWidth > 1) {
+			delete [] segsStartBackup;
+			delete [] convexListBackup;
+			delete [] lineUsedBackup;
+			delete [] lineCheckedBackup;
+			delete [] tempSegBackup;
+			delete [] sideInfoBackup;
 		}
+
+		nodeDepth--;
+
+		convexPtr = cptr;
+		if ( KeepUniqueSubsectors ( segs, *noSegs ) == true ) {
+			ArrangeSegs ( segs, *noSegs );
+			return ( UINT16 )  GenerateUniqueSectors ( segs, *noSegs );
+		}
+		// if ( showProgress ) ShowDone ();
+		return ( UINT16 ) ( 0x8000 | CreateSSector ( segs, *noSegs ));
 	}
 
 	bool betterTree = false;
 
-	
-	// we set width to -1 IF we have a fauly non-first line pick.
+
+	// we set width to -1 IF we have a faulty non-first line pick.
 	if (width != -1) {
 
 		wNode tempNode;
@@ -2464,15 +2466,18 @@ differentpartition:
 				betterTree = true;
 			} 
 		} else {
+			// printf("huh\n");
 			betterTree = true;
 		}
 
-		if (width > 0) {
-			// betterTree = false;
+		if (betterTree) {
+			// printf("Found a better tree!\n");
 		}
 
 		// Was it a better set of sub trees, and do we have more to check?
-		if (betterTree && (width != (maxWidth - 1)) )  {
+		if (betterTree && (width <= maxWidth))  {
+
+			// printf("more trees\n");
 
 			if (bestSegs) {
 				delete [] bestSegs;
@@ -2505,7 +2510,7 @@ differentpartition:
 			memcpy (bestConvexList, convexList, sizeof ( int ) * (convexListEntries));
 			memcpy (bestLineChecked, lineChecked, sizeof (char) * (noAliases));
 			memcpy (bestLineUsed, lineUsed, sizeof (char) * (noAliases));
-			
+
 			char *temp = new char [sideInfoEntries];
 			bestSideInfo = (char **) temp;
 			memcpy(bestSideInfo, sideInfo, sizeof(char) * (sideInfoEntries));
@@ -2530,17 +2535,20 @@ differentpartition:
 
 			CNbestCurrentAlias = currentAlias;
 			CNbestCurrentSide = currentSide;
-		}
 
+			// printf("wide tree\n");
+
+		}
 		width++;
 
-		if (width < MaxWidth(nodeDepth, options )) {
+		if (width <= MaxWidth(nodeDepth, options )) {
+			// printf("wider\n");
 			goto differentpartition;
 		}
 
 	}
 
-	// Cleanup if we looked for severl trees
+	// Cleanup if we looked for several trees
 	if (maxWidth > 1) {
 		delete [] tempSegBackup;
 		delete [] segsStartBackup;
@@ -2549,7 +2557,7 @@ differentpartition:
 		delete [] lineCheckedBackup;
 		delete [] sideInfoBackup;
 	}
-	
+
 	// Last tree was not best, restore that one
 	if (betterTree == false) {
 		memcpy(nodePool, 	bestNodes, sizeof ( wNode) * 		(CNbestNodesCount) );
@@ -2593,14 +2601,14 @@ differentpartition:
 
 		//segs = &segStart[inSeg];
 		segs = CNbestSegs;
-		
+
 		currentAlias = CNbestCurrentAlias;
 		currentSide = CNbestCurrentSide;
 
 		FindBounds ( &node->side [0], segs, noRight );
 		FindBounds ( &node->side [1], segs + noRight, noLeft );
 	}
-	
+
 	nodeDepth--;
 
 	delete [] bestSegs;
@@ -2699,12 +2707,18 @@ void CreateNODES ( DoomLevel *level, sBSPOptions *options ) {
 		PartitionFunction = AlgorithmBalancedTree;
 	} else if ( options->algorithm == 3 ) {
 		PartitionFunction = AlgorithmQuick;
+	} else if ( options->algorithm == 4 ) {
+		PartitionFunction = AlgorithmAdaptive;
 	} else if ( options->algorithm == 5 ) {
 		PartitionFunction = AlgorithmMulti;
 	} else { // usually == 1
 		PartitionFunction = AlgorithmFewerSplits;
 	}
 
+	if (PartitionFunction != AlgorithmMulti) {
+        	options->Width = 1; // never build wide trees unless we have to :)
+	}
+	
 
 restart:
 
@@ -2748,7 +2762,7 @@ restart:
 	CreateSideInfo ( level );
 
 	// Score is used by balanced and multi
-	if ((options->algorithm == 2) || (options->algorithm == 5) ) {
+	if ((options->algorithm == 2) || (options->algorithm == 5) || (options->algorithm == 4) ) {
 		score = new sScoreInfo [ noAliases ] ;
 	} else {
 		score = NULL;
@@ -2767,6 +2781,8 @@ restart:
 		Status ( (char *) "Nodes (balance): " );
 	} else if ( options->algorithm == 3 ) {
 		Status ( (char *) "Nodes (quick): " );
+	} else if ( options->algorithm == 4 ) {
+	        Status ( (char *) "Nodes (adaptive): " );
 	} else if (options->algorithm == 5 ) {
 		Status ( (char *) "Nodes (wide): " );
 	}
