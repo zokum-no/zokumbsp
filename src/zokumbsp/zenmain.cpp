@@ -221,8 +221,8 @@ void printHelp () {
 
 	// Misc
 	fprintf ( stdout, " level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN.\n\n" );
-	fprintf ( stdout, "Example: zokumbsp -b- -r- -sm -na=mqi file.wad map01+map03\n");
-	fprintf ( stdout, "This rebuild nodes only, mixed tree, quiet, ignore non-visible lindefs.\n");
+	fprintf ( stdout, "Example: zokumbsp -b- -r- -sm -na=a file.wad map01+map03\n");
+	fprintf ( stdout, "This rebuild nodes only, adaptive tree, give a total summary.\n");
 	fprintf ( stdout, "It reads from file.wad, but only builds map01 and map03.\n");
 }
 
