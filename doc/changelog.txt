@@ -1,5 +1,11 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.10-beta7
+- New adaptive algorithm to allow for hybrid trees using depth for the big
+  partitions and split reduction when segs go below a certain limit. This
+  limit is tunable with -nt=?, where ? is an integer.
+- Multiple split lines is still broken.
+
 ZokumBSP 1.0.10-beta6
 - New algorithm for testing multiple split lines recursively!
 - Minor tweaks to improve balanced algorithm metrics.
