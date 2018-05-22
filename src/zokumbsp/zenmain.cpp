@@ -112,10 +112,18 @@ sOptionsRMB rmbOptionTable [MAX_WADS];
 
 long long totalNodes = 0;
 long long oldTotalNodes = 0;
+
 long long totalSegs = 0;
 long long oldTotalSegs = 0;
+
 long long totalBlockmap = 0;
 long long oldTotalBlockmap = 0;
+
+long long totalLineDefs = 0;
+long long oldTotalLineDefs = 0;
+
+long long totalVertices = 0;
+long long oldTotalVertices = 0;
 
 
 
@@ -178,8 +186,8 @@ void printHelp () {
 	fprintf ( stdout, "%c     s   Minimize splits.\n", ( config.Nodes.Method == 1 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     d   Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     f   Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
-	fprintf ( stdout, "%c     a   Adaptive tree. N/A\n", ( config.Nodes.Method == 4 ) ? DEFAULT_CHAR : ' ');
-	fprintf ( stdout, "%c     m   Multiple trees. N/A\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "%c     a   Adaptive tree.\n", ( config.Nodes.Method == 4 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "%c     m   Multiple trees. BROKEN!\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
 
 	fprintf ( stdout, "    m=    Metric, what kind of node tree do you favor.\n" );
 	fprintf ( stdout, "%c     s   Favor fewer SEG splits.\n", ( config.Nodes.Metric == TREE_METRIC_SEGS ) ? DEFAULT_CHAR : ' ' );
@@ -1065,8 +1073,132 @@ int CheckREJECT ( DoomLevel *curLevel ) {
 void PrintTime ( UINT32 time ) {
 	FUNCTION_ENTRY ( NULL, "PrintTime", false );
 
-	GotoXY ( 53, startY );
-	cprintf ( "%4ld.%03ld sec%s", time / 1000, time % 1000, ( time == 1000 ) ? "" : "s" );
+	GotoXY ( 68, startY );
+	cprintf ( "%4ld.%03ld sec%s\r\n", time / 1000, time % 1000, ( time == 1000 ) ? "" : "s" );
+}
+
+#define COLOR true
+
+void PrintColorOff(void) {
+	cprintf ( "%c[0m", 27);
+}
+
+void PrintMapHeader(char *map) {
+	//   cprintf ( "\r0        10        20        30        40        50        60        70       79\n\r");
+	GotoXY ( startX, startY );
+	if (COLOR) {
+		 cprintf ( "%c[37;44;1m", 27);
+	}
+/*
+                   0        10        20        30        40        50        60        70       79
+                   MAP20    Lump          Old        New      %Change     %Limit   Time Elapsed
+*/
+
+//                 0        10        20        30        40        50        60        70       79           
+//                          Lump          Old        New      %Change       %Limit     Time Elapsed
+	cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
+	
+	if (COLOR) {
+		cprintf ( "%c[0;37;44m", 27);
+	}
+	
+	cprintf(" Lump          Old         New     %%Change      %%Limit      Time Elapsed\n\r");
+	
+	if (COLOR) {
+        	PrintColorOff();
+	}
+
+	GetXY ( &startX, &startY );
+}
+
+void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nuD) {
+	GotoXY ( startX + 6, startY );
+
+	if (nu) {
+		cprintf ( "%-8s   %6d  =>  %6d", lump, old, nu );
+	} else {
+		cprintf ( "%-8s  %6.2f%%  => %6.2f%%", lump, oldD, nuD );
+	}
+
+	double dNew = nu;
+	double dOld = old;
+	double dLimit = limit;
+
+	double change, efficiency;
+
+	
+	if (old && nu) {
+		change = dNew / dOld;
+	}
+	
+	if (nu && limit) {
+		efficiency = dNew / dLimit;
+	}
+ 
+
+	char ansicolor[8];
+	
+	if ((oldD > 0) && (nuD > 0)) {
+		change = oldD / nuD;
+		nu = 1;
+		old = 0;
+	}
+
+	if(COLOR) {
+		if(change >= 1.25) {
+			sprintf(ansicolor, "1;31");
+		} else if (change >= 1.1) {
+			sprintf(ansicolor, "0;33");
+		} else if (change > 1.0) {
+                        sprintf(ansicolor, "1;33");
+		} else if ((nuD == dOld) || (old == nu)) {
+                        sprintf(ansicolor, "0;37");
+                } else if (change >= 0.9) {
+                        sprintf(ansicolor, "0;32");
+		} else {
+			sprintf(ansicolor, "1;32");
+		}
+		cprintf ("%c[%sm", 27, ansicolor);
+	
+	}
+	if (old || (oldD > 0)) {
+		cprintf("     %6.2f%%", change * 100.0);
+	} else {
+		cprintf("           -");
+	}
+
+	if(COLOR) {
+		if (limit == 0) {
+			sprintf(ansicolor, "0;37");
+		} else if (	(efficiency) > 1.0) {
+			sprintf(ansicolor, "1;37;41");
+		} else if (efficiency >= 0.95) {
+			sprintf(ansicolor, "0;31");
+		} else if ( efficiency >= 0.90) {
+                        sprintf(ansicolor, "1;31");
+		} else if (old == nu) {
+			sprintf(ansicolor, "0;37");
+		} else if ( efficiency >= 0.85) {
+                        sprintf(ansicolor, "0;33");
+		} else if ( efficiency >= 0.80) {
+                        sprintf(ansicolor, "1;33");
+		} else {
+			sprintf(ansicolor, "0;37");
+		}
+		cprintf ("%c[%sm", 27, ansicolor);
+	}
+
+	if (limit) {
+		cprintf("     %6.2f%%", efficiency * 100.0);	
+	} else {
+		cprintf("           -");
+	}
+
+	if (COLOR) {
+		PrintColorOff();
+	}
+	
+	// cprintf ( "\r\n" );
 }
 
 bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
@@ -1077,8 +1209,11 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	*elapsed = 0;
 
 	// cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
-	cprintf ( "\r%-*.*s        Old       New    %%Change    %%Limit   Time Elapsed\n\r", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
-	GetXY ( &startX, &startY );
+	//cprintf ( "\r%-*.*s        Old       New    %%Change    %%Limit   Time Elapsed\n\r", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
+	//GetXY ( &startX, &startY );
+
+	PrintMapHeader(name);	
+
 	// startX = 4;
 
 	const wadListDirEntry *dir = myList->FindWAD ( name );
@@ -1090,7 +1225,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		return false;
 	}
 
-	int rows = 0;
+	int rows = 1;
 
 	startX = 4;
 
@@ -1106,6 +1241,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		// Status ( (char *) "" );
 		// GotoXY ( startX, startY );
 		//cprintf ( "PREPROCESS - ");
+
+		// CompressSideDefs(curLevel, &config);
 
 		double pct;
 
@@ -1126,6 +1263,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 			PrintTime (preTime);
 			cprintf ( "\r\n" );
+			rows++;
 		}
 		if (config.Statistics.ShowSectors) {
 			GotoXY ( startX, startY );
@@ -1141,6 +1279,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			pct = ((double) curLevel->SectorCount () / 32768.0) * 100.0;
 			cprintf("   %6.2f%%", pct);
 			cprintf ( "\r\n" );
+			rows++;
 		}
 
 		GetXY ( &dummyX, &startY );
@@ -1148,8 +1287,6 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	}
 
 	if ( config.BlockMap.Rebuild ) {
-
-		rows++;
 
 		int oldSize = curLevel->BlockMapSize ();
 		UINT32 blockTime = CurrentTime ();
@@ -1161,29 +1298,35 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		GotoXY ( startX, startY );
 
 		if ( saved >= 0 ) {
+			PrintMapLump((char * )"Blockmap", oldSize, newSize, 65536, 0, 0);
+			
+			/*
 			cprintf ( "Blockmap: %6d => %6d ", oldSize, newSize );
 			if ( oldSize ) cprintf ( "   %6.2f%%", ( float ) ( 100.0 * newSize / oldSize ));
 			else cprintf ( " - " );
-			/*cprintf ( "   Compressed: " );
+			cprintf ( "   Compressed: " );
 			  if ( newSize + saved ) cprintf ( "%3.2f%%", ( float ) ( 100.0 * newSize / ( newSize + saved ) ));
 			  else cprintf ( "(****)" );
 			  */
+			/*
 			double pct = ((double) newSize / 65535.0) * 100.0; 
+			
 			cprintf("   %6.2f%%", pct);
+			*/
 		} else {
-			cprintf ( "Blockmap: * Level too big to create valid BLOCKMAP *" );
+			// PrintMapLumpError("Blockmap", newSize, 65536);
+			cprintf ( "       Blockmap   Failed to create a valid lump\n" );
 		}
+		
 
 		PrintTime ( blockTime );
 
-		cprintf ( "\r\n" );
+		//cprintf ( "\r\n" );
 		GetXY ( &dummyX, &startY );
+		rows++;
 	}
 
 	if ( config.Nodes.Rebuild ) {
-
-		rows++;
-
 		int oldNodeCount = curLevel->NodeCount ();
 		int oldSegCount  = curLevel->SegCount ();
 		int oldSubSectorCount = curLevel->SubSectorCount ();
@@ -1245,6 +1388,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		//cprintf("\r\n");
 		cprintf("\r\n");
 		*/
+
+		/*
 		GotoXY ( startX, startY );
 
 		cprintf ( "Segs: %10d => %6d ",  oldSegCount, curLevel->SegCount ());
@@ -1258,6 +1403,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		pct = ((double) curLevel->SegCount() / 32768.0) * 100.0;
 		cprintf("   %6.2f%%", pct);
+		*/
+
 		/*
 		   cprintf ( "\r\n   Nodes: %9d => %6d   ", oldNodeCount,  curLevel->NodeCount ());
 		   if ( oldNodeCount ) {
@@ -1273,9 +1420,18 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		*/
 
 		// PrintTime ( nodeTime );
+		/*
 		cprintf ( "\r\n" );
 		GotoXY ( startX, startY );
 
+		rows++;
+		*/
+
+		PrintMapLump( (char *)  "Segs", oldSegCount, curLevel->SegCount (), 32768, 0, 0);
+		cprintf ( "\r\n" );
+		rows++;
+	
+		/*
 		cprintf ( "Subsecs: %7d => %6d ",  oldSubSectorCount, curLevel->SubSectorCount());
 		if ( oldSubSectorCount ) {
 			pct = ( 100.0 * ( (double) curLevel->SubSectorCount () / (double) oldSubSectorCount) );
@@ -1290,12 +1446,16 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		cprintf("\r\n");
 		GotoXY ( startX, startY );
+		*/
 
+		PrintMapLump( (char *)  "Subsecs", oldSubSectorCount, curLevel->SubSectorCount (), 32768, 0, 0);
+		GetXY ( &dummyX, &startY );
+		PrintTime ( nodeTime );
+
+		rows++;
 	}
 
 	if ( config.Reject.Rebuild ) {
-
-		rows++;
 
 		int oldEfficiency = CheckREJECT ( curLevel );
 
@@ -1308,12 +1468,16 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		if ( special == false ) {
 			Status ( (char *) "" );
 			GotoXY ( startX, startY );
+			/*
 			//cprintf ( "Reject:  %3ld.%1ld%% =>%3ld.%1ld%%  Sectors: %5d", newEfficiency / 100, newEfficiency % 100,
 			//		oldEfficiency / 100, oldEfficiency % 100, curLevel->SectorCount ());
 			cprintf ( "Reject:  %3ld.%02ld%% =>%3ld.%02ld%%", newEfficiency / 100, newEfficiency % 100, oldEfficiency / 100, oldEfficiency % 100);
 
 			cprintf ( "    %6.2f%%         -", ((double) newEfficiency / (double) oldEfficiency) * 100.0);
 
+			cprintf ( "\r\n" );
+*/
+			PrintMapLump( (char *)  "Reject", 0, 0, 0, oldEfficiency / 100.0, newEfficiency / 100.0);
 
 			PrintTime ( rejectTime );
 		} else {
@@ -1322,6 +1486,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		cprintf ( "\r\n" );
 		GetXY ( &dummyX, &startY );
+		rows++;
 	}
 
 	bool changed = false;
@@ -1331,7 +1496,14 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		Status ( (char *) "" );
 		if ( changed ) {
 			MoveUp ( rows );
-			cprintf ( "\r *" );
+			
+			if (COLOR) {
+				// cprintf(
+			}
+
+			cprintf("\r");
+			GotoXY(startX + 5 /*strlen(name)*/, startY);
+			cprintf("*");
 			MoveDown ( rows );
 		}
 	} else {
@@ -1387,19 +1559,14 @@ void printTotals(void) {
 	double pct;
 
 	// summary..
+	/*
 	GotoXY ( 0, startY );
 	cprintf ( "=================================================================");
-
 	cprintf("\r\n");
-	GotoXY ( startX, startY );
+	*/
+	
+	PrintMapHeader((char *) "Total:");
 
-	cprintf ( "Nodes: %9d => %6d    ", oldTotalNodes, totalNodes );
-	if ( oldTotalNodes ) {
-		pct = ( 100.0 * (totalNodes / (double) oldTotalNodes) );
-		cprintf ( "%6.2f%%", pct);
-	}
-
-	cprintf("\r\n");
 	GotoXY ( startX, startY );
 
 	cprintf ( "Segs: %10d => %6d ",  oldTotalSegs, totalSegs );
@@ -1410,7 +1577,26 @@ void printTotals(void) {
 	} else {
 		cprintf ( "     -" );
 	}
+
 	cprintf("\r\n");
+	GotoXY ( startX, startY );
+
+	// nodes to subsecs fix
+	oldTotalNodes++;
+	totalNodes++;
+
+	cprintf ( "Subsecs: %7d => %6d    ", oldTotalNodes, totalNodes );
+	if ( oldTotalNodes ) {
+		pct = ( 100.0 * (totalNodes / (double) oldTotalNodes) );
+		cprintf ( "%6.2f%%", pct);
+	}
+
+
+	cprintf("\r\n");
+
+	//GotoXY ( 0, startY );
+	//cprintf ( "=================================================================");
+	//cprintf("\r\n");
 
 }
 
