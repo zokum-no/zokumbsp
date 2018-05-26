@@ -60,7 +60,7 @@
 //----------------------------------------------------------------------------
 
 
-#define DIAGNOSTIC
+#undef DIAGNOSTIC
 
 #include <assert.h>
 #include <limits.h>
@@ -84,7 +84,7 @@ DBG_REGISTER ( __FILE__ );
 #define EPSILON                 0.0001
 
 // Emperical values derived from a test of numerous .WAD files
-#define FACTOR_VERTEX           1.0             //  1.662791 - ???
+#define FACTOR_VERTEX           1.6             //  1.662791 - ???
 #define FACTOR_SEGS             3.0             //  1.488095 - ???
 #define FACTOR_NODE             0.6             //  0.590830 - MAP01 - csweeper.wad
 
@@ -153,7 +153,8 @@ long progressWide = 0;
 int nodeDepth = 0;
 
 
-
+// may 2018 stupid hack!
+bool noMoreScores;
 
 
 
@@ -452,8 +453,6 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 		fprintf ( stderr, "DX & DY are both 0!\n" );
 		fprintf ( stderr, "Offset: %d, different: %d\n", offset, different);
 	
-		
-
 		exit(0);
 	}
 #endif
@@ -678,9 +677,21 @@ static void CreateSideInfo ( DoomLevel *level ) {
 static int AddVertex ( int x, int y ) {
 	FUNCTION_ENTRY ( NULL, "AddVertex", true );
 
+	
 	for ( int i = 0; i < noVertices; i++ ) {
 		if (( newVertices [i].x == x ) && ( newVertices [i].y == y )) return i;
 	}
+	
+
+	// let's try reverse search, it should work better!
+	// If this was accessed using a hash table, we could def. speed things up!
+	/*
+	for (int i = noVertices - 1; i--; i >= 0) {
+		if (( newVertices [i].x == x ) && ( newVertices [i].y == y )) return i;
+	}
+*/
+
+	// it doesn't go faster, unfortunatly :|
 
 	if ( noVertices == maxVertices ) {
 		maxVertices = ( 102 * maxVertices ) / 100 + 1;
@@ -697,6 +708,8 @@ static int AddVertex ( int x, int y ) {
 
 	newVertices [ noVertices ].x = ( UINT16 ) x;
 	newVertices [ noVertices ].y = ( UINT16 ) y;
+	
+	// printf("\nAdded vertex #%3d (%d,%d)\n", noVertices + 1, x, y);
 
 	return noVertices++;
 }
@@ -787,6 +800,7 @@ static UINT16 CreateSSector ( SEG *segs, int noSegs ) {
 			}
 		}
 		fprintf ( stdout, "\n" );
+		exit(0);
 	}
 #endif
 
@@ -1222,7 +1236,7 @@ retry:
 
 	// Make sure the set of SEGs is still convex after we convert to integer coordinates
 	//if (( pSeg == NULL ) && ( check == true )) {
-	if (( partitionOffset == -1 ) && ( check == true )) {
+	if (( partitionOffset == -2 ) && ( check == true )) {
 		check = false;
 		double error = 0.0;
 		for ( int i = 0; i < noSegs; i++ ) {
@@ -1472,7 +1486,7 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 
 			// ComputeStaticVariables ( testSeg );
 			
-			printf("AB tree nosegs=%d, i=%d\n", noSegs, i);
+			// printf("AB tree nosegs=%d, i=%d\n", noSegs, i);
 			ComputeStaticVariables(segs, i);
 
 			if (( fabs ( DX ) < EPSILON ) && ( fabs ( DY ) < EPSILON )) goto next;
@@ -1613,6 +1627,7 @@ next:
 		retval = -2;
 	} else if (noScores == 1) {
 		retval =  score [0].index;
+		noMoreScores = true;
 	} else {
 		int w = *width;
 
@@ -1624,11 +1639,17 @@ next:
 					break;
 				}
 			} else {
+				
 				printf("Dodged a bullet\n");
 			}
 		}
 		// retval = score [0].index;
 	}
+
+	if (noScores == *width) {
+		noMoreScores = true;
+	}
+	
 
 	/*
 	if ((score [(*width) - 1].index) == -1) {
@@ -1905,6 +1926,8 @@ static void PrintKeepUniqueSegs ( SEG *segs, int noSegs, const char *msg = NULL 
 			double dy = segs[i-1].end.y - segs[i-1].start.y;
 			double y1 = dx * ( segs[i].start.y - segs[i-1].start.y ) - dy * ( segs[i].start.x - segs[i-1].start.x );
 			if ( y1 != 0.0 ) fprintf ( stdout, "<< ERROR - seg[%d] is not colinear with seg[%d] - %f!!! >>\n", i, i-1, y1 );
+		
+			exit(0);
 		}
 		lastAngle = segs [i].Data.angle;
 	}
@@ -2062,7 +2085,7 @@ static void VerifyNode ( SEG *segs, int noSegs, double x1, double y1, double x2,
 		double p2 = ( dx * ( segs [j].end.y - y1 ) - dy * ( segs [j].end.x - x1 )) / h;
 		if (( p1 > 0.25 ) || ( p2 > 0.25 )) errors = true;
 	}
-	if ( errors == true || true) {
+	if ( errors == true || false) {
 		if (errors) {
 			fprintf ( stdout, "\nPartition line (%8.1f,%8.1f)-(%8.1f,%8.1f) is not correct!\n", x1, y1, x2, y2 );
 		} else {
@@ -2071,7 +2094,16 @@ static void VerifyNode ( SEG *segs, int noSegs, double x1, double y1, double x2,
 		for ( int j = 0; j < noSegs; j++ ) {
 			double p1 = ( dx * ( segs [j].start.y - y1 ) - dy * ( segs [j].start.x - x1 )) / h;
 			double p2 = ( dx * ( segs [j].end.y - y1 ) - dy * ( segs [j].end.x - x1 )) / h;
-			fprintf ( stdout, " [%d] (%8.1f,%8.1f)-(%8.1f,%8.1f)  S:%5d  LD:%5d  y1:%10.3f  y2:%10.3f %s\n", j, segs[j].start.x, segs[j].start.y, segs[j].end.x, segs[j].end.y, segs[j].Sector, segs[j].Data.lineDef, p1, p2, (( p1 > 0.25 ) || ( p2 > 0.25 )) ? "<---" : "" );
+			fprintf ( stdout, " [%d] #%4d  (%8.1f,%8.1f) - #%4d (%8.1f,%8.1f)  S:%5d  LD:%5d  y1:%10.3f  y2:%10.3f %s\n", j, segs[j].Data.start,  segs[j].start.x, segs[j].start.y, segs[j].Data.end, segs[j].end.x, segs[j].end.y, segs[j].Sector, segs[j].Data.lineDef, p1, p2, (( p1 > 0.25 ) || ( p2 > 0.25 )) ? "<---" : "" );
+			/*
+			int datasx = newVertices[segs[j].Data.start].x;
+			int datasy = newVertices[segs[j].Data.start].y;
+			int dataex = newVertices[segs[j].Data.end].x;
+			int dataey = newVertices[segs[j].Data.end].y;
+
+			fprintf ( stdout, " [%d] Data: (%8.1f,%8.1f) - (%8.1f,%8.1f)\n", j,  datasx, datasy, dataex, dataey);
+			*/
+	
 		}
 		if (errors == true) {
 			exit(0);
@@ -2177,13 +2209,40 @@ int depthProgress[PROGRESS_DEPTH] = {0, 0, 0, 0, 0, 0, 0};
 long progMax = 0;
 int cutoff = 1;
 
-int MaxWidth(int depth, sBSPOptions *options) {
+int MaxWidth(int depth, int segs, sBSPOptions *options) {
+
+
+	if (segs < 10) {
+		return 1;
+	}
+
+	if (options->Width > 2) {
+		if (segs < 30) {
+			return 2;
+		}
+	} 
+	if (options->Width > 3) {
+		if (segs < 60) {
+                        return 3;
+                }
+	}
+
 
 	return options->Width;
+
+/*
+	int ret = sqrt(segs / 8);
+
+	if (ret < 1) {
+		ret = 1;
+	}
+
+	return ret;
+*/
 }
 
 
-void DepthProgress(int depth, sBSPOptions *o) {
+void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
 
 	// We only update if it's fairly shallow...
@@ -2207,19 +2266,19 @@ void DepthProgress(int depth, sBSPOptions *o) {
 	double divisor = 0;
 	double total = 0;
 
-	double progress = 	depthProgress[0] / ((double) MaxWidth(1, o) * 2.0) +
-		depthProgress[1] / ((double) MaxWidth(1, o) * (double) MaxWidth(2, o) * 4.0) +
-		depthProgress[2] / ((double) MaxWidth(1, o) * (double) MaxWidth(2, o) * (double) MaxWidth(3, o) * 8.0) +
-		depthProgress[3] / ((double) MaxWidth(1, o) * (double) MaxWidth(2, o) * (double) MaxWidth(3, o) *(double) MaxWidth(4, o) * 16.0) +
-		depthProgress[4] / ((double) MaxWidth(1, o) * (double) MaxWidth(2, o) * (double) MaxWidth(3, o) *(double) MaxWidth(4, o) *(double) MaxWidth(5, o) * 32.0) +	
-		depthProgress[5] / ((double) MaxWidth(1, o) * (double) MaxWidth(2, o) * (double) MaxWidth(3, o) *(double) MaxWidth(4, o) *(double) MaxWidth(5, o) * (double) MaxWidth(6, o) * 64.0) + 
-		depthProgress[6] / ((double) MaxWidth(1, o) * (double) MaxWidth(2, o) * (double) MaxWidth(3, o) *(double) MaxWidth(4, o) *(double) MaxWidth(5, o) * (double) MaxWidth(6, o) * (double) MaxWidth(7, o)  * 128.0);
+	double progress = 	depthProgress[0] / ((double) MaxWidth(1, segs, o) * 2.0) +
+		depthProgress[1] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * 4.0) +
+		depthProgress[2] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) * 8.0) +
+		depthProgress[3] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) * 16.0) +
+		depthProgress[4] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * 32.0) +	
+		depthProgress[5] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * 64.0) + 
+		depthProgress[6] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * (double) MaxWidth(7, segs, o)  * 128.0);
 
 
-	sprintf(prog, "Nodes (width: %d|%d): %5.2f%% [", o->Width, cutoff, 100.0 * progress);
+	sprintf(prog, "      BSP  %5.2f%%  [", o->Width, cutoff, 100.0 * progress);
 
-	for (int i = 0; i != 33; i++) {
-		if ( ((double(i) / 33.0) < progress)) {
+	for (int i = 0; i != 56; i++) {
+		if ( ((double(i) / 56.0) < progress)) {
 			strcat(prog, "#");
 		} else {
 			strcat(prog, " ");
@@ -2232,6 +2291,8 @@ void DepthProgress(int depth, sBSPOptions *o) {
 
 int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level) {
 
+	bool noMoreScores = false; // stupid hack
+
 	SEG *segs = &segStart[inSeg];
 
 	FUNCTION_ENTRY ( NULL, "CreateNode", true );
@@ -2242,9 +2303,16 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 	// insert code here to try different partitions?
 
 	int width = 1; // we start at tree 1, not 0
-	int maxWidth = MaxWidth(nodeDepth, options ); // 1 or higher :)
+	int maxWidth; //= MaxWidth(nodeDepth, *noSegs, options ); // 1 or higher :)
 
 	// backup our nodes, segs and sub sectors
+	
+	// performance
+
+	int initialSegs = *noSegs;	
+
+	maxWidth = MaxWidth(nodeDepth, initialSegs, options );
+	
 
 	int nodesLeftBackup = nodesLeft;
 	int segCountBackup = segCount;
@@ -2261,13 +2329,17 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 	int *convexPtrBackup = convexPtr;
 	int *cptrBackup = cptr;
 
-	SEG *segsBackup = segs;
+	// SEG *segsBackup = segs;
 	SEG *CNbestSegs = NULL;
 
 	char *currentSideBackup = currentSide;
 
+	wVertex *newVerticesBackup;
+	wSSector *ssectorPoolBackup;
+	wNode *nodePoolBackup;
+
 	SEG *segsStartBackup = NULL;
-	SEG *tempSegBackup = NULL;
+	// SEG *tempSegBackup = NULL;
 	int *convexListBackup;
 	char *lineCheckedBackup;
 	char *lineUsedBackup;
@@ -2288,11 +2360,22 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 
 	// We only backup if we plan to do more than one line pick
 	if (maxWidth > 1) {
-		segsStartBackup = new SEG [segCount];
-		memcpy ( segsStartBackup, segStart, sizeof ( SEG) * (segCount) );
+		// segsStartBackup = new SEG [segCount];
+		//memcpy ( segsStartBackup, segStart, sizeof ( SEG) * (segCount) );
+		
+		segsStartBackup = new SEG [maxSegs];
+		// memset ( segsStartBackup, 0, sizeof ( SEG ) * maxSegs );
 
+		//memcpy(segsStartBackup, segStart, sizeof segStart);
+
+		memcpy ( segsStartBackup, segStart, sizeof ( SEG) * maxSegs);
+
+		// memcpy(segsStartBackup, segStart, maxSegs);
+
+		/*
 		tempSegBackup = new SEG [tempSegEntries];
 		memcpy( tempSegBackup, tempSeg, sizeof(SEG) * (tempSegEntries));
+		*/
 
 		convexListBackup = new int[noAliases];
 		memcpy (convexListBackup, convexList, sizeof( int) * (noAliases));
@@ -2309,18 +2392,21 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 	
 		ANGLE = ANGLEBackup;
 
+		noVerticesBackup = noVertices;
+		newVerticesBackup = new wVertex[noVertices];
+		memcpy(newVerticesBackup, newVertices, sizeof (wVertex) * noVertices);
+		
+
+		ssectorPoolBackup = new wSSector [ssectorPoolEntries];
+		memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
+		   
+		nodePoolBackup = new wNode [nodePoolEntries];
+		memcpy (nodePoolBackup, nodePool, sizeof ( wNode) * (nodePoolEntries));
+		
+	 	newVerticesBackup = new wVertex[maxVertices];
+		memcpy (newVerticesBackup, newVertices, sizeof (wVertex) * maxVertices);
+
 	}
-
-	/*
-	   wSSector *ssectorPoolBackup = new wSSector [ssectorPoolEntries];
-	   memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
-
-	   wNode *nodePoolBackup = new wNode [nodePoolEntries];
-	   memcpy (nodePoolBackup, nodePool, sizeof ( wNode) * (nodePoolEntries));
-
-	   wVertex *newVerticesBackup = new wVertex[maxVertices];
-	   memcpy (newVerticesBackup, newVertices, sizeof (wVertex) * maxVertices);
-	   */
 	nodeDepth++;
 
 	int CNbestSegsCount = 65536;
@@ -2336,6 +2422,7 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 	int *CNbestCptr;
 	int *CNbestConvexPtr;
 	int CNbestCurrentAlias;
+	int CNbestNodePoolEntries;
 
 	int CNbestNoRight, CNbestNoLeft;
 
@@ -2372,7 +2459,7 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 
 differentpartition:
 
-	segs = &segStart[inSeg];
+	// segs = &segStart[inSeg];
 
 	if (width != 1) {
 		// restore data from our saved backup
@@ -2390,30 +2477,43 @@ differentpartition:
 		nodePoolEntries = nodePoolEntriesBackup;
 		ssectorPoolEntries = ssectorPoolEntriesBackup;
 
-		segs = segsBackup;
+		maxSegs = maxSegsBackup;
 
-		memcpy (segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup) );
-		memcpy (tempSeg, tempSegBackup, sizeof ( SEG ) * (tempSegEntries));
+		// segs = segsBackup;
+
+		delete [] segStart;
+		segStart = new SEG [maxSegs];
+
+		memcpy (segStart, segsStartBackup, sizeof ( SEG) * maxSegs );
+
+		segs = &segStart[inSeg];
+
+		// memcpy(segStart, segsStartBackup, sizeof segStart );
+
+		// printf("\nCopied %d bytes\n", sizeof ( SEG ) * maxSegs);
+
+		/*
+		   memcpy (tempSeg, tempSegBackup, sizeof ( SEG ) * (tempSegEntries));
+		   */
 		memcpy (convexList, convexListBackup, sizeof( int) * (convexListEntries));
 
 		memcpy (lineChecked, lineCheckedBackup, sizeof(char) * ( noAliases));
 		memcpy (lineUsed, lineUsedBackup, sizeof(char) * ( noAliases));
 
-
-		segs = &segStart[inSeg]; // new fix?
+		memcpy(newVertices, newVerticesBackup, sizeof (wVertex) * noVertices);
 
 		convexPtr = convexPtrBackup;
 		cptr = cptrBackup;
-		
+
 		memcpy(sideInfo, sideInfoBackup, sizeof(char) * (sideInfoEntries));
 		currentSide = currentSideBackup;
 
 		noLeft = noLeftBackup;
 		noRight = noRightBackup;	
-	
-		/*
-		   memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
-		   memcpy ( nodePool, nodePoolBackup, sizeof ( wNode) * (nodePoolEntriesBackup));
+
+		memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
+		memcpy ( nodePool, nodePoolBackup, sizeof ( wNode) * (nodePoolEntriesBackup));
+/*
 		   if (maxVerticesBackup != maxVertices) {
 		   memcpy ( newVertices, newVerticesBackup, sizeof ( wVertex) * (maxVerticesBackup));
 		   memcpy ( newVertices, newVerticesBackup, sizeof ( wVertex) * (noVerticesBackup));
@@ -2427,7 +2527,7 @@ differentpartition:
 		ANGLE = ANGLEBackup;
 	}
 
-	printf("Choose p. noSegs=%d, width=%d\n", *noSegs, width);
+	// printf("Choose p. noSegs=%d, width=%d\n", *noSegs, width);
 
 	if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight, options, level, &width, wideSegs) == false )) {
 
@@ -2437,11 +2537,18 @@ differentpartition:
 			delete [] convexListBackup;
 			delete [] lineUsedBackup;
 			delete [] lineCheckedBackup;
-			delete [] tempSegBackup;
+			// delete [] tempSegBackup;
 			delete [] sideInfoBackup;
+			delete [] newVerticesBackup;
 		}
 
 		nodeDepth--;
+
+		if (width > 1) {
+			if (width < 900) {
+				printf("mega bug\n");
+			}
+		}
 
 		convexPtr = cptr;
 		if ( KeepUniqueSubsectors ( segs, *noSegs ) == true ) {
@@ -2451,23 +2558,23 @@ differentpartition:
 		// if ( showProgress ) ShowDone ();
 		return ( UINT16 ) ( 0x8000 | CreateSSector ( segs, *noSegs ));
 	}
-/*
-	if (nodeDepth != 999) {
-		printf("Not subsector, depth: %d, width %d, segs: %d (r: %d, l: %d)\n", nodeDepth, 
-		width, 
-		*noSegs, 
-		noRight, 
-		noLeft);
-	}
-*/
-	
+	/*
+	   if (nodeDepth != 999) {
+	   printf("Not subsector, depth: %d, width %d, segs: %d (r: %d, l: %d)\n", nodeDepth, 
+	   width, 
+	 *noSegs, 
+	 noRight, 
+	 noLeft);
+	 }
+	 */
+
 
 
 	bool betterTree = false;
 
 	// we set width to -1 IF we have a faulty non-first line pick.
-	
-// scope fix:
+
+	// scope fix:
 
 	UINT16 rNode, lNode;
 
@@ -2491,11 +2598,30 @@ differentpartition:
 #endif
 
 		// printf("\nwidth: %d, depth %d nosegs %d |%d|%d|\n", width, nodeDepth, *noSegs, noRight, noLeft);
-	
-		
+
 		FindBounds ( &tempNode.side [0], segs, noRight );
 		FindBounds ( &tempNode.side [1], segs + noRight, noLeft );
-		
+
+#if defined ( DIAGNOSTIC )		
+		// printf("\nPartition line: width: %d, depth %d, %d,%d to %d,%d. nosegs %d (%d + %d) \n", width, nodeDepth, tempNode.x, tempNode.y, tempNode.x + tempNode.dx, tempNode.y + tempNode.dy, *noSegs, noRight, noLeft);
+
+		/*
+		   for (int s = 0 ; s < (noRight + noLeft); s++) {
+
+		   int startX = lrint ( segs [s].start.x );
+		   int endX   = lrint ( segs [s].end.x );
+
+		   int startY = lrint ( segs [s].start.y );
+		   int endY   = lrint ( segs [s].end.y );
+
+		   printf("%5d seg. %4d,%4d -> %4d,%4d | ", inSeg + s, startX, startY, endX, endY );
+
+		   if (s % 7 == 6) {
+		   printf("\n");
+		   }
+		   }
+		   */
+#endif
 
 		int alias = currentAlias;
 
@@ -2506,19 +2632,36 @@ differentpartition:
 
 		// UINT16 rNode = CreateNode ( inSeg, &noRight, options, level);
 		rNode = CreateNode ( inSeg, &noRight, options, level);
-		DepthProgress(nodeDepth, options);
+		DepthProgress(nodeDepth, initialSegs, options);
 
 		// UINT16 lNode = CreateNode ( inSeg + noRight, &noLeft, options, level);
 		lNode = CreateNode ( inSeg + noRight, &noLeft, options, level);
-		DepthProgress(nodeDepth, options);
+		DepthProgress(nodeDepth, initialSegs, options);
+
+		// Restore segs!
+		segs = &segStart[inSeg];
+
+		if (!((lNode & 0x8000) && ((rNode & 0x8000)))) {
+			// printf("\nnone of the sub nodes are subsectors, %d\n", nodeDepth );
+			// printf("\nR min x: %d\n", tempNode.side [0].minx);
+			// printf("R min x2: %d %d\n" tempNode.
+
+		} else {
+			// printf("\nOne or more are sub sectors...\n");
+		}
+
 
 		*noSegs = noLeft + noRight;
 
 #if defined ( DIAGNOSTIC )
-		VerifyNode ( segs, noRight, x1, y1, x2, y2 );
-		VerifyNode ( segs+noRight, noLeft, x2, y2, x1, y1 );
-#endif
 
+		//		printf("\nVerifying right #%d, width %d, depth %d\n", inSeg, width, nodeDepth);
+		VerifyNode ( segs, noRight, x1, y1, x2, y2 );
+
+		//		printf("\nVerifying left #%d, width %d, depth %d\n", inSeg + noRight, width, nodeDepth);
+		VerifyNode ( segs + noRight, noLeft, x2, y2, x1, y1 );
+
+#endif
 		while ( convexPtr != cptr ) lineUsed [ *--convexPtr ] = false;
 		lineUsed [ alias ] = false;
 
@@ -2537,7 +2680,7 @@ differentpartition:
 			nodesLeft += delta;
 		}
 
-		
+
 		wNode *node = &nodePool [nodeCount];
 		*node           = tempNode;
 		node->child [0] = rNode;
@@ -2546,19 +2689,22 @@ differentpartition:
 		if (options->Metric == TREE_METRIC_SUBSECTORS) {
 			if (ssectorCount < CNbestSsectorsCount) {
 				betterTree = true;
-			} 
+			} else if (ssectorCount == CNbestSsectorsCount) {
+				if ((segCount < CNbestSegsCount) || width == maxWidth) {
+					betterTree = true;
+				}
+			}
 		} else if (options->Metric == TREE_METRIC_SEGS) {
 			if (segCount < CNbestSegsCount) {
 				betterTree = true;
 			} 
 		} else {
-			printf("2 was better\n");
 			betterTree = true;
 		}
 
 		// Test 2018
 		if (width > 1) {
-			betterTree = false; 
+			// betterTree = false; 
 		}
 
 		// Was it a better set of sub trees, and do we have more to check?
@@ -2581,7 +2727,7 @@ differentpartition:
 			memcpy(&CNbestTempNode, &tempNode, sizeof(wNode));
 
 			bestTempSeg = new SEG [maxSegs];
-			bestSegs = new SEG [segCount];
+			bestSegs = new SEG [maxSegs];
 			bestSSectors = new wSSector [ssectorPoolEntries];
 			bestNodes = new wNode [nodePoolEntries];
 			bestVertices = new wVertex[maxVertices];
@@ -2589,11 +2735,14 @@ differentpartition:
 			bestLineUsed = new char[noAliases];
 			bestLineChecked = new char[noAliases];
 
+
+
 			memcpy (bestTempSeg, tempSeg, sizeof (SEG) * (tempSegEntries));
-			memcpy (bestSegs, segStart, sizeof ( SEG) * (segCount) );
+			memcpy (bestSegs, segStart, sizeof ( SEG) * (maxSegs) );
 			memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
 			memcpy (bestVertices, newVertices, sizeof (wVertex) * noVertices);
-			memcpy (bestNodes, nodePool, sizeof ( wNode) * (nodeCount + 1 )); // 2018
+			//memcpy (bestNodes, nodePool, sizeof ( wNode) * (nodeCount));
+			memcpy (bestNodes, nodePool, sizeof ( wNode) * nodePoolEntries);
 			memcpy (bestConvexList, convexList, sizeof ( int ) * (convexListEntries));
 			memcpy (bestLineChecked, lineChecked, sizeof (char) * (noAliases));
 			memcpy (bestLineUsed, lineUsed, sizeof (char) * (noAliases));
@@ -2609,6 +2758,7 @@ differentpartition:
 			CNbestSsectorsCount = ssectorCount;
 			CNbestSsectorsLeft = ssectorsLeft;
 			CNbestNoVertices = noVertices;
+
 			CNbestNodesCount = nodeCount;
 			CNbestNodesLeft = nodesLeft;
 			CNbestSegs = segs;
@@ -2623,20 +2773,27 @@ differentpartition:
 			CNbestCurrentAlias = currentAlias;
 			CNbestCurrentSide = currentSide;
 
+			CNbestNodePoolEntries = nodePoolEntries;
+
 			CNbestX = X;
 			CNbestY = Y;
 			CNbestDX = DX;
 			CNbestDY = DY;
 			CNbestANGLE = ANGLE;
 
+			CNbestNodePoolEntries;
+
 			// CNbestInSeg = inSeg;
-			
+
 			// printf("wide tree\n");
 
 		}
 		width++;
 
-		if ((width <= MaxWidth(nodeDepth, options )) && (width < *noSegs) ) {
+		if (		(width <= maxWidth) 
+				&& 	(width < *noSegs) 
+				&&	(noMoreScores == false)
+		   ) {
 			goto differentpartition;
 		}
 
@@ -2644,25 +2801,31 @@ differentpartition:
 
 	// Cleanup if we looked for several trees
 	if (maxWidth > 1) {
-		delete [] tempSegBackup;
+		// delete [] tempSegBackup;
 		delete [] segsStartBackup;
 		delete [] convexListBackup;
 		delete [] lineUsedBackup;
 		delete [] lineCheckedBackup;
 		delete [] sideInfoBackup;
+		delete [] newVerticesBackup;
 	}
 
 	// Last tree was not best, restore that one
 	if (betterTree == false) {
-		memcpy(nodePool, 	bestNodes, sizeof ( wNode) * 		(CNbestNodesCount + 1 ) ); // 2018
+		maxSegs = CNbestMaxSegs;
+
+		memcpy(nodePool, 	bestNodes, sizeof ( wNode) * 		(CNbestNodePoolEntries) );
 		memcpy(newVertices,	bestVertices, sizeof ( wVertex) *     	(CNbestNoVertices) );
 		memcpy(ssectorPool,  	bestSSectors, sizeof ( wSSector) *    	(CNbestSsectorsCount));
-		memcpy(segStart, 	bestSegs, sizeof ( SEG) * 		(CNbestNoSegs));
+		//memcpy(segStart, 	bestSegs, sizeof ( SEG) * 		(CNbestNoSegs));
+		memcpy(segStart,	bestSegs, sizeof ( SEG) * CNbestMaxSegs);
+
 		memcpy(convexList,	bestConvexList, sizeof ( int ) *	(convexListEntries));
 		memcpy(lineChecked, 	bestLineChecked, sizeof( char ) *	(noAliases));
 		memcpy(lineUsed,	bestLineUsed, sizeof( char ) *		(noAliases));
-		memcpy(tempSeg,		bestTempSeg, sizeof( SEG) * 		(tempSegEntries));
+		// memcpy(tempSeg,		bestTempSeg, sizeof( SEG) * 		(tempSegEntries));
 		memcpy(sideInfo, 	bestSideInfo, sizeof (char) * 		(sideInfoEntries));
+
 
 		nodeCount = CNbestNodesCount;
 
@@ -2695,7 +2858,7 @@ differentpartition:
 		//segs = &segStart[inSeg];
 		// segs = CNbestSegs;
 		//
-		
+
 		segs = &segStart[inSeg];
 
 		currentAlias = CNbestCurrentAlias;
@@ -2709,30 +2872,30 @@ differentpartition:
 		DX = CNbestDX;
 		DY = CNbestDY;
 		ANGLE = CNbestANGLE;
-		
+
 
 		// FindBounds ( &node->side [0], segs, noRight );
-	        // FindBounds ( &node->side [1], segs + noRight, noLeft );
+		// FindBounds ( &node->side [1], segs + noRight, noLeft );
 
 
 	}
 
 	// Find the bounds of our current node
-/*
-	wNode *node = &nodePool [nodeCount];
+	/*
+	   wNode *node = &nodePool [nodeCount];
 
-	node->child [0] = rNode;
-	node->child [1] = lNode;
+	   node->child [0] = rNode;
+	   node->child [1] = lNode;
 
-	node->x  = ( INT16 ) lrint ( X );
-	node->y  = ( INT16 ) lrint ( Y );
-	node->dx = ( INT16 ) lrint ( DX );
-	node->dy = ( INT16 ) lrint ( DY );
+	   node->x  = ( INT16 ) lrint ( X );
+	   node->y  = ( INT16 ) lrint ( Y );
+	   node->dx = ( INT16 ) lrint ( DX );
+	   node->dy = ( INT16 ) lrint ( DY );
 
 
-	FindBounds ( &node->side [0], segs, noRight );
-	FindBounds ( &node->side [1], segs + noRight, noLeft );
-*/
+	   FindBounds ( &node->side [0], segs, noRight );
+	   FindBounds ( &node->side [1], segs + noRight, noLeft );
+	   */
 
 	nodeDepth--;
 
@@ -2842,9 +3005,9 @@ void CreateNODES ( DoomLevel *level, sBSPOptions *options ) {
 	}
 
 	if (PartitionFunction != AlgorithmMulti) {
-        	options->Width = 1; // never build wide trees unless we have to :)
+		options->Width = 1; // never build wide trees unless we have to :)
 	}
-	
+
 
 restart:
 
@@ -2908,7 +3071,7 @@ restart:
 	} else if ( options->algorithm == 3 ) {
 		Status ( (char *) "Nodes (quick): " );
 	} else if ( options->algorithm == 4 ) {
-	        Status ( (char *) "Nodes (adaptive): " );
+		Status ( (char *) "Nodes (adaptive): " );
 	} else if (options->algorithm == 5 ) {
 		Status ( (char *) "Nodes (wide): " );
 	}
@@ -2925,7 +3088,7 @@ restart:
 
 	int noSegs = segCount;
 
-	DepthProgress(-1, options);	
+	DepthProgress(-1, 1, options);	
 
 	CreateNode ( 0, &noSegs, options, level);
 

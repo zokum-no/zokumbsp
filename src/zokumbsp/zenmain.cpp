@@ -1481,10 +1481,10 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 			PrintTime ( rejectTime );
 		} else {
-			cprintf ( "Reject: Special effects detected, use -rf to force an update." );
+			cprintf ( "         Reject special effects detected, use -rf to force an update." );
+			cprintf ( "\r\n" );
 		}
 
-		cprintf ( "\r\n" );
 		GetXY ( &dummyX, &startY );
 		rows++;
 	}
@@ -1498,18 +1498,23 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			MoveUp ( rows );
 			
 			if (COLOR) {
-				// cprintf(
+				cprintf ( "%c[37;44;1m", 27);
 			}
 
 			cprintf("\r");
-			GotoXY(startX + 5 /*strlen(name)*/, startY);
+			GotoXY(startX + 2 /*strlen(name)*/, startY);
 			cprintf("*");
 			MoveDown ( rows );
+			if (COLOR) {
+				PrintColorOff();
+			}
 		}
 	} else {
 		cprintf ( "Nothing to do here ... " );
 		cprintf ( "\r\n" );
 	}
+
+	cprintf ( "\r\n" );
 
 	int noSectors = curLevel->SectorCount ();
 	int rejectSize = (( noSectors * noSectors ) + 7 ) / 8;
