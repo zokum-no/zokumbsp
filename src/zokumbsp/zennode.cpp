@@ -420,9 +420,15 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 		currentAlias   = lineDefAlias [ pSeg->Data.lineDef ];
 		currentSide    = sideInfo ? sideInfo [ currentAlias ] : NULL;	
 		// }
-
+	
 		wVertex *vertS = &newVertices [ pSeg->AliasFlip ? pSeg->Data.end : pSeg->Data.start ];
 		wVertex *vertE = &newVertices [ pSeg->AliasFlip ? pSeg->Data.start : pSeg->Data.end ];
+/*
+		if ( (int) lrint(pSeg->start.x) != (int) vertS->x) {
+			printf("ERROR %d %d\n", pSeg->start.x, vertS->x);
+		}
+*/		
+
 		X     = vertS->x;
 		Y     = vertS->y;
 		DX    = vertE->x - vertS->x;
@@ -2203,8 +2209,8 @@ static UINT16 GenerateUniqueSectors ( SEG *segs, int noSegs ) {
 //      since it will be convex for all children.
 //----------------------------------------------------------------------------
 
-#define PROGRESS_DEPTH 7
-int depthProgress[PROGRESS_DEPTH] = {0, 0, 0, 0, 0, 0, 0};
+#define PROGRESS_DEPTH 8
+int depthProgress[PROGRESS_DEPTH] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 long progMax = 0;
 int cutoff = 1;
@@ -2244,6 +2250,7 @@ int MaxWidth(int depth, int segs, sBSPOptions *options) {
 
 void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
+	segs = 30000;
 
 	// We only update if it's fairly shallow...
 	if (depth > PROGRESS_DEPTH) {
@@ -2266,13 +2273,15 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 	double divisor = 0;
 	double total = 0;
 
-	double progress = 	depthProgress[0] / ((double) MaxWidth(1, segs, o) * 2.0) +
+	double progress = 	
+		depthProgress[0] / ((double) MaxWidth(1, segs, o) * 2.0) +
 		depthProgress[1] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * 4.0) +
 		depthProgress[2] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) * 8.0) +
 		depthProgress[3] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) * 16.0) +
 		depthProgress[4] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * 32.0) +	
 		depthProgress[5] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * 64.0) + 
-		depthProgress[6] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * (double) MaxWidth(7, segs, o)  * 128.0);
+		depthProgress[6] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * (double) MaxWidth(7, segs, o) * 128.0) +
+		depthProgress[7] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * (double) MaxWidth(7, segs, o) * (double) MaxWidth(7, segs, o)  * 256.0);
 
 
 	sprintf(prog, "      BSP  %5.2f%%  [", o->Width, cutoff, 100.0 * progress);
@@ -2325,11 +2334,9 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 	int ssectorPoolEntriesBackup = ssectorPoolEntries;
 	int maxVerticesBackup = maxVertices;
 	int maxSegsBackup = maxSegs;
-	// int noAliasesBackup = noAliases;
 	int *convexPtrBackup = convexPtr;
 	int *cptrBackup = cptr;
 
-	// SEG *segsBackup = segs;
 	SEG *CNbestSegs = NULL;
 
 	char *currentSideBackup = currentSide;
@@ -2339,7 +2346,6 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 	wNode *nodePoolBackup;
 
 	SEG *segsStartBackup = NULL;
-	// SEG *tempSegBackup = NULL;
 	int *convexListBackup;
 	char *lineCheckedBackup;
 	char *lineUsedBackup;
@@ -2393,9 +2399,6 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 		ANGLE = ANGLEBackup;
 
 		noVerticesBackup = noVertices;
-		newVerticesBackup = new wVertex[noVertices];
-		memcpy(newVerticesBackup, newVertices, sizeof (wVertex) * noVertices);
-		
 
 		ssectorPoolBackup = new wSSector [ssectorPoolEntries];
 		memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
@@ -2462,6 +2465,13 @@ differentpartition:
 	// segs = &segStart[inSeg];
 
 	if (width != 1) {
+	
+		delete [] segStart;
+		segStart = new SEG [maxSegs];
+		memcpy (segStart, segsStartBackup, sizeof ( SEG) * maxSegs );
+		
+		segs = &segStart[inSeg];		
+
 		// restore data from our saved backup
 
 		currentAlias = currentAliasBackup;
@@ -2479,27 +2489,9 @@ differentpartition:
 
 		maxSegs = maxSegsBackup;
 
-		// segs = segsBackup;
-
-		delete [] segStart;
-		segStart = new SEG [maxSegs];
-
-		memcpy (segStart, segsStartBackup, sizeof ( SEG) * maxSegs );
-
-		segs = &segStart[inSeg];
-
-		// memcpy(segStart, segsStartBackup, sizeof segStart );
-
-		// printf("\nCopied %d bytes\n", sizeof ( SEG ) * maxSegs);
-
-		/*
-		   memcpy (tempSeg, tempSegBackup, sizeof ( SEG ) * (tempSegEntries));
-		   */
 		memcpy (convexList, convexListBackup, sizeof( int) * (convexListEntries));
-
 		memcpy (lineChecked, lineCheckedBackup, sizeof(char) * ( noAliases));
 		memcpy (lineUsed, lineUsedBackup, sizeof(char) * ( noAliases));
-
 		memcpy(newVertices, newVerticesBackup, sizeof (wVertex) * noVertices);
 
 		convexPtr = convexPtrBackup;
@@ -2537,9 +2529,10 @@ differentpartition:
 			delete [] convexListBackup;
 			delete [] lineUsedBackup;
 			delete [] lineCheckedBackup;
-			// delete [] tempSegBackup;
 			delete [] sideInfoBackup;
 			delete [] newVerticesBackup;
+			delete [] nodePoolBackup;
+			delete [] ssectorPoolBackup;
 		}
 
 		nodeDepth--;
@@ -2690,22 +2683,23 @@ differentpartition:
 			if (ssectorCount < CNbestSsectorsCount) {
 				betterTree = true;
 			} else if (ssectorCount == CNbestSsectorsCount) {
-				if ((segCount < CNbestSegsCount) || width == maxWidth) {
+				if ((segCount < CNbestSegsCount)) {
+					betterTree = true;
+				} else if ((segCount == CNbestSegsCount) && (width == maxWidth)) {
 					betterTree = true;
 				}
 			}
 		} else if (options->Metric == TREE_METRIC_SEGS) {
 			if (segCount < CNbestSegsCount) {
 				betterTree = true;
-			} 
-		} else {
-			betterTree = true;
-		}
-
-		// Test 2018
-		if (width > 1) {
-			// betterTree = false; 
-		}
+			} else if (segCount == CNbestSegsCount) {
+				if (ssectorCount < CNbestSsectorsCount) {
+					betterTree = true;
+				} else if ((ssectorCount == CNbestSsectorsCount) && (width == maxWidth)) {
+					betterTree = true;
+				}
+			}
+		} 
 
 		// Was it a better set of sub trees, and do we have more to check?
 		if (betterTree && (width < maxWidth))  {
@@ -2726,7 +2720,6 @@ differentpartition:
 
 			memcpy(&CNbestTempNode, &tempNode, sizeof(wNode));
 
-			bestTempSeg = new SEG [maxSegs];
 			bestSegs = new SEG [maxSegs];
 			bestSSectors = new wSSector [ssectorPoolEntries];
 			bestNodes = new wNode [nodePoolEntries];
@@ -2735,13 +2728,9 @@ differentpartition:
 			bestLineUsed = new char[noAliases];
 			bestLineChecked = new char[noAliases];
 
-
-
-			memcpy (bestTempSeg, tempSeg, sizeof (SEG) * (tempSegEntries));
 			memcpy (bestSegs, segStart, sizeof ( SEG) * (maxSegs) );
 			memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
 			memcpy (bestVertices, newVertices, sizeof (wVertex) * noVertices);
-			//memcpy (bestNodes, nodePool, sizeof ( wNode) * (nodeCount));
 			memcpy (bestNodes, nodePool, sizeof ( wNode) * nodePoolEntries);
 			memcpy (bestConvexList, convexList, sizeof ( int ) * (convexListEntries));
 			memcpy (bestLineChecked, lineChecked, sizeof (char) * (noAliases));
@@ -2801,83 +2790,92 @@ differentpartition:
 
 	// Cleanup if we looked for several trees
 	if (maxWidth > 1) {
-		// delete [] tempSegBackup;
 		delete [] segsStartBackup;
 		delete [] convexListBackup;
 		delete [] lineUsedBackup;
 		delete [] lineCheckedBackup;
 		delete [] sideInfoBackup;
 		delete [] newVerticesBackup;
+		delete [] nodePoolBackup;
+		delete [] ssectorPoolBackup;
 	}
 
 	// Last tree was not best, restore that one
+	//
+	
+	bool reassigned = false;
+	
 	if (betterTree == false) {
 		maxSegs = CNbestMaxSegs;
 
 		memcpy(nodePool, 	bestNodes, sizeof ( wNode) * 		(CNbestNodePoolEntries) );
-		memcpy(newVertices,	bestVertices, sizeof ( wVertex) *     	(CNbestNoVertices) );
 		memcpy(ssectorPool,  	bestSSectors, sizeof ( wSSector) *    	(CNbestSsectorsCount));
-		//memcpy(segStart, 	bestSegs, sizeof ( SEG) * 		(CNbestNoSegs));
-		memcpy(segStart,	bestSegs, sizeof ( SEG) * CNbestMaxSegs);
+		memcpy(convexList,      bestConvexList, sizeof ( int ) *        (convexListEntries));
+		memcpy(lineChecked,     bestLineChecked, sizeof( char ) *       (noAliases));
+		memcpy(lineUsed,        bestLineUsed, sizeof( char ) *          (noAliases));
+		memcpy(sideInfo,	bestSideInfo, sizeof (char) *           (sideInfoEntries));
 
-		memcpy(convexList,	bestConvexList, sizeof ( int ) *	(convexListEntries));
-		memcpy(lineChecked, 	bestLineChecked, sizeof( char ) *	(noAliases));
-		memcpy(lineUsed,	bestLineUsed, sizeof( char ) *		(noAliases));
-		// memcpy(tempSeg,		bestTempSeg, sizeof( SEG) * 		(tempSegEntries));
-		memcpy(sideInfo, 	bestSideInfo, sizeof (char) * 		(sideInfoEntries));
+		// Uses malloc / free:
+		memcpy(newVertices,  bestVertices, sizeof ( wVertex) *       (CNbestNoVertices) );
 
+// Working
+		reassigned = true;
+
+		// delete [] nodePool;
+		// nodePool = bestNodes;
+
+		/*delete [] newVertices;
+		newVertices = bestVertices;
+*/
+
+/*		delete ssectorPool;
+		ssectorPool = bestSSectors;
+*/
+		// memcpy(segStart,      bestSegs, sizeof ( SEG) *               (CNbestMaxegs));
+		delete [] segStart;
+		segStart = bestSegs;
+/*
+		delete [] tempSeg;
+		tempSeg = bestTempSeg;
+*/
+//		delete [] ssectorPool;
+//		ssectorPool =  bestSSectors;
+		
+//		delete [] bestConvexList;
+//		convexList = bestConvexList;
+		
+//		delete [] lineChecked;
+//		lineChecked = bestLineChecked;
+		
+//		delete [] lineUsed;
+//		lineUsed = bestLineUsed;
+
+//		delete [] sideInfo;
+//		sideInfo = bestSideInfo;
 
 		nodeCount = CNbestNodesCount;
-
-		// wNode *node = &nodePool [nodeCount];
-
-		// memcpy(node, &CNbestTempNode, sizeof(wNode));
-
-		// *node = CNbestTempNode; // zok
-		// node->child [0] = CNbestRNode;
-		// node->child [1] = CNbestLNode;
-
 		nodesLeft = CNbestNodesLeft;
-
 		ssectorCount = CNbestSsectorsCount;
 		ssectorsLeft = CNbestSsectorsLeft;
-
 		*noSegs = CNbestNoSegs;
 		segCount = CNbestSegsCount;
-
 		noVertices = CNbestNoVertices;
-
 		cptr = CNbestCptr;
 		convexPtr = CNbestConvexPtr;
-
 		noRight = CNbestNoRight;
 		noLeft = CNbestNoLeft;
-
-		// fix bounds :)
-
-		//segs = &segStart[inSeg];
-		// segs = CNbestSegs;
-		//
-
 		segs = &segStart[inSeg];
-
 		currentAlias = CNbestCurrentAlias;
 		currentSide = CNbestCurrentSide;
-
-		// FindBounds ( &node->side [0], segs, noRight );
-		// FindBounds ( &node->side [1], segs + noRight, noLeft );
-
+		
 		X = CNbestX;
 		Y = CNbestY;
 		DX = CNbestDX;
 		DY = CNbestDY;
 		ANGLE = CNbestANGLE;
 
-
 		// FindBounds ( &node->side [0], segs, noRight );
 		// FindBounds ( &node->side [1], segs + noRight, noLeft );
-
-
 	}
 
 	// Find the bounds of our current node
@@ -2899,16 +2897,28 @@ differentpartition:
 
 	nodeDepth--;
 
-	delete [] bestSegs;
-	delete [] bestTempSeg;
-	delete [] bestSSectors;
+//	if(segStart != bestSegs) {
+
 	delete [] bestNodes;
+
+	if (reassigned == false) {
+		delete [] bestSegs;
+		/* delete [] bestTempSeg; */
+		// delete [] bestSSectors;
+		// delete [] bestVertices;
+		// delete [] bestConvexList;
+		// delete [] bestLineChecked;
+		// delete [] bestLineUsed;
+		// delete [] bestSideInfo;
+		// delete [] bestNodes;
+	}
+	//delete [] bestTempSeg;
+	delete [] bestSSectors;
 	delete [] bestVertices;
 	delete [] bestConvexList;
 	delete [] bestLineChecked;
 	delete [] bestLineUsed;
 	delete [] bestSideInfo;
-
 
 	return ( UINT16 ) nodeCount++;
 }
