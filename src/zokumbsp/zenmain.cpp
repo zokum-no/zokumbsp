@@ -76,7 +76,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10-beta7"
+#define ZOKVERSION		"1.0.10-beta8"
 #define ZOKVERSIONSHORT		"1.0.10"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2018 Kim Roar Foldøy Hauge";
@@ -1111,6 +1111,60 @@ void PrintMapHeader(char *map) {
 	GetXY ( &startX, &startY );
 }
 
+
+void ProgressBar(char *lump, double progress, int width) {
+
+        char prog[256];
+
+        double counter = 0;
+        double divisor = 0;
+        double total = 0;
+
+
+	 cprintf("\r         %-s", lump);
+	if (progress < 1.0) {
+		cprintf(" %5.2f%% ", 100.0 * progress);
+	} else {
+		cprintf(" %5.1f%% ", 100.0 * progress);
+	}
+
+	sprintf(prog, "");
+
+	if (COLOR) {
+                cprintf ( "%c[0;37m", 27);
+        }
+	cprintf("[");
+
+	if (COLOR) {
+		cprintf ( "%c[1;30m", 27);
+	}
+
+
+        for (int i = 0; i != width; i++) {
+
+		double d = (double) i / (double) width;
+
+                if ( progress >= d) {
+                        strcat(prog, "#");
+                } else {
+                        strcat(prog, " ");
+                }
+        }
+	cprintf ( "%s", prog);
+	
+	if (COLOR) {
+        	cprintf ( "%c[0;37m", 27);
+	}
+
+	cprintf("]");
+
+	if (COLOR) {
+		PrintColorOff();
+	}
+
+}
+
+
 void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nuD) {
 	GotoXY ( startX + 6, startY );
 
@@ -1176,8 +1230,6 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 			sprintf(ansicolor, "0;31");
 		} else if ( efficiency >= 0.90) {
                         sprintf(ansicolor, "1;31");
-		} else if (old == nu) {
-			sprintf(ansicolor, "0;37");
 		} else if ( efficiency >= 0.85) {
                         sprintf(ansicolor, "0;33");
 		} else if ( efficiency >= 0.80) {

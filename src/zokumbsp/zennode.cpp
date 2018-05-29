@@ -84,9 +84,13 @@ DBG_REGISTER ( __FILE__ );
 #define EPSILON                 0.0001
 
 // Emperical values derived from a test of numerous .WAD files
-#define FACTOR_VERTEX           1.6             //  1.662791 - ???
-#define FACTOR_SEGS             3.0             //  1.488095 - ???
-#define FACTOR_NODE             0.6             //  0.590830 - MAP01 - csweeper.wad
+// #define FACTOR_VERTEX           1.6             //  1.662791 - ???
+//#define FACTOR_SEGS             3.0             //  1.488095 - ???
+//#define FACTOR_NODE             0.6             //  0.590830 - MAP01 - csweeper.wad
+
+#define FACTOR_VERTEX 1.1
+#define FACTOR_SEGS 1.1
+#define FACTOR_NODE 0.2
 
 
 // int MAX_WIDTH = 3;
@@ -226,7 +230,6 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 	}
 	tempSeg  = new SEG [ maxSegs ];
 	tempSegEntries = maxSegs;
-	//tempSeg  = new SEG [ 32767 ];
 
 	maxSegs  = ( int ) ( maxSegs * FACTOR_SEGS );
 	segStart = new SEG [ maxSegs ];
@@ -423,16 +426,20 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 	
 		wVertex *vertS = &newVertices [ pSeg->AliasFlip ? pSeg->Data.end : pSeg->Data.start ];
 		wVertex *vertE = &newVertices [ pSeg->AliasFlip ? pSeg->Data.start : pSeg->Data.end ];
+
 /*
 		if ( (int) lrint(pSeg->start.x) != (int) vertS->x) {
-			printf("ERROR %d %d\n", pSeg->start.x, vertS->x);
+			printf("ERROR %f %d\n", pSeg->start.x, vertS->x);
+			printf("ERROR %f %d\n", pSeg->start.x, vertE->x);
 		}
-*/		
+*/
+		
 
 		X     = vertS->x;
 		Y     = vertS->y;
 		DX    = vertE->x - vertS->x;
 		DY    = vertE->y - vertS->y;
+
 #if defined ( DIAGNOSTIC )
 		if (vertS != vertE) {
 		        different++;
@@ -1053,10 +1060,30 @@ static void SplitSegs ( SEG *segs, int noSplits ) {
 	FUNCTION_ENTRY ( NULL, "SplitSegs", true );
 
 	segCount += noSplits;
+	
 	if ( segCount > maxSegs ) {
 		fprintf ( stderr, "\nError: Too many SEGs have been split: %d > %d \n", segCount, maxSegs );
 		exit ( -1 );
 	}
+	
+/*
+	if (segCount >= maxSegs) {
+
+		int memwtf = segs - segStart;
+
+		SEG *s = new SEG [maxSegs + noSplits];
+		memset (s, 0, sizeof ( SEG ) * (maxSegs + noSplits));
+		memcpy(s, segStart, maxSegs * sizeof(SEG));
+
+		delete [] segStart;
+		segStart = s;
+
+		// printf("\nexpanding\n\n");
+
+		maxSegs += noSplits;
+		segs = segStart + memwtf;
+	}
+*/
 
 	int count = segCount - ( segs - segStart ) - noSplits;
 	memmove ( segs + noSplits, segs, count * sizeof ( SEG ));
@@ -1835,8 +1862,8 @@ static int AlgorithmMulti( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 
 	int returnSeg;
 	// static wLineDefInternal *oldLine;
-/*
-	if (*width == 2) {
+
+/*	if (*width == 1) {
 		returnSeg = AlgorithmFewerSplits (segs, noSegs, options, level, width, wideSegs );
 	}
 */
@@ -2247,6 +2274,9 @@ int MaxWidth(int depth, int segs, sBSPOptions *options) {
 */
 }
 
+#define COLOR true
+
+void ProgressBar(char *, double, int);
 
 void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
@@ -2267,12 +2297,6 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 		depthProgress[depth - 1 ]++;
 	}
 
-	char prog[256];
-
-	double counter = 0;
-	double divisor = 0;
-	double total = 0;
-
 	double progress = 	
 		depthProgress[0] / ((double) MaxWidth(1, segs, o) * 2.0) +
 		depthProgress[1] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * 4.0) +
@@ -2283,31 +2307,66 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 		depthProgress[6] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * (double) MaxWidth(7, segs, o) * 128.0) +
 		depthProgress[7] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * (double) MaxWidth(7, segs, o) * (double) MaxWidth(7, segs, o)  * 256.0);
 
+	ProgressBar((char *) "BSP       ", progress, 51);
 
-	sprintf(prog, "      BSP  %5.2f%%  [", o->Width, cutoff, 100.0 * progress);
-
-	for (int i = 0; i != 56; i++) {
-		if ( ((double(i) / 56.0) < progress)) {
-			strcat(prog, "#");
-		} else {
-			strcat(prog, " ");
-		}
-	}
-	strcat(prog, "]");
-
-	Status(prog);
 }
 
+int deep[256];
+bool deepinit = false;
+
 int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level) {
+/*
+	if (deepinit == false) {
+		for (int i = 0; i != 256; i++) {
+			deep[i] = 0;
+		}
+		deepinit = true;
+	} else {
+		if (nodeDepth < 256) {
+			deep[nodeDepth]++;
+			printf("\n");
+			for (int i = 0; i != 35; i++) {
+				printf("%d,", deep[i]);
+			}
+		} else {
+			printf("very deep!");
+		}
+		printf("\n");
+	}
+*/
 
 	bool noMoreScores = false; // stupid hack
-
-	SEG *segs = &segStart[inSeg];
 
 	FUNCTION_ENTRY ( NULL, "CreateNode", true );
 
 	int noLeft, noRight;
 	int *cptr = convexPtr;
+
+
+	double sc = segCount;
+
+	int expander = ((int) (sc * 1.02)) + 4;
+
+        if (expander > maxSegs) {
+
+		expander = ((double) maxSegs * 1.02) + 4;
+
+		// printf("\n%d > %d\n", expander, segCount);
+
+                SEG *s = new SEG [expander];
+                // memset (s, 0, sizeof ( SEG ) * (expander));
+                memcpy(s, segStart, maxSegs * sizeof(SEG));
+
+                delete [] segStart;
+                segStart = s;
+
+                // printf("\nexpanding\n\n");
+                // 
+	        maxSegs = expander;
+		// printf("maxSegs %d\n\n", maxSegs);
+	}
+
+	SEG *segs = &segStart[inSeg];
 
 	// insert code here to try different partitions?
 
@@ -2406,8 +2465,10 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 		nodePoolBackup = new wNode [nodePoolEntries];
 		memcpy (nodePoolBackup, nodePool, sizeof ( wNode) * (nodePoolEntries));
 		
+		/*
 	 	newVerticesBackup = new wVertex[maxVertices];
 		memcpy (newVerticesBackup, newVertices, sizeof (wVertex) * maxVertices);
+		*/
 
 	}
 	nodeDepth++;
@@ -2468,8 +2529,8 @@ differentpartition:
 	
 		delete [] segStart;
 		segStart = new SEG [maxSegs];
-		memcpy (segStart, segsStartBackup, sizeof ( SEG) * maxSegs );
-		
+		memcpy (segStart, segsStartBackup, sizeof ( SEG) * maxSegsBackup);
+
 		segs = &segStart[inSeg];		
 
 		// restore data from our saved backup
@@ -2487,12 +2548,17 @@ differentpartition:
 		nodePoolEntries = nodePoolEntriesBackup;
 		ssectorPoolEntries = ssectorPoolEntriesBackup;
 
-		maxSegs = maxSegsBackup;
+		// maxSegs = maxSegsBackup;
 
 		memcpy (convexList, convexListBackup, sizeof( int) * (convexListEntries));
 		memcpy (lineChecked, lineCheckedBackup, sizeof(char) * ( noAliases));
 		memcpy (lineUsed, lineUsedBackup, sizeof(char) * ( noAliases));
-		memcpy(newVertices, newVerticesBackup, sizeof (wVertex) * noVertices);
+
+/*		if (memcmp(newVertices, newVerticesBackup, sizeof (wVertex) * noVertices)) {
+			printf("forskjell\n");
+		}*/
+
+		// memcpy(newVertices, newVerticesBackup, sizeof (wVertex) * noVertices);
 
 		convexPtr = convexPtrBackup;
 		cptr = cptrBackup;
@@ -2525,12 +2591,14 @@ differentpartition:
 
 		// cleanup!
 		if (maxWidth > 1) {
-			delete [] segsStartBackup;
+			if (segsStartBackup) {
+				delete [] segsStartBackup;
+			}
 			delete [] convexListBackup;
 			delete [] lineUsedBackup;
 			delete [] lineCheckedBackup;
 			delete [] sideInfoBackup;
-			delete [] newVerticesBackup;
+			// delete [] newVerticesBackup;
 			delete [] nodePoolBackup;
 			delete [] ssectorPoolBackup;
 		}
@@ -2624,6 +2692,9 @@ differentpartition:
 		}
 
 		// UINT16 rNode = CreateNode ( inSeg, &noRight, options, level);
+
+		bool swapped = false;	
+
 		rNode = CreateNode ( inSeg, &noRight, options, level);
 		DepthProgress(nodeDepth, initialSegs, options);
 
@@ -2643,9 +2714,8 @@ differentpartition:
 			// printf("\nOne or more are sub sectors...\n");
 		}
 
-
 		*noSegs = noLeft + noRight;
-
+		
 #if defined ( DIAGNOSTIC )
 
 		//		printf("\nVerifying right #%d, width %d, depth %d\n", inSeg, width, nodeDepth);
@@ -2777,6 +2847,7 @@ differentpartition:
 			// printf("wide tree\n");
 
 		}
+
 		width++;
 
 		if (		(width <= maxWidth) 
@@ -2790,12 +2861,14 @@ differentpartition:
 
 	// Cleanup if we looked for several trees
 	if (maxWidth > 1) {
-		delete [] segsStartBackup;
+		if (segsStartBackup) {
+			delete [] segsStartBackup;
+		}
 		delete [] convexListBackup;
 		delete [] lineUsedBackup;
 		delete [] lineCheckedBackup;
 		delete [] sideInfoBackup;
-		delete [] newVerticesBackup;
+		// delete [] newVerticesBackup;
 		delete [] nodePoolBackup;
 		delete [] ssectorPoolBackup;
 	}
@@ -2816,7 +2889,15 @@ differentpartition:
 		memcpy(sideInfo,	bestSideInfo, sizeof (char) *           (sideInfoEntries));
 
 		// Uses malloc / free:
-		memcpy(newVertices,  bestVertices, sizeof ( wVertex) *       (CNbestNoVertices) );
+//		memcpy(newVertices,  bestVertices, sizeof ( wVertex) *       (CNbestNoVertices) );
+
+		memcpy(newVertices + noVerticesBackup,  bestVertices + noVerticesBackup, sizeof ( wVertex) *  (CNbestNoVertices - noVerticesBackup) );
+
+/*
+		if (memcmp(newVertices,  bestVertices, sizeof ( wVertex) *       (CNbestNoVertices) )) {
+			printf("error\n");
+		}	
+*/
 
 // Working
 		reassigned = true;
