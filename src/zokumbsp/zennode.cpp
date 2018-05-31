@@ -2180,8 +2180,8 @@ static UINT16 GenerateUniqueSectors ( SEG *segs, int noSegs ) {
 	double y2 = Y + DY;
 #endif
 
-	FindBounds ( &tempNode.side [0], segs, noRight );
-	FindBounds ( &tempNode.side [1], segs + noRight, noLeft );
+	// FindBounds ( &tempNode.side [0], segs, noRight );
+	// FindBounds ( &tempNode.side [1], segs + noRight, noLeft );
 
 	// if ( showProgress ) GoRight ();
 
@@ -2660,8 +2660,8 @@ differentpartition:
 
 		// printf("\nwidth: %d, depth %d nosegs %d |%d|%d|\n", width, nodeDepth, *noSegs, noRight, noLeft);
 
-		FindBounds ( &tempNode.side [0], segs, noRight );
-		FindBounds ( &tempNode.side [1], segs + noRight, noLeft );
+		// FindBounds ( &tempNode.side [0], segs, noRight );
+		// FindBounds ( &tempNode.side [1], segs + noRight, noLeft );
 
 #if defined ( DIAGNOSTIC )		
 		// printf("\nPartition line: width: %d, depth %d, %d,%d to %d,%d. nosegs %d (%d + %d) \n", width, nodeDepth, tempNode.x, tempNode.y, tempNode.x + tempNode.dx, tempNode.y + tempNode.dy, *noSegs, noRight, noLeft);
@@ -3062,6 +3062,74 @@ wSegs *GetSegs () {
 	return finalSegs;
 }
 
+
+void PostFindBounds( wNode *node) {
+	
+	wBound bounds[2];
+
+	// If it's a subSector, calculate from segs!
+	// If not, recursively figure it out.
+
+	for (int nodeChild = 0; nodeChild != 2; nodeChild++) {
+		
+		// If a child is a subsector, we can use the segs to get bounds
+		
+		// printf("Checking side %d\n", nodeChild);
+		if (node->child[nodeChild] & 0x8000) {
+
+			int subSector = node->child[nodeChild] - 0x8000;
+
+			// printf(" FindBounds: child: %d, subsector: %d, first: %d, num %d\n", &node->side[nodeChild], subSector, ssectorPool[subSector].first, ssectorPool[subSector].num);
+
+			FindBounds( &node->side[nodeChild], &segStart [ssectorPool[subSector].first], ssectorPool[subSector].num);
+
+			// The child is another node, we need to figure out it's bounds and then use the bounds
+		} else { 
+
+			// printf(" PostFind recursive on node %d\n", node->child[nodeChild]);
+
+			PostFindBounds( &nodePool[node->child[nodeChild]]); // recursion
+
+			// Check the children's two sides on this side to get this node's side
+
+			// printf("\nBefore: %d, %d, %d, %d\n", node->side[nodeChild].minx, node->side[nodeChild].miny, node->side[nodeChild].maxx, node->side[nodeChild].maxy );			
+
+			if (nodePool[node->child[nodeChild]].side[0].minx < nodePool[node->child[nodeChild]].side[1].minx) {
+				node->side[nodeChild].minx = nodePool[node->child[nodeChild]].side[0].minx;
+			} else {
+				node->side[nodeChild].minx = nodePool[node->child[nodeChild]].side[1].minx;
+			}
+
+			if (nodePool[node->child[nodeChild]].side[0].miny < nodePool[node->child[nodeChild]].side[1].miny) {
+				node->side[nodeChild].miny = nodePool[node->child[nodeChild]].side[0].miny;
+			} else {
+				node->side[nodeChild].miny = nodePool[node->child[nodeChild]].side[1].miny;
+			}
+
+			if (nodePool[node->child[nodeChild]].side[0].maxx > nodePool[node->child[nodeChild]].side[1].maxx) {
+				node->side[nodeChild].maxx = nodePool[node->child[nodeChild]].side[0].maxx;
+			} else {
+				node->side[nodeChild].maxx = nodePool[node->child[nodeChild]].side[1].maxx;
+			}
+
+			if (nodePool[node->child[nodeChild]].side[0].maxy > nodePool[node->child[nodeChild]].side[1].maxy) {
+				node->side[nodeChild].maxy = nodePool[node->child[nodeChild]].side[0].maxy;
+			} else {
+				node->side[nodeChild].maxy = nodePool[node->child[nodeChild]].side[1].maxy;
+			}
+
+
+			//printf("After:  %d, %d, %d, %d\n", node->side[nodeChild].minx, node->side[nodeChild].miny, node->side[nodeChild].maxx, node->side[nodeChild].maxy );
+
+		}
+	}
+}
+
+
+//static void FindBounds ( wBound *bound, SEG *seg, int noSegs ) {
+
+
+
 //----------------------------------------------------------------------------
 //  Wrapper function that calls all the necessary functions to prepare the
 //    BSP tree and insert the new data into the level.  All screen I/O is
@@ -3182,6 +3250,9 @@ restart:
 	DepthProgress(-1, 1, options);	
 
 	CreateNode ( 0, &noSegs, options, level);
+
+	// new 2018 may 29 code
+	PostFindBounds(&nodePool[nodeCount - 1]);
 
 	delete [] convexList;
 	if ( score ) delete [] score;
