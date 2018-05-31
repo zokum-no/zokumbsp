@@ -2487,6 +2487,7 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 	int *CNbestConvexPtr;
 	int CNbestCurrentAlias;
 	int CNbestNodePoolEntries;
+	int CNBestNodeCount;
 
 	int CNbestNoRight, CNbestNoLeft;
 
@@ -2839,13 +2840,6 @@ differentpartition:
 			CNbestDX = DX;
 			CNbestDY = DY;
 			CNbestANGLE = ANGLE;
-
-			CNbestNodePoolEntries;
-
-			// CNbestInSeg = inSeg;
-
-			// printf("wide tree\n");
-
 		}
 
 		width++;
@@ -2881,7 +2875,8 @@ differentpartition:
 	if (betterTree == false) {
 		maxSegs = CNbestMaxSegs;
 
-		memcpy(nodePool, 	bestNodes, sizeof ( wNode) * 		(CNbestNodePoolEntries) );
+		// memcpy(nodePool,	bestNodes, sizeof ( wNode) * 		(CNbestNodePoolEntries) );
+		memcpy(nodePool,	bestNodes, sizeof ( wNode) *		(CNbestNodesCount + 1));
 		memcpy(ssectorPool,  	bestSSectors, sizeof ( wSSector) *    	(CNbestSsectorsCount));
 		memcpy(convexList,      bestConvexList, sizeof ( int ) *        (convexListEntries));
 		memcpy(lineChecked,     bestLineChecked, sizeof( char ) *       (noAliases));
@@ -2954,7 +2949,7 @@ differentpartition:
 		DX = CNbestDX;
 		DY = CNbestDY;
 		ANGLE = CNbestANGLE;
-
+		
 		// FindBounds ( &node->side [0], segs, noRight );
 		// FindBounds ( &node->side [1], segs + noRight, noLeft );
 	}
