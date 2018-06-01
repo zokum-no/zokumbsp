@@ -751,7 +751,8 @@ static int SortByLineDef ( const void *ptr1, const void *ptr2 ) {
 static UINT16 CreateSSector ( SEG *segs, int noSegs ) {
 	FUNCTION_ENTRY ( NULL, "CreateSSector", true );
 
-	if ( ssectorsLeft-- == 0 ) {
+	// if ( ssectorsLeft-- == 0 ) {
+	if (ssectorCount == ssectorPoolEntries) {
 		int delta     = ( 3 * ssectorCount ) / 100 + 1;
 
 		// mem error fix
@@ -2314,7 +2315,7 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 int deep[256];
 bool deepinit = false;
 
-int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level) {
+int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level, int segGoal, int subSectorGoal) {
 /*
 	if (deepinit == false) {
 		for (int i = 0; i != 256; i++) {
@@ -2343,6 +2344,8 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 	int *cptr = convexPtr;
 
 
+	// speedup!
+
 	double sc = segCount;
 
 	int expander = ((int) (sc * 1.02)) + 4;
@@ -2351,36 +2354,42 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 
 		expander = ((double) maxSegs * 1.02) + 4;
 
-		// printf("\n%d > %d\n", expander, segCount);
-
                 SEG *s = new SEG [expander];
-                // memset (s, 0, sizeof ( SEG ) * (expander));
                 memcpy(s, segStart, maxSegs * sizeof(SEG));
 
                 delete [] segStart;
                 segStart = s;
 
-                // printf("\nexpanding\n\n");
-                // 
 	        maxSegs = expander;
-		// printf("maxSegs %d\n\n", maxSegs);
 	}
 
 	SEG *segs = &segStart[inSeg];
 
-	// insert code here to try different partitions?
-
 	int width = 1; // we start at tree 1, not 0
 	int maxWidth; //= MaxWidth(nodeDepth, *noSegs, options ); // 1 or higher :)
 
-	// backup our nodes, segs and sub sectors
-	
 	// performance
-
 	int initialSegs = *noSegs;	
 
-	maxWidth = MaxWidth(nodeDepth, initialSegs, options );
-	
+	if (options->Metric == TREE_METRIC_SEGS) {
+		if (segGoal < segCount) {
+			maxWidth = 1;
+		} else if ((segGoal == segCount) && (subSectorGoal < (ssectorCount + 1))) {
+			maxWidth = 1;
+		} else {
+			maxWidth = MaxWidth(nodeDepth, initialSegs, options );
+		}
+	} else if (options->Metric == TREE_METRIC_SUBSECTORS) {
+		if (subSectorGoal < (ssectorCount + 1)) { // we will always make at least one more sub sector
+			maxWidth = 1;
+		} else if ((subSectorGoal == (ssectorCount + 1)) && (segGoal < segCount)) {
+			maxWidth = 1;
+		} else {
+			maxWidth = MaxWidth(nodeDepth, initialSegs, options );
+		}
+	} else {
+		maxWidth = MaxWidth(nodeDepth, initialSegs, options );
+	}
 
 	int nodesLeftBackup = nodesLeft;
 	int segCountBackup = segCount;
@@ -2389,7 +2398,7 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level)
 	int noSegsBackup = *noSegs;
 	int noVerticesBackup = noVertices;
 	int nodeCountBackup = nodeCount;
-	int nodePoolEntriesBackup = nodePoolEntries;
+	int nodePoolEntriesBackup = nodePoolEntries; // how many did we have at start
 	int ssectorPoolEntriesBackup = ssectorPoolEntries;
 	int maxVerticesBackup = maxVertices;
 	int maxSegsBackup = maxSegs;
@@ -2528,6 +2537,9 @@ differentpartition:
 
 	if (width != 1) {
 	
+		subSectorGoal = ssectorCount;
+		segGoal = segCount;
+
 		delete [] segStart;
 		segStart = new SEG [maxSegs];
 		memcpy (segStart, segsStartBackup, sizeof ( SEG) * maxSegsBackup);
@@ -2546,8 +2558,8 @@ differentpartition:
 		noVertices = noVerticesBackup;
 
 		nodesLeft =  nodesLeftBackup;
-		nodePoolEntries = nodePoolEntriesBackup;
-		ssectorPoolEntries = ssectorPoolEntriesBackup;
+		// nodePoolEntries = nodePoolEntriesBackup;
+		// ssectorPoolEntries = ssectorPoolEntriesBackup;
 
 		// maxSegs = maxSegsBackup;
 
@@ -2696,11 +2708,11 @@ differentpartition:
 
 		bool swapped = false;	
 
-		rNode = CreateNode ( inSeg, &noRight, options, level);
+		rNode = CreateNode ( inSeg, &noRight, options, level, segGoal, subSectorGoal);
 		DepthProgress(nodeDepth, initialSegs, options);
 
 		// UINT16 lNode = CreateNode ( inSeg + noRight, &noLeft, options, level);
-		lNode = CreateNode ( inSeg + noRight, &noLeft, options, level);
+		lNode = CreateNode ( inSeg + noRight, &noLeft, options, level, segGoal, subSectorGoal);
 		DepthProgress(nodeDepth, initialSegs, options);
 
 		// Restore segs!
@@ -2729,11 +2741,14 @@ differentpartition:
 		while ( convexPtr != cptr ) lineUsed [ *--convexPtr ] = false;
 		lineUsed [ alias ] = false;
 
-		if ( nodesLeft-- == 0 ) {
-			int delta  = ( 3 * nodeCount ) / 100 + 1;
+		// if ( nodesLeft-- == 0 ) {
+		if (nodeCount == nodePoolEntries) {
+			int delta  = ( 5 * nodeCount ) / 100 + 1;
+			// printf("Delta %d\n", delta);
 
-			wNode *nodePoolRealloc = ( wNode * ) realloc ( nodePool, sizeof ( wNode ) * ( nodeCount + delta ));
 			nodePoolEntries = nodeCount + delta; // zokum 2017
+
+			wNode *nodePoolRealloc = ( wNode * ) realloc ( nodePool, sizeof ( wNode ) * ( nodePoolEntries ));
 
 			if (nodePoolRealloc) {
 				nodePool = nodePoolRealloc;
@@ -2793,7 +2808,12 @@ differentpartition:
 
 			bestSegs = new SEG [maxSegs];
 			bestSSectors = new wSSector [ssectorPoolEntries];
+
+			//bestNodes = new wNode [nodePoolEntries];
+			
+			CNbestNodePoolEntries = nodePoolEntries;
 			bestNodes = new wNode [nodePoolEntries];
+
 			bestVertices = new wVertex[maxVertices];
 			bestConvexList = new int[convexListEntries];
 			bestLineUsed = new char[noAliases];
@@ -2802,7 +2822,10 @@ differentpartition:
 			memcpy (bestSegs, segStart, sizeof ( SEG) * (maxSegs) );
 			memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
 			memcpy (bestVertices, newVertices, sizeof (wVertex) * noVertices);
+
 			memcpy (bestNodes, nodePool, sizeof ( wNode) * nodePoolEntries);
+			// memcpy (bestNodes, nodePool, sizeof ( wNode) * nodeCount + 1);
+
 			memcpy (bestConvexList, convexList, sizeof ( int ) * (convexListEntries));
 			memcpy (bestLineChecked, lineChecked, sizeof (char) * (noAliases));
 			memcpy (bestLineUsed, lineUsed, sizeof (char) * (noAliases));
@@ -2832,8 +2855,6 @@ differentpartition:
 
 			CNbestCurrentAlias = currentAlias;
 			CNbestCurrentSide = currentSide;
-
-			CNbestNodePoolEntries = nodePoolEntries;
 
 			CNbestX = X;
 			CNbestY = Y;
@@ -2875,8 +2896,11 @@ differentpartition:
 	if (betterTree == false) {
 		maxSegs = CNbestMaxSegs;
 
-		// memcpy(nodePool,	bestNodes, sizeof ( wNode) * 		(CNbestNodePoolEntries) );
-		memcpy(nodePool,	bestNodes, sizeof ( wNode) *		(CNbestNodesCount + 1));
+
+		// printf("%d %d\n", nodePoolEntries, CNbestNodePoolEntries);
+
+		memcpy(nodePool,	bestNodes, sizeof ( wNode) * 		(CNbestNodePoolEntries) );
+		//memcpy(nodePool,	bestNodes, sizeof ( wNode) *		(CNbestNodesCount + 1));
 		memcpy(ssectorPool,  	bestSSectors, sizeof ( wSSector) *    	(CNbestSsectorsCount));
 		memcpy(convexList,      bestConvexList, sizeof ( int ) *        (convexListEntries));
 		memcpy(lineChecked,     bestLineChecked, sizeof( char ) *       (noAliases));
@@ -3244,7 +3268,7 @@ restart:
 
 	DepthProgress(-1, 1, options);	
 
-	CreateNode ( 0, &noSegs, options, level);
+	CreateNode ( 0, &noSegs, options, level, 99999, 99999 );
 
 	// new 2018 may 29 code
 	PostFindBounds(&nodePool[nodeCount - 1]);
