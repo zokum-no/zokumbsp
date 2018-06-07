@@ -216,6 +216,8 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 		// some types, like 48 invalidate this one
 		lineDef = level->GetLineDefs();
 
+		bool flag = false;
+
 		switch (lineDef [i].type) {
 			case 48: // scrolling wall
 				if (lineDef [i].tag > 1){
@@ -255,6 +257,25 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 					}
 				}
 				break;
+			case 1078: // Change start vertex of all with same tag to be same as this line. Make line non-render. Also copies sidedefs.
+				flag = true;
+			case 1079: // Change end vertex of all with same tag to be the same as this line. Make line non-render. Also copies sidedefs.
+				for ( int j = 0; j < level->LineDefCount(); j++ ) {
+					if (lineDef [j].tag == lineDef [i].tag) {
+						if (flag) {
+							lineDef [j].start = lineDef [i].start;
+						} else {
+							lineDef [j].end = lineDef [i].end;
+						}
+						lineDef [j].sideDef[0] = lineDef [i].sideDef[0];
+						lineDef [j].sideDef[1] = lineDef [i].sideDef[1];
+					}
+
+				}
+				extraData->lineDefsCollidable	[i] = false;
+				extraData->lineDefsRendered	[i] = false;
+				break;
+
 
 		}
 	}
@@ -534,7 +555,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 
 				  ) {
 
-				
+
 
 				int sectorL = sideDef [lineDef [i].sideDef[LEFT_SIDEDEF]].sector;
 				int sectorR = sideDef [lineDef [i].sideDef[RIGHT_SIDEDEF]].sector;
@@ -633,4 +654,51 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 		}
 	}
 	}
+	/*
+	   INT16       xOff;                 
+	   INT16       yOff;                 
+	   char        text1[MAX_LUMP_NAME]; 
+	   char        text2[MAX_LUMP_NAME]; 
+	   char        text3[MAX_LUMP_NAME]; 
+	   UINT16      sector;               
+	 * */
+
+	int CompressSideDefs(DoomLevel *level, const sOptions *config) {
+		int sideDefs = level->SideDefCount();
+
+		const wSideDef *sideDef = level->GetSideDefs ();
+
+		int compressable = 0;
+
+		bool alreadyCompressed[sideDefs];
+
+		for ( int i = 0; i < (sideDefs); i++ ) {
+			alreadyCompressed[i] = false;
+		}
+
+		for ( int i = 0; i < (sideDefs - 1); i++ ) {
+			for (int j = i + 1; j < sideDefs; j++) {
+				if (	
+						(alreadyCompressed[i] == false) &&
+						(sideDef [i].sector == sideDef [j].sector) && 
+						(sideDef [i].xOff == sideDef [j].xOff) &&  
+						(sideDef [i].yOff == sideDef [j].yOff) &&
+						(strncmp( sideDef [i].text1, sideDef [j].text1, 8) == 0) &&
+						(strncmp( sideDef [i].text2, sideDef [j].text2, 8) == 0) &&
+						(strncmp( sideDef [i].text3, sideDef [j].text3, 8) == 0)
+				   )
+				{
+					alreadyCompressed[j] = true;
+					// printf("Compressable sidedef found %5d == %5d, sector %3d | %8.8s %8.8s | %8.8s %8.8s | %8.8s %8.8s\n", i, j, sideDef [i].sector, sideDef [i].text1, sideDef [j].text1, sideDef [i].text2, sideDef [j].text2, sideDef [i].text3, sideDef [j].text3);
+					compressable++;
+				}
+			}
+
+		}
+		// printf("Sidedefs: %d of %d are compressable\n", compressable, sideDefs);
+
+	}
+
+
+
 

@@ -169,12 +169,12 @@ void printHelp () {
 	fprintf ( stdout, "%c     2   Zero footer.\n", (config.BlockMap.ZeroHeader == 2) ? DEFAULT_CHAR : ' ' );
 // Nodes
 
-	fprintf ( stdout, "\nSwitches to control node tree and related structures in a map.\n\n");
+	fprintf ( stdout, "\nSwitches to control BSP tree and related structures in a map.\n\n");
 
 	fprintf ( stdout, "%c -n      Rebuild NODES.\n\n", config.Nodes.Rebuild ? DEFAULT_CHAR : ' ' );
 	
 	fprintf ( stdout, "%c   b     Remove backside seg on on some linedefs.\n", config.BlockMap.autoDetectBacksideRemoval ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c   c     Use unsafe cache to lower build time.\n", ( config.Nodes.Cache == 1 ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   c     Calculate BAM from SEGs instead of lineDefs.\n", ( config.Nodes.SegBAMs == 1 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c   i     Ignore non-visible lineDefs.\n", config.Nodes.ReduceLineDefs ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c   q     Don't display progress bar.\n", config.Nodes.Quiet ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c   u     Ensure all sub-sectors contain only 1 sector.\n", config.Nodes.Unique ? DEFAULT_CHAR : ' ' );
@@ -221,6 +221,7 @@ void printHelp () {
 
 	fprintf ( stdout, "\nSwitches to control other options.\n\n");
 
+	fprintf ( stdout, "%c -c      Enable colored output\n", config.Color ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c -t      Don't write output file (test mode).\n\n", ! config.WriteWAD ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "  -s=     Which output stats to show.\n");
 	fprintf ( stdout, "%c    m    Show a total for all computed levels.\n", config.Reject.UseRMB ? DEFAULT_CHAR : ' ' );
@@ -366,12 +367,13 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 			setting = ( *ptr++ == '+' ) ? true : false;
 		}
 		switch ( option ) {
-			case '1' : config.Nodes.Method = 1;                 break;
-			case '2' : config.Nodes.Method = 2;                 break;
-			case '3' : config.Nodes.Method = 3;                 break;
-			case 'Q' : config.Nodes.Quiet = setting;            break;
-			case 'U' : config.Nodes.Unique = setting;           break;
-			case 'I' : config.Nodes.ReduceLineDefs = setting;   break;
+			case '1' : config.Nodes.Method = 1;                 		break;
+			case '2' : config.Nodes.Method = 2;                 		break;
+			case '3' : config.Nodes.Method = 3;                 		break;
+			case 'C' : config.Nodes.SegBAMs = setting;			break;
+			case 'Q' : config.Nodes.Quiet = setting;            		break;
+			case 'U' : config.Nodes.Unique = setting;           		break;
+			case 'I' : config.Nodes.ReduceLineDefs = setting;   		break;
 			case 'B' : config.BlockMap.autoDetectBacksideRemoval = setting; break;
 			case 'A' :
 				   if (ptr[0] && ptr[1]) {
@@ -599,6 +601,7 @@ int parseArgs ( int index, const char *argv [] )
 				case 'R' : localError = parseREJECTArgs ( ptr, setting );       break;
 				case 'S' : localError = parseSTATISTICSArgs (ptr, setting);	break;
 				case 'T' : config.WriteWAD = ! setting;                         break;
+				case 'C' : config.Color = setting;				break;
 				default  : localError = true;
 			}
 		}
@@ -660,6 +663,7 @@ void ReadConfigFile ( const char *argv [] )
 					case 'N' : localError = parseNODESArgs ( ptr, setting );        break;
 					case 'R' : localError = parseREJECTArgs ( ptr, setting );       break;
 					case 'T' : config.WriteWAD = ! setting;                         break;
+					case 'C' : config.Color = setting;
 					default  : localError = true;
 				}
 			}
@@ -1077,7 +1081,6 @@ void PrintTime ( UINT32 time ) {
 	cprintf ( "%4ld.%03ld sec%s\r\n", time / 1000, time % 1000, ( time == 1000 ) ? "" : "s" );
 }
 
-#define COLOR true
 
 void PrintColorOff(void) {
 	cprintf ( "%c[0m", 27);
@@ -1086,7 +1089,7 @@ void PrintColorOff(void) {
 void PrintMapHeader(char *map) {
 	//   cprintf ( "\r0        10        20        30        40        50        60        70       79\n\r");
 	GotoXY ( startX, startY );
-	if (COLOR) {
+	if (config.Color) {
 		 cprintf ( "%c[37;44;1m", 27);
 	}
 /*
@@ -1098,13 +1101,13 @@ void PrintMapHeader(char *map) {
 //                          Lump          Old        New      %Change       %Limit     Time Elapsed
 	cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
 	
-	if (COLOR) {
+	if (config.Color) {
 		cprintf ( "%c[0;37;44m", 27);
 	}
 	
 	cprintf(" Lump          Old         New     %%Change      %%Limit      Time Elapsed\n\r");
 	
-	if (COLOR) {
+	if (config.Color) {
         	PrintColorOff();
 	}
 
@@ -1130,16 +1133,16 @@ void ProgressBar(char *lump, double progress, int width) {
 
 	sprintf(prog, "");
 
-	if (COLOR) {
+	if (config.Color) {
                 cprintf ( "%c[0;37m", 27);
         }
 	cprintf("[");
 
-	if (COLOR) {
+	if (config.Color) {
 		cprintf ( "%c[1;30m", 27);
 	}
 
-
+/*
         for (int i = 0; i != width; i++) {
 
 		double d = (double) i / (double) width;
@@ -1150,15 +1153,24 @@ void ProgressBar(char *lump, double progress, int width) {
                         strcat(prog, " ");
                 }
         }
+*/
+	sprintf(prog, "%*s", width, (char *)" ");
+
+	int hashes = progress * (double) width;
+
+	for (int i = 0; i != hashes; i++) {
+		prog[i] = '#';
+	}
+
 	cprintf ( "%s", prog);
 	
-	if (COLOR) {
+	if (config.Color) {
         	cprintf ( "%c[0;37m", 27);
 	}
 
 	cprintf("]");
 
-	if (COLOR) {
+	if (config.Color) {
 		PrintColorOff();
 	}
 
@@ -1198,7 +1210,7 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 		old = 0;
 	}
 
-	if(COLOR) {
+	if(config.Color) {
 		if(change >= 1.25) {
 			sprintf(ansicolor, "1;31");
 		} else if (change >= 1.1) {
@@ -1221,7 +1233,7 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 		cprintf("           -");
 	}
 
-	if(COLOR) {
+	if(config.Color) {
 		if (limit == 0) {
 			sprintf(ansicolor, "0;37");
 		} else if (	(efficiency) > 1.0) {
@@ -1246,7 +1258,7 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 		cprintf("           -");
 	}
 
-	if (COLOR) {
+	if (config.Color) {
 		PrintColorOff();
 	}
 	
@@ -1390,6 +1402,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		options.algorithm      = config.Nodes.Method;
 		options.thoroughness   = config.Nodes.Thoroughness;
 		options.showProgress   = ! config.Nodes.Quiet;
+		options.segBAMs 	= config.Nodes.SegBAMs;
 		options.reduceLineDefs = config.Nodes.ReduceLineDefs;
 		options.ignoreLineDef  = NULL;
 		options.dontSplit      = NULL;
@@ -1549,7 +1562,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		if ( changed ) {
 			MoveUp ( rows );
 			
-			if (COLOR) {
+			if (config.Color) {
 				cprintf ( "%c[37;44;1m", 27);
 			}
 
@@ -1557,7 +1570,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			GotoXY(startX + 2 /*strlen(name)*/, startY);
 			cprintf("*");
 			MoveDown ( rows );
-			if (COLOR) {
+			if (config.Color) {
 				PrintColorOff();
 			}
 		}
@@ -1759,6 +1772,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Nodes.Quiet          = isatty ( fileno ( stdout )) ? false : true;
 	config.Nodes.Unique         = false;
 	config.Nodes.ReduceLineDefs = false;
+	config.Nodes.SegBAMs		= true;
 	config.Nodes.SplitHandling  = 1;
 	config.Nodes.SplitReduction = 3;
 	config.Nodes.MultipleSplitMethods = 0;
@@ -1780,6 +1794,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Statistics.ShowTotals = false;
 
 	config.WriteWAD             = true;
+	config.Color 			= false;
 	config.OutputWad            = false;
 
 	if ( argc == 1 ) {

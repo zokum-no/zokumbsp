@@ -69,6 +69,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "common.hpp"
 #include "logger.hpp"
 
@@ -423,7 +424,11 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 		currentAlias   = lineDefAlias [ pSeg->Data.lineDef ];
 		currentSide    = sideInfo ? sideInfo [ currentAlias ] : NULL;	
 		// }
-	
+	/*
+		wVertex *vertS = &newVertices [ pSeg->AliasFlip ? pSeg->Data.end : pSeg->Data.start ];
+		wVertex *vertE = &newVertices [ pSeg->AliasFlip ? pSeg->Data.start : pSeg->Data.end ];
+*/
+
 		wVertex *vertS = &newVertices [ pSeg->AliasFlip ? pSeg->Data.end : pSeg->Data.start ];
 		wVertex *vertE = &newVertices [ pSeg->AliasFlip ? pSeg->Data.start : pSeg->Data.end ];
 
@@ -448,7 +453,6 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 
 
 	} else {
-
 		currentAlias = 0;
 
 		X     = pSeg->start.x;
@@ -695,7 +699,6 @@ static int AddVertex ( int x, int y ) {
 		if (( newVertices [i].x == x ) && ( newVertices [i].y == y )) return i;
 	}
 	
-
 	// let's try reverse search, it should work better!
 	// If this was accessed using a hash table, we could def. speed things up!
 	/*
@@ -2532,7 +2535,21 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 	}
 
 differentpartition:
+/*
+	static time_t update = 0;
+	time_t nuh = time(NULL);
+	static char tree[120] = "                                                                                                                       ";
 
+	tree[nodeDepth] = width + 48;
+
+	if (update < nuh) {
+		
+		//fprintf ( stdout, "\r\033[80C\033[%dC%d", nodeDepth, width );
+	        fprintf ( stdout, "\r\033[80C%s", tree);
+		fflush ( stdout );
+		update = nuh;
+	}
+*/
 	// segs = &segStart[inSeg];
 
 	if (width != 1) {
@@ -3046,7 +3063,7 @@ wNode *GetNodes ( wNode *nodeList, int noNodes ) {
 
 static wSegs *finalSegs;
 
-wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors ) {
+wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors, sBSPOptions *options) {
 	FUNCTION_ENTRY ( NULL, "GetSSectors", true );
 
 	wSegs *segs = finalSegs = new wSegs [ segCount ];
@@ -3058,7 +3075,144 @@ wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors ) {
 
 		// Copy the used SEGs to the final SEGs list
 		for ( int x = 0; x < ssectorList [i].num; x++ ) {
+
+			// 02.06.2018 adding vertex			
+
+			// segs->Data.start = ( UINT16 ) AddVertex ( lrint ( segs->start.x ), lrint ( segs->start.y ));
+			// segs->Data.end   = ( UINT16 ) AddVertex ( lrint ( segs->end.x ),   lrint ( segs->end.y ));
+
 			segs [x] = segStart [start+x].Data;
+/*
+			if (	((int) 	segStart[start+x].start.x != newVertices[segStart[start+x].Data.start].x) ||
+				((int)	segStart[start+x].start.y != newVertices[segStart[start+x].Data.start].y) ||
+				((int)	segStart[start+x].end.x != newVertices[segStart[start+x].Data.end].x) ||
+				((int)	segStart[start+x].end.y != newVertices[segStart[start+x].Data.end].y)
+			) {	
+				 printf("\nStart: X %d|%f  Y: %d|%f\nEnd:   X: %d|%f   Y: %d|%f\n", 
+					segStart[start+x].start.x, 
+					newVertices[segStart[start+x].Data.start].x,
+					
+					segStart[start+x].start.y,
+					newVertices[segStart[start+x].Data.start].y,
+
+					segStart[start+x].end.x,
+					newVertices[segStart[start+x].Data.end].x,
+	
+					segStart[start+x].end.y,
+					newVertices[segStart[start+x].Data.end].y
+
+
+					);
+*//*
+			} else {*/
+				/*
+				   struct wSegs {
+				   UINT16      start;      
+				   UINT16      end;        
+				   UINT16      angle;      
+				   UINT16      lineDef;    
+				   UINT16      flip;       
+				   UINT16      offset;     
+				   };
+				   */
+
+
+
+				// segs[x].start = ( UINT16 ) AddVertex ( lrint ( segStart[start+x].start.x ), lrint ( segStart[start+x].start.y ));
+				// segs[x].end   = ( UINT16 ) AddVertex ( lrint ( segStart[start+x].end.x ), lrint ( segStart[start+x].end.y ));
+
+				// Angle code, c&p
+				BAM angle;
+				/*
+				 * These 4 new linedef types allow for arbitrary rotation of the ways walls are rendered compared to
+				 * the base linedef. Check docs for more info.
+				 */
+
+				double a2;
+
+				const wLineDefInternal *lineDef = segStart[start+x].LineDef;
+
+				long dx;
+				long dy;
+
+				if (options->segBAMs) {
+					dx = segStart[start+x].end.x - segStart[start+x].start.x;
+					dy = segStart[start+x].end.y - segStart[start+x].start.y;
+				} else {
+					// printf("seg:%2d l:%d r:%d - ", segStart[start+x].Side, SIDE_RIGHT, SIDE_LEFT);
+
+					//if (segStart[start+x].Side == -1) {
+						dx = (long) (newVertices[lineDef->end].x - newVertices[lineDef->start].x);
+						dy = (long) (newVertices[lineDef->end].y - newVertices[lineDef->start].y); /*
+					} else {
+						dx = (long) (newVertices[lineDef->start].x - newVertices[lineDef->end].x);
+						dy = (long) (newVertices[lineDef->start].y - newVertices[lineDef->end].y);
+					}
+					*/
+				}
+
+				if (lineDef->type == 1081) { // linedef special to force angle to degrees
+					// angle = ((BAM)lineDef->tag * BAM360) / (BAM)360;
+					angle = (BAM) ((lineDef->tag * BAM360) / 360);
+				} else if (lineDef->type == 1083) { // linedef special to force angle to BAM
+					angle = (BAM)lineDef->tag;
+				} else {
+					// based on BSP's code, cleaner and simpler :)
+
+					/*
+					angle = (dy == 0) ? (BAM)((dx < 0) ? BAM180 : 0) :
+						(dx == 0) ? (BAM)((dy < 0) ? BAM270 : BAM90) :
+						(BAM)(atan2((float)dy, (float)dx) * BAM180 / M_PI + 0.5 * sgn(dy));
+					*/
+
+					angle = ComputeAngle(dx, dy);
+
+					// angle = (BAM)(atan2((float)dy, (float)dx) * BAM180 / M_PI + 0.5 * sgn(dy) );
+					// a2 = (atan2((float)dy, (float)dx) * 180 / M_PI + 0.5 * sgn(dy) + 90.0);
+
+					// a2 = atan2( (double) dy, (double) dx ) * 180.0 / M_PI  ;
+
+					if (lineDef->type == 1080) { // linedef special for additive degrees
+						// angle += ((double)lineDef->tag * (double)BAM360) / 360.0;
+						//printf("\n-- %u %d --\n", angle, lineDef->tag);
+						//double d = ( (double) lineDef->tag / 360.0) * (double) BAM360;
+
+						angle += (BAM) ((lineDef->tag * BAM360) / 360);
+						// angle += (BAM) d;
+						// printf("\n-- %u -- (%f)\n", angle, d);
+					} else if (lineDef->type == 1082) { // linedef special for additive bam
+						// printf("\n");
+						angle += (BAM)lineDef->tag;
+						// printf("\n");
+					}
+				}
+		
+				if (!options->segBAMs) {
+					if (segStart[start+x].Data.flip) {
+						angle =	( BAM ) ( angle + BAM180 );
+					}
+				}
+
+				if (segs[x].angle != angle) {
+			
+					//printf("Bleh 1 %d\n", ComputeAngle(2752 - 3048, -3048 - (-2880)));
+					// printf("Bleh 2 %d\n", ComputeAngle(
+					
+					// printf("Angle change %4d,%-4d -> %5d != %5d | %3d \n", dx,dy, segs[x].angle, angle, segs[x].angle - angle);
+				}
+
+				// angle += 256; 
+
+				/*else {
+					// printf("angle ok\n");
+					*/
+					segs[x].angle = angle;
+				// }
+
+/*			} */
+
+
+			// segs [x] = segStart [start+x].Data;
 		}
 
 		segs += ssectorList [i].num;
@@ -3083,16 +3237,16 @@ wSegs *GetSegs () {
 
 
 void PostFindBounds( wNode *node) {
-	
+
 	wBound bounds[2];
 
 	// If it's a subSector, calculate from segs!
 	// If not, recursively figure it out.
 
 	for (int nodeChild = 0; nodeChild != 2; nodeChild++) {
-		
+
 		// If a child is a subsector, we can use the segs to get bounds
-		
+
 		// printf("Checking side %d\n", nodeChild);
 		if (node->child[nodeChild] & 0x8000) {
 
@@ -3289,7 +3443,7 @@ restart:
 
 	level->NewVertices ( noVertices, GetVertices ());
 	level->NewNodes ( nodeCount, GetNodes ( nodePool, nodeCount ));
-	level->NewSubSectors ( ssectorCount, GetSSectors ( ssectorPool, ssectorCount ));
+	level->NewSubSectors ( ssectorCount, GetSSectors ( ssectorPool, ssectorCount, options ));
 	level->NewSegs ( segCount, GetSegs ());
 
 	free ( newVertices );

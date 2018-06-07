@@ -69,6 +69,7 @@ struct sNodeOptions {
 	bool  Quiet;
 	bool  Unique;
 	bool  ReduceLineDefs;
+	bool  SegBAMs;
 	int   SplitHandling;
 	int   SplitReduction;
 	int   MultipleSplitMethods;
@@ -133,6 +134,7 @@ struct sBSPOptions {
 	int       algorithm;
 	int 	thoroughness;
 	bool      showProgress;
+	bool	segBAMs;
 	bool      reduceLineDefs;		// global flag for invisible linedefs
 	bool     *ignoreLineDef;		// linedefs that can be left out
 	bool     *dontSplit;		// linedefs that can't be split
@@ -325,6 +327,7 @@ struct sOptions {
 	bool             WriteWAD;
 	bool             Extract;
 	bool		 OutputWad;
+	bool		Color;
 };
 
 struct sBlockMapExtraData;

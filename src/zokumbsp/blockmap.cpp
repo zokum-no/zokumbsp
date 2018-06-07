@@ -404,6 +404,8 @@ inline bool BoundaryBoxCheck(sBlockMap *blockMap, int i, int index, int xCheck, 
 
 int compare( const void *aa, const void  *bb);
 
+void ProgressBar(char *, double, int);
+
 int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 	// Generate the data
 	sBlockMap *blockMap = NULL;
@@ -523,24 +525,22 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 
 	for (int offsetY = offsetYMin; offsetY <= offsetYMax; offsetY += offsetIncreaseY) {
 
-		if (bestBlockSize < 1234567) {
-			sprintf(zokoutput, "BLOCKMAP - Offset x{%d-%d} y=%-3d  Best: %dbytes, x=%d, y=%d", 
-					offsetYMin,
-					offsetXMax, 
-					offsetY, 
-					bestBlockSize, 
-					bestX, bestY );
-		} else {
-			sprintf(zokoutput, "BLOCKMAP - Offset x{%d-%d} y=%-3d  Best: N/A",
-					offsetXMin,
-					offsetXMax,
-					offsetY);
-		}
-		Status( (char *) zokoutput);
-
 		bool compress = options.Compress;
 
 		for (int offsetX = offsetXMin; offsetX <= offsetXMax; offsetX += offsetIncreaseX) {
+
+			double progress = (double) offsetY / (double) offsetYMax + ((((double) offsetX / (double) offsetXMax)) / (double) offsetXMax    );
+
+			if (!(offsetX % 8)) {
+
+				if (bestBlockSize < 1234567) {
+					sprintf(zokoutput, "Blockmap      %5dbytes ", bestBlockSize);
+				} else {
+					sprintf(zokoutput, "Blockmap      N/A bytes  ");
+				}
+				ProgressBar(zokoutput, progress, 36);
+			}
+
 			if (bailout) {
 				int xLeft =  extraData->leftMostVertex - offsetX;
 				int xRight = extraData->rightMostVertex;
@@ -565,7 +565,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 			totalSize = blockMap->noColumns * blockMap->noRows;
 
 			blockListSize = 0;
-	
+
 			int i = -1;
 			int minEntrySize = 0;
 #ifdef _WIN32
@@ -703,7 +703,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 				}
 			}
 			// is the new blockmap smaller?
-			
+
 			if (blockBig) {
 				blockSize = sizeof ( wBlockMap32 ) + totalSize * sizeof ( INT32 ) + blockListSize * sizeof ( INT32 );
 			} else {
@@ -760,10 +760,10 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 	// delete [] extraData->lineDefsUsed;
 	// delete extraData;
 
-	Status ( (char *)"Saving BLOCKMAP ... " );
+	Status ( (char *)"Blockmap   Now saving... " );
 
 	char *start = new char [ blockSize];
-	
+
 	wBlockMap *map = ( wBlockMap * ) start;
 	wBlockMap32 *map32 = ( wBlockMap32 * ) start;
 
@@ -816,7 +816,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 				block->offset = data - ( UINT16 * ) start;
 				blockList [i].offset = data - ( UINT16 * ) start;
 			}
-			
+
 			for ( int x = 0; x < block->count; x++ ) {
 				if (blockBig) {
 					*data32++ = ( UINT32 ) block->line [x];
@@ -831,11 +831,11 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 			}
 
 			if (!blockBig && (blockList [i].offset > 0xFFFF )) {
-			        errors = true;
+				errors = true;
 			}
 
 		} else if (block->firstIndex == -1) {
-			
+
 			if (blockBig) {
 				block->offset = blockList [ bestLinedefArray[totalSize- 1]].offset + blockList[bestLinedefArray[totalSize- 1] ].count;
 			} else {
@@ -851,24 +851,24 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 			savings = savings + blockList[i].count + 1;
 		}
 		/*if ( blockList [i].offset > 0xFFFF ) {
-			errors = true;
-		}*/
+		  errors = true;
+		  }*/
 		if (blockBig) {
 			offset [i] = ( UINT32 ) blockList [i].offset;
 		} else {
 			offset [i] = ( UINT16 ) blockList [i].offset;
 		}
-		
+
 		if ( blockList [i].line ) {
 			free ( blockList [i].line );
 		}
 	}
-/*
-	for(int k = 0 ; k != blockSize; k++) {
-		printf("%d, ", (signed) start[k]);
-	}
-	printf("\n");
-*/
+	/*
+	   for(int k = 0 ; k != blockSize; k++) {
+	   printf("%d, ", (signed) start[k]);
+	   }
+	   printf("\n");
+	   */
 
 	/*
 	   if (squeeze) {
@@ -900,7 +900,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 
 	// testing, do not use in prod!
 	// MakeENDOOMLump();
-	
+
 	if (blockBig) {
 		return savings * sizeof ( INT32 );
 	} else {
@@ -912,8 +912,8 @@ void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, cons
 	int grid = map->noColumns * map->noRows * sizeof(UINT16);
 	int lists = blockSize - grid - 8;
 	int idSize = grid + savings + grid * 2 + lists;
-//	int val = 0;
-	
+	//	int val = 0;
+
 	char *start = new char [ blockSize];
 
 	UINT16 *offset = ( UINT16 * ) ( map + 1 );
@@ -952,9 +952,9 @@ void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, cons
 
 	printf("<table>\n");
 
-/*	int size = 8;
-	size = size + map->noColumns * map->noRows;
-*/
+	/*	int size = 8;
+		size = size + map->noColumns * map->noRows;
+		*/
 	for (int rows = blockMap->noRows - 1; rows != -1; rows--) {
 		printf(" <tr>\n  ");
 		for (int cols = 0; cols != blockMap->noColumns; cols++) {

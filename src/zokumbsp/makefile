@@ -8,14 +8,15 @@ CC       = g++
 #WARNINGS = -Wall -Wno-format -Winline
 #CC       = /opt/intel/compiler60/ia32/bin/icc
 #CFLAGS   = -g -O3
-CFLAGS   = -fpermissive -O3 -pipe -march=k8
-#CFLAGS	  = -O0 -g -pipe
-#CFLAGS   = -O2 -pipe -static
+#CFLAGS   = -fpermissive -O3 -pipe -march=k8
+#CFLAGS	  = -O0 -g -pipe 
+CFLAGS   = -O2 -pipe -static
 #CFLAGS   = -O2 -pipe -fomit-frame-pointer -foptimize-sibling-calls -fbranch-probabilities
 INCLUDES = -I../doom -I../common
 #TARGETS  = ZokumBSP bspdiff bspinfo compare
 TARGETS = zokumbsp
-#LINKFLAGS = -static
+LINKFLAGS = -static
+LINKFLAGS =
 
 CFLAGS  += -D__LINUX__
 

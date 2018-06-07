@@ -1,5 +1,10 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.10-beta8
+- Wide algorithm seems to be working, but is still very slow. Only usable for
+  final builds of maps. Invoke with -na=mw=2, swap out the number with how
+  many sub trees you want to build.  
+
 ZokumBSP 1.0.10-beta7
 - New adaptive algorithm to allow for hybrid trees using depth for the big
   partitions and split reduction when segs go below a certain limit. This
