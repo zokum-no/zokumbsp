@@ -269,11 +269,15 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 						}
 						lineDef [j].sideDef[0] = lineDef [i].sideDef[0];
 						lineDef [j].sideDef[1] = lineDef [i].sideDef[1];
+						
+						extraData->lineDefsRendered     [j] = false;
+
 					}
 
 				}
 				extraData->lineDefsCollidable	[i] = false;
 				extraData->lineDefsRendered	[i] = false;
+				
 				break;
 
 
