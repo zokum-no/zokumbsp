@@ -1,5 +1,16 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.10-beta11
+- Removed code that added 256 to all SEG angles for testing.
+
+ZokumBSP 1.0.10-beta10
+- Verified fixing slime trails when using angle from segs not linedefs.
+
+ZokumBSP 1.0.10-beta9
+- Refined wide algorith, sped it up a lot.
+- Added switch to turn on colored output, now off by default.
+- Added support for vertex-moving linedef types 1078 and 1079.
+
 ZokumBSP 1.0.10-beta8
 - Wide algorithm seems to be working, but is still very slow. Only usable for
   final builds of maps. Invoke with -na=mw=2, swap out the number with how
