@@ -3210,7 +3210,7 @@ wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors, sBSPOptions *opti
 					// printf("Angle change %4d,%-4d -> %5d != %5d | %3d \n", dx,dy, segs[x].angle, angle, segs[x].angle - angle);
 				}
 
-				angle += 256;
+				// angle += 256;
 
 				/*else {
 					// printf("angle ok\n");
