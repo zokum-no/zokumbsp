@@ -2318,7 +2318,7 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 int deep[256];
 bool deepinit = false;
 
-int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level, int segGoal, int subSectorGoal) {
+int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level, int segGoal, int subSectorGoal, int *picks) {
 /*
 	if (deepinit == false) {
 		for (int i = 0; i != 256; i++) {
@@ -2393,6 +2393,15 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 	} else {
 		maxWidth = MaxWidth(nodeDepth, initialSegs, options );
 	}
+
+	// June 2018 speedup
+	if (maxWidth > *picks) {
+		*picks = maxWidth;
+		if (maxWidth < 2) {
+			maxWidth = 1;
+		}
+	}
+
 
 	int nodesLeftBackup = nodesLeft;
 	int segCountBackup = segCount;
@@ -2725,11 +2734,11 @@ differentpartition:
 
 		bool swapped = false;	
 
-		rNode = CreateNode ( inSeg, &noRight, options, level, segGoal, subSectorGoal);
+		rNode = CreateNode ( inSeg, &noRight, options, level, segGoal, subSectorGoal, picks);
 		DepthProgress(nodeDepth, initialSegs, options);
 
 		// UINT16 lNode = CreateNode ( inSeg + noRight, &noLeft, options, level);
-		lNode = CreateNode ( inSeg + noRight, &noLeft, options, level, segGoal, subSectorGoal);
+		lNode = CreateNode ( inSeg + noRight, &noLeft, options, level, segGoal, subSectorGoal, picks);
 		DepthProgress(nodeDepth, initialSegs, options);
 
 		// Restore segs!
@@ -3201,7 +3210,7 @@ wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors, sBSPOptions *opti
 					// printf("Angle change %4d,%-4d -> %5d != %5d | %3d \n", dx,dy, segs[x].angle, angle, segs[x].angle - angle);
 				}
 
-				// angle += 256; 
+				angle += 256;
 
 				/*else {
 					// printf("angle ok\n");
@@ -3422,7 +3431,8 @@ restart:
 
 	DepthProgress(-1, 1, options);	
 
-	CreateNode ( 0, &noSegs, options, level, 99999, 99999 );
+	int picks = 32768;
+	CreateNode ( 0, &noSegs, options, level, 99999, 99999, &picks);
 
 	// new 2018 may 29 code
 	PostFindBounds(&nodePool[nodeCount - 1]);
