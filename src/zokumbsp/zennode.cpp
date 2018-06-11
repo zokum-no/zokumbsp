@@ -175,7 +175,7 @@ static long Y3 = getenv ( "ZEN_Y3" ) ? atol ( getenv ( "ZEN_Y3" )) : 1;
 static long Y4 = getenv ( "ZEN_Y4" ) ? atol ( getenv ( "ZEN_Y4" )) : 0;
 
 // static SEG *(*PartitionFunction) ( SEG *, int, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs);
-static int (*PartitionFunction) ( SEG *, int, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs);
+static int (*PartitionFunction) ( SEG *, int, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs, int *picks);
 
 int bestSegCount = 32767;
 int bestNodeCount = 32767;
@@ -630,7 +630,15 @@ static int WhichSide ( SEG *seg, sBSPOptions *options ) {
 	// See if partition & seg lie on the same line
 	int alias = lineDefAlias [ seg->Data.lineDef ];
 	if ( alias == currentAlias ) {
-		return seg->AliasFlip ^ SIDE_RIGHT;
+		// return seg->AliasFlip ^ SIDE_RIGHT;
+		
+		if (seg->AliasFlip) {
+			return -1;
+		} else {
+			return 1;
+		}
+		
+		return seg->AliasFlip ^ true;
 	}
 
 	// See if we've already categorized the LINEDEF for this SEG
@@ -920,7 +928,8 @@ static int GetLineDefAliases ( DoomLevel *level, SEG *segs, int noSegs ) {
 			*alias = x;
 		}
 
-		segs [i].AliasFlip = ( segs [i].Data.angle == segAlias [*alias]->Data.angle ) ? 0 : SIDE_FLIPPED;
+		// segs [i].AliasFlip = ( segs [i].Data.angle == segAlias [*alias]->Data.angle ) ? 0 : SIDE_FLIPPED;
+		segs [i].AliasFlip = ( segs [i].Data.angle == segAlias [*alias]->Data.angle ) ? false : true;
 	}
 
 	delete [] segAlias;
@@ -1184,7 +1193,7 @@ static void SortSegs ( int inSeg, SEG *seg, int noSegs, int *noLeft, int *noRigh
 //    be split, followed by those that are to the left.
 //----------------------------------------------------------------------------
 
-static bool ChoosePartition ( SEG *seg, int noSegs, int *noLeft, int *noRight, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs) {
+static bool ChoosePartition ( SEG *seg, int noSegs, int *noLeft, int *noRight, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs, int *picks) {
 	FUNCTION_ENTRY ( NULL, "ChoosePartition", true );
 
 	bool check = true;
@@ -1201,7 +1210,7 @@ retry:
 
 	// printf("width: %d\n", *width);
 	// SEG *pSeg = PartitionFunction ( seg, noSegs, options, level, width, wideSegs);
-	int partitionOffset = PartitionFunction ( seg, noSegs, options, level, width, wideSegs);
+	int partitionOffset = PartitionFunction ( seg, noSegs, options, level, width, wideSegs, picks);
 
 
 	/*
@@ -1318,7 +1327,7 @@ retry:
 //    balanced and run deep.
 //----------------------------------------------------------------------------
 
-static int AlgorithmFewerSplits ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs ) {
+static int AlgorithmFewerSplits ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs, int *picks ) {
 	FUNCTION_ENTRY ( NULL, "AlgorithmFewerSplits", true );
 
 	SEG *pSeg = NULL, *testSeg = segs;
@@ -1482,7 +1491,7 @@ int sortMetric2 ( const void *ptr1, const void *ptr2 ) {
 
 
 // static SEG *AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs )
-int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs ) {
+int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs, int *picks ) {
 	FUNCTION_ENTRY ( NULL, "AlgorithmBalancedTree", true );
 	/*
 	   if (wideSegs) {
@@ -1677,7 +1686,7 @@ next:
 				}
 			} else {
 				
-				printf("Dodged a bullet\n");
+				// printf("Dodged a bullet\n");
 			}
 		}
 		// retval = score [0].index;
@@ -1699,6 +1708,7 @@ next:
 
 	// printf("depth %d, width %d, index %d, noScores: %d, retval %d (%d)\n", nodeDepth, *width, score [(*width) - 1].index, noScores, retval, score [0].index);
 	
+	*picks = noScores;
 	return retval;
 
 	// zokum 2017, sept
@@ -1752,7 +1762,7 @@ splitCache[cache][0] = score [0].index;
 //----------------------------------------------------------------------------
 
 //static SEG *AlgorithmQuick ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs )
-int AlgorithmQuick ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs ) {
+int AlgorithmQuick ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs, int *picks ) {
 	FUNCTION_ENTRY ( NULL, "AlgorithmQuick", true );
 
 	SEG *pSeg = NULL, *testSeg = segs;
@@ -1861,7 +1871,7 @@ int bestSplitReduction = 3;
 int maxAdaptiveCutoff = 14;
 
 // static SEG *AlgorithmMulti( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs) {
-static int AlgorithmMulti( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs) {
+static int AlgorithmMulti( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs, int *picks) {
 
 
 	int returnSeg;
@@ -1871,16 +1881,16 @@ static int AlgorithmMulti( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 		returnSeg = AlgorithmFewerSplits (segs, noSegs, options, level, width, wideSegs );
 	}
 */
-	returnSeg = AlgorithmBalancedTree (segs, noSegs, options, level, width, wideSegs );
+	returnSeg = AlgorithmBalancedTree (segs, noSegs, options, level, width, wideSegs, picks );
 
 	return returnSeg;
 }
 
-static int AlgorithmAdaptive( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs) {
+static int AlgorithmAdaptive( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs, int *picks) {
 	if (noSegs > options->Tuning) {
-		return AlgorithmBalancedTree (segs, noSegs, options, level, width, wideSegs );
+		return AlgorithmBalancedTree (segs, noSegs, options, level, width, wideSegs, picks );
 	} else {
-		return AlgorithmFewerSplits (segs, noSegs, options, level, width, wideSegs );
+		return AlgorithmFewerSplits (segs, noSegs, options, level, width, wideSegs, picks );
 	}
 }
 
@@ -2318,7 +2328,7 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 int deep[256];
 bool deepinit = false;
 
-int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level, int segGoal, int subSectorGoal, int *picks) {
+int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level, int segGoal, int subSectorGoal, int *maxPicks) {
 /*
 	if (deepinit == false) {
 		for (int i = 0; i != 256; i++) {
@@ -2338,6 +2348,14 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 		printf("\n");
 	}
 */
+
+
+	int localPicks; // we get this from pickpartition
+	int leftPicks;
+	int rightPicks;	
+
+	// printf("picks %d, segs %d\n", *picks, *noSegs);
+
 
 	bool noMoreScores = false; // stupid hack
 
@@ -2395,12 +2413,19 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 	}
 
 	// June 2018 speedup
-	if (maxWidth > *picks) {
-		*picks = maxWidth;
+	
+	if (maxWidth > *maxPicks) {
+		
+		if ((maxWidth == 3) && (*maxPicks == 1)) {
+			printf("win! %d %d\n", *maxPicks, maxWidth);
+		}
+
+		maxWidth = *maxPicks;
 		if (maxWidth < 2) {
 			maxWidth = 1;
 		}
 	}
+
 
 
 	int nodesLeftBackup = nodesLeft;
@@ -2626,7 +2651,9 @@ differentpartition:
 
 	// printf("Choose p. noSegs=%d, width=%d\n", *noSegs, width);
 
-	if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight, options, level, &width, wideSegs) == false )) {
+	if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight, options, level, &width, wideSegs, &localPicks) == false )) {
+
+		*maxPicks = 0;
 
 		// cleanup!
 		if (maxWidth > 1) {
@@ -2646,7 +2673,7 @@ differentpartition:
 
 		if (width > 1) {
 			if (width < 900) {
-				printf("mega bug\n");
+				// printf("mega bug\n");
 			}
 		}
 
@@ -2668,6 +2695,8 @@ differentpartition:
 	 }
 	 */
 
+	*maxPicks = localPicks;
+	
 
 
 	bool betterTree = false;
@@ -2734,11 +2763,20 @@ differentpartition:
 
 		bool swapped = false;	
 
-		rNode = CreateNode ( inSeg, &noRight, options, level, segGoal, subSectorGoal, picks);
+		
+		int rightPicks = *maxPicks;
+
+		// printf("rightPicks %d\n", rightPicks);
+
+		rNode = CreateNode ( inSeg, &noRight, options, level, segGoal, subSectorGoal, &rightPicks);
 		DepthProgress(nodeDepth, initialSegs, options);
 
+		// printf("rightPicks %d, localPicks %d\n", rightPicks, localPicks);
+
+		leftPicks = localPicks - rightPicks;
+
 		// UINT16 lNode = CreateNode ( inSeg + noRight, &noLeft, options, level);
-		lNode = CreateNode ( inSeg + noRight, &noLeft, options, level, segGoal, subSectorGoal, picks);
+		lNode = CreateNode ( inSeg + noRight, &noLeft, options, level, segGoal, subSectorGoal, &leftPicks);
 		DepthProgress(nodeDepth, initialSegs, options);
 
 		// Restore segs!
@@ -3145,6 +3183,7 @@ wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors, sBSPOptions *opti
 				long dy;
 
 				if (options->segBAMs) {
+					// printf("seg\n");
 					dx = segStart[start+x].end.x - segStart[start+x].start.x;
 					dy = segStart[start+x].end.y - segStart[start+x].start.y;
 				} else {

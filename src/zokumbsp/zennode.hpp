@@ -115,7 +115,8 @@ struct SEG {
 	const wLineDefInternal *LineDef;
 	int             Sector;
 	int             Side;
-	int             AliasFlip;
+	// int             AliasFlip;
+	bool		AliasFlip;
 	bool            Split;
 	bool            DontSplit;
 	bool            final;
