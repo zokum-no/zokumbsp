@@ -110,16 +110,27 @@ struct sVertex {
 	double l;
 };
 
+#define SEG_ALIAS_FLIP	0x01
+#define SEG_SPLIT	0x02
+#define SEG_DONT_SPLIT	0x04
+#define SEG_FINAL	0x08
+
 struct SEG {
 	wSegs           Data;
 	const wLineDefInternal *LineDef;
 	int             Sector;
 	int             Side;
 	// int             AliasFlip;
+
+	int flags;	
+/*
 	bool		AliasFlip;
 	bool            Split;
 	bool            DontSplit;
 	bool            final;
+*/
+	int 		vertexCoords[2][2];
+
 	sVertex         start;
 	sVertex         end;
 };

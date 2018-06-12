@@ -355,7 +355,12 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 		// printf("dy: %d dx: %d -> %lf \n",  dy,dx, atan2 (dy, dx));
 
 
+		if (split) {
+ 		       seg->flags |= SEG_DONT_SPLIT;
+		}
+
 		if ( sideRight ) {
+			
 			seg->Data.start   = lineDef->start;
 			seg->Data.end     = lineDef->end;
 			seg->Data.angle   = angle;
@@ -363,15 +368,21 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 			seg->Data.flip    = 0;
 			seg->LineDef      = lineDef;
 			seg->Sector       = sideRight->sector;
-			seg->DontSplit    = split;
+			//seg->DontSplit    = split;
+
 			seg->start.x      = vertS->x;
 			seg->start.y      = vertS->y;
 			seg->start.l      = 0.0;
 			seg->end.x        = vertE->x;
 			seg->end.y        = vertE->y;
 			seg->end.l        = 1.0;
-			seg++;
 
+			seg->vertexCoords[0][0] = vertS->x;
+			seg->vertexCoords[0][1] = lrint(vertS->y);
+			seg->vertexCoords[1][0] = lrint(vertE->x);
+			seg->vertexCoords[1][1] = lrint(vertE->y);
+
+			seg++;
 			// printf(", B: %5d", angle);
 		}
 
@@ -383,13 +394,19 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 			seg->Data.flip    = 1;
 			seg->LineDef      = lineDef;
 			seg->Sector       = sideLeft->sector;
-			seg->DontSplit    = split;
+			// seg->DontSplit    = split;
 			seg->start.x      = vertE->x;
 			seg->start.y      = vertE->y;
 			seg->start.l      = 0.0;
 			seg->end.x        = vertS->x;
 			seg->end.y        = vertS->y;
 			seg->end.l        = 1.0;
+
+			seg->vertexCoords[0][0] = vertE->x;
+			seg->vertexCoords[0][1] = lrint(vertE->y);
+			seg->vertexCoords[1][0] = lrint(vertS->x);
+			seg->vertexCoords[1][1] = lrint(vertS->y);		
+
 			seg++;
 
 			// printf(", C: %5d", (BAM) (angle + BAM180));
@@ -415,7 +432,8 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 	int different = 0;
 #endif
 
-	if ( pSeg->final == false ) {
+	// if ( pSeg->final == false ) {
+	if ((pSeg->flags & SEG_FINAL) == false) {
 
 		/* if (pSeg->Data.lineDef = 0xFFFF) {
 		   currentAlias = 0;
@@ -429,8 +447,11 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 		wVertex *vertE = &newVertices [ pSeg->AliasFlip ? pSeg->Data.start : pSeg->Data.end ];
 */
 
-		wVertex *vertS = &newVertices [ pSeg->AliasFlip ? pSeg->Data.end : pSeg->Data.start ];
-		wVertex *vertE = &newVertices [ pSeg->AliasFlip ? pSeg->Data.start : pSeg->Data.end ];
+		//wVertex *vertS = &newVertices [ pSeg->AliasFlip ? pSeg->Data.end : pSeg->Data.start ];
+		//wVertex *vertE = &newVertices [ pSeg->AliasFlip ? pSeg->Data.start : pSeg->Data.end ];
+		
+		wVertex *vertS = &newVertices [ (pSeg->flags & SEG_ALIAS_FLIP) ? pSeg->Data.end : pSeg->Data.start ];
+		wVertex *vertE = &newVertices [ (pSeg->flags & SEG_ALIAS_FLIP) ? pSeg->Data.start : pSeg->Data.end ];
 
 /*
 		if ( (int) lrint(pSeg->start.x) != (int) vertS->x) {
@@ -439,11 +460,23 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 		}
 */
 		
-
 		X     = vertS->x;
 		Y     = vertS->y;
 		DX    = vertE->x - vertS->x;
 		DY    = vertE->y - vertS->y;
+
+		// if (pSeg->AliasFlip) {
+		if (pSeg->flags & SEG_ALIAS_FLIP) {
+			if ((int ) X != pSeg->vertexCoords[1][0]) {
+				//printf ("\nF %4.0f | %d (%d)\n", X, pSeg->vertexCoords[1][0], pSeg->vertexCoords[0][0]);
+				// exit(1);
+			}
+		} else {
+			if ((int ) X != pSeg->vertexCoords[0][0]) {
+				// printf ("\nN %4.0f | %d (%d)\n", X, pSeg->vertexCoords[0][0], pSeg->vertexCoords[1][0]);
+				// exit(1);
+			}
+		}
 
 #if defined ( DIAGNOSTIC )
 		if (vertS != vertE) {
@@ -459,6 +492,16 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 		Y     = pSeg->start.y;
 		DX    = pSeg->end.x - pSeg->start.x;
 		DY    = pSeg->end.y - pSeg->start.y;
+
+		if ((int) X != pSeg->vertexCoords[0][0]) {
+			printf ("\n%5.0f | %d\n", X, pSeg->vertexCoords[0][0]);
+		}
+
+		/* printf ("%d | %d\n", X, pSeg->vertexCoords[1][0]);
+	
+		printf ("%d | %d\n", X, pSeg->vertexCoords[0][1]);
+		printf ("%d | %d\n", X, pSeg->vertexCoords[1][1]); */
+
 
 	}
 
@@ -623,7 +666,8 @@ static int WhichSide ( SEG *seg, sBSPOptions *options ) {
 	FUNCTION_ENTRY ( NULL, "WhichSide", true );
 
 	// Treat split partition/seg differently
-	if (( seg->Split == true ) || ( currentAlias == 0 )) {
+	//if (( seg->Split == true ) || ( currentAlias == 0 )) {
+	if ((seg->flags & SEG_SPLIT) || (currentAlias == 0 )) {
 		return _WhichSide ( seg, options );
 	}
 
@@ -632,13 +676,15 @@ static int WhichSide ( SEG *seg, sBSPOptions *options ) {
 	if ( alias == currentAlias ) {
 		// return seg->AliasFlip ^ SIDE_RIGHT;
 		
-		if (seg->AliasFlip) {
+		// if (seg->AliasFlip) {
+		if (seg->flags & SEG_ALIAS_FLIP) {
 			return -1;
 		} else {
 			return 1;
 		}
 		
-		return seg->AliasFlip ^ true;
+		// return seg->AliasFlip ^ true;
+		return (seg->flags & SEG_ALIAS_FLIP) ^ true;
 	}
 
 	// See if we've already categorized the LINEDEF for this SEG
@@ -647,7 +693,8 @@ static int WhichSide ( SEG *seg, sBSPOptions *options ) {
 
 	side = _WhichSide ( seg, options );
 
-	if ( seg->Split == false ) {
+	//if ( seg->Split == false ) {
+	if ((seg->flags & SEG_SPLIT) == false) {
 		currentSide [ seg->Data.lineDef ] = ( char ) side;
 	}
 
@@ -851,6 +898,12 @@ static UINT16 CreateSSector ( SEG *segs, int noSegs ) {
 
 		segs->Data.start = ( UINT16 ) AddVertex ( lrint ( segs->start.x ), lrint ( segs->start.y ));
 		segs->Data.end   = ( UINT16 ) AddVertex ( lrint ( segs->end.x ),   lrint ( segs->end.y ));
+
+		segs->vertexCoords[0][0] = lrint ( segs->start.x );
+		segs->vertexCoords[0][1] = lrint ( segs->start.y );
+		segs->vertexCoords[1][0] = lrint ( segs->end.x );
+		segs->vertexCoords[1][1] = lrint ( segs->end.y );
+
 		segs++;
 	}
 	if ( count == 0 ) {
@@ -929,7 +982,13 @@ static int GetLineDefAliases ( DoomLevel *level, SEG *segs, int noSegs ) {
 		}
 
 		// segs [i].AliasFlip = ( segs [i].Data.angle == segAlias [*alias]->Data.angle ) ? 0 : SIDE_FLIPPED;
-		segs [i].AliasFlip = ( segs [i].Data.angle == segAlias [*alias]->Data.angle ) ? false : true;
+		
+		// segs [i].AliasFlip = ( segs [i].Data.angle == segAlias [*alias]->Data.angle ) ? false : true;
+		if ( segs [i].Data.angle == segAlias [*alias]->Data.angle ){
+			segs [i].flags &= ~SEG_ALIAS_FLIP;
+		} else {
+			segs [i].flags |= SEG_ALIAS_FLIP;
+		}
 	}
 
 	delete [] segAlias;
@@ -993,7 +1052,8 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg ) {
 	double x = vertS->x + num * dx / det;
 	double y = vertS->y + num * dy / det;
 
-	if ( rSeg->final == true ) {
+	// if ( rSeg->final == true ) {
+	if (rSeg->flags & SEG_FINAL) {
 		x = lrint ( x );
 		y = lrint ( y );
 #if defined ( DEBUG )
@@ -1015,8 +1075,10 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg ) {
 	if ( rSeg->Data.flip ) vertS = vertE;
 	if ( rSeg->Data.flip ) l = 1.0 - l;
 
-	rSeg->Split = true;
-	lSeg->Split = true;
+	//rSeg->Split = true;
+	//lSeg->Split = true;
+	rSeg->flags |= SEG_SPLIT;
+	lSeg->flags |= SEG_SPLIT;
 
 	// Fill in the parts of lSeg & rSeg that have changed
 	if ( sideS < 0.0 ) {
@@ -1033,6 +1095,14 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg ) {
 		lSeg->start.x     = x;
 		lSeg->start.y     = y;
 		lSeg->start.l     = l;
+
+		rSeg->vertexCoords[1][0] = x;
+		rSeg->vertexCoords[1][1] = y;
+		
+		lSeg->vertexCoords[0][0] = x;
+		lSeg->vertexCoords[0][1] = y;
+
+
 		lSeg->Data.offset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
 	} else {
 #if defined ( DEBUG )
@@ -1048,6 +1118,13 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg ) {
 		rSeg->start.x     = x;
 		rSeg->start.y     = y;
 		rSeg->start.l     = l;
+
+		rSeg->vertexCoords[0][0] = x;
+		rSeg->vertexCoords[0][1] = y;	
+
+		lSeg->vertexCoords[1][0] = x;
+		lSeg->vertexCoords[1][1] = y;
+
 		rSeg->Data.offset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
 	}
 
@@ -1200,7 +1277,8 @@ static bool ChoosePartition ( SEG *seg, int noSegs, int *noLeft, int *noRight, s
 
 retry:
 
-	if ( seg->final == false ) {
+	//if ( seg->final == false ) {
+	if (! (seg->flags & SEG_FINAL)) {
 		memcpy ( lineChecked, lineUsed, sizeof ( char ) * noAliases );
 	} else {
 		memset ( lineChecked, 0, sizeof ( char ) * noAliases );
@@ -1301,7 +1379,16 @@ retry:
 			seg [i].start.y = startY;
 			seg [i].end.x   = endX;
 			seg [i].end.y   = endY;
-			seg [i].final   = true;
+			//seg [i].final   = true;
+			seg[i].flags |= SEG_FINAL;
+
+
+			seg [i].vertexCoords[0][0] = startX;
+			seg [i].vertexCoords[0][1] = startY;
+			seg [i].vertexCoords[1][0] = endX;					
+			seg [i].vertexCoords[1][1] = endY;
+
+
 		}
 		if ( (error > EPSILON) && (options->SplitHandling != 0)) {
 			// printf("error!\n");
@@ -1346,7 +1433,10 @@ static int AlgorithmFewerSplits ( SEG *segs, int noSegs, sBSPOptions *options, D
 
 	for ( int i = 0; i < noSegs; i++ ) {
 		// if ( showProgress && (( i & 15 ) == 0 )) ShowProgress (); obsolete, spammy
-		int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+		// int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+		
+		int alias = (testSeg->flags & SEG_SPLIT) ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+
 		if (( alias == 0 ) || ( lineChecked [ alias ] == false )) {
 			lineChecked [ alias ] = -1;
 			count [0] = count [1] = count [2] = 0;
@@ -1523,7 +1613,8 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 
 	for ( i = 0; i < noSegs; i++ ) {
 		// if ( showProgress && (( i & 15 ) == 0 )) ShowProgress (); // obsolete, spammy
-		int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+		// int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+		int alias = testSeg->flags & SEG_SPLIT ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
 
 		if (( alias == 0 ) || ( lineChecked [ alias ] == false )) {
 
@@ -1543,10 +1634,19 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 			for ( int j = 0; j < noSegs; j++, destSeg++ ) {
 				// printf ("%d %d\n", j, noSegs);
 				switch ( WhichSide ( destSeg, options )) {
-					case SIDE_LEFT  : lCount++; usedSector [ destSeg->Sector ] |= 0xF0;	break;
-					case SIDE_SPLIT : if ( destSeg->DontSplit ) curScore->invalid++;
-								  sCount++; usedSector [ destSeg->Sector ] |= 0xFF;	break;
-					case SIDE_RIGHT : rCount++; usedSector [ destSeg->Sector ] |= 0x0F;	break;
+					case SIDE_LEFT  : 
+						lCount++; usedSector [ destSeg->Sector ] |= 0xF0;	
+						break;
+					//case SIDE_SPLIT : if ( destSeg->DontSplit ) curScore->invalid++;
+					case SIDE_SPLIT :
+						if ( destSeg->flags & SEG_DONT_SPLIT) {
+							curScore->invalid++;
+						}
+						sCount++; usedSector [ destSeg->Sector ] |= 0xFF;
+						break;
+					case SIDE_RIGHT : 
+						rCount++; usedSector [ destSeg->Sector ] |= 0x0F;	
+						break;
 				}
 			}
 			// Only consider SEG if it is not a boundary line
@@ -1780,7 +1880,9 @@ retry:
 
 	for ( ; i < max; i++ ) {
 		// if ( showProgress && (( i & 15 ) == 0 )) ShowProgress (); obsolete, spammy
-		int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+		// int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+		int alias = testSeg->flags & SEG_SPLIT ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+
 		if (( alias == 0 ) || ( lineChecked [ alias ] == false )) {
 			lineChecked [ alias ] = -1;
 			count [0] = count [1] = count [2] = 0;
@@ -3122,13 +3224,14 @@ wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors, sBSPOptions *opti
 
 		// Copy the used SEGs to the final SEGs list
 		for ( int x = 0; x < ssectorList [i].num; x++ ) {
-
-			// 02.06.2018 adding vertex			
-
-			// segs->Data.start = ( UINT16 ) AddVertex ( lrint ( segs->start.x ), lrint ( segs->start.y ));
-			// segs->Data.end   = ( UINT16 ) AddVertex ( lrint ( segs->end.x ),   lrint ( segs->end.y ));
+			// 11.06.2018 adding vertex			
 
 			segs [x] = segStart [start+x].Data;
+
+			segs [x].start = ( UINT16 ) AddVertex ( lrint ( segStart[start+x].start.x), lrint ( segStart[start+x].start.y ));
+			segs [x].end   = ( UINT16 ) AddVertex ( lrint ( segStart[start+x].end.x),   lrint ( segStart[start+x].end.y ));
+
+
 /*
 			if (	((int) 	segStart[start+x].start.x != newVertices[segStart[start+x].Data.start].x) ||
 				((int)	segStart[start+x].start.y != newVertices[segStart[start+x].Data.start].y) ||
@@ -3473,9 +3576,9 @@ restart:
 	int picks = 32768;
 	CreateNode ( 0, &noSegs, options, level, 99999, 99999, &picks);
 
-	// new 2018 may 29 code
+	// new 29.05.2018 code
 	PostFindBounds(&nodePool[nodeCount - 1]);
-
+	
 	delete [] convexList;
 	if ( score ) delete [] score;
 
