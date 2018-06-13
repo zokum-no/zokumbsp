@@ -24,8 +24,8 @@ int main ( int argc, const char *argv [] ) {
 	} else {
 		double sx = atoi(argv[1]);
 		double sy = atoi(argv[2]);
-		double ex = atoi(argv[3]) + sx;
-		double ey = atoi(argv[4]) + sy;
+		double ex = sx + atoi(argv[3]);
+		double ey = sy + atoi(argv[4]);
 		double px; // = atio(argv[5]);
 		double py; // = atio(argv[6]);
 
@@ -42,12 +42,19 @@ int main ( int argc, const char *argv [] ) {
 			double upper = abs(((ey - sy) * px) - ((ex -sx) * py) + (ex * sy) - (ey * sx));
 			double below = sqrt( pow(ey - sy, 2) + pow(ex - sx, 2));
 
-			dist = upper / below;
+			dist = abs(upper / below);
 
-			printf("Distance from point #%-2d to line: %10.8f", p, dist);
+			printf("Distance from point #%-2d (%5.0f,%-5.0f) to line: %10.8f", p, px, py, dist);
 
-			if (dist > 0.3) {
-				printf(" - Possible slime trail!");
+
+			if (dist > 0.5) {
+				printf(" ! Bad rounding, should have inserted a seg!");
+			} else 	if (dist > 0.3) {
+				printf(" ! Possible slime trail!");
+			} else if (dist > 0.1) {
+				printf(" - Doubtful sime tail.");
+			} else {
+				printf(" - All good!");
 			}
 			
 			printf("\n");			
