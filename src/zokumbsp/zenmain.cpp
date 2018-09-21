@@ -126,7 +126,6 @@ long long totalVertices = 0;
 long long oldTotalVertices = 0;
 
 
-
 void printHelp () {
 	FUNCTION_ENTRY ( NULL, "printHelp", true );
 
@@ -601,7 +600,19 @@ int parseArgs ( int index, const char *argv [] )
 				case 'R' : localError = parseREJECTArgs ( ptr, setting );       break;
 				case 'S' : localError = parseSTATISTICSArgs (ptr, setting);	break;
 				case 'T' : config.WriteWAD = ! setting;                         break;
-				case 'C' : config.Color = setting;				break;
+				case 'C' : 
+					   if (config.Color) {
+						   if (setting) {
+							   config.Color = 2;	
+						   } else {
+							   config.Color = 0;
+						   }
+					   } else {
+						   config.Color = setting;
+					   }
+
+					   break;
+				case 'V' : exit(0);
 				default  : localError = true;
 			}
 		}
@@ -663,7 +674,8 @@ void ReadConfigFile ( const char *argv [] )
 					case 'N' : localError = parseNODESArgs ( ptr, setting );        break;
 					case 'R' : localError = parseREJECTArgs ( ptr, setting );       break;
 					case 'T' : config.WriteWAD = ! setting;                         break;
-					case 'C' : config.Color = setting;
+					case 'C' : config.Color = setting;				break;
+					case 'V' : exit(0);
 					default  : localError = true;
 				}
 			}
@@ -1089,26 +1101,31 @@ void PrintColorOff(void) {
 void PrintMapHeader(char *map) {
 	//   cprintf ( "\r0        10        20        30        40        50        60        70       79\n\r");
 	GotoXY ( startX, startY );
-	if (config.Color) {
-		 cprintf ( "%c[37;44;1m", 27);
+	if (config.Color == 1)  {
+		cprintf ( "%c[37;44;1m", 27);
+	} else if (config.Color == 2) {
+		cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
 	}
-/*
-                   0        10        20        30        40        50        60        70       79
-                   MAP20    Lump          Old        New      %Change     %Limit   Time Elapsed
-*/
+	/*
+	   0        10        20        30        40        50        60        70       79
+	   MAP20    Lump          Old        New      %Change     %Limit   Time Elapsed
+	   */
 
-//                 0        10        20        30        40        50        60        70       79           
-//                          Lump          Old        New      %Change       %Limit     Time Elapsed
+	//                 0        10        20        30        40        50        60        70       79           
+	//                          Lump          Old        New      %Change       %Limit     Time Elapsed
 	cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
-	
-	if (config.Color) {
+
+	if (config.Color == 1) {
 		cprintf ( "%c[0;37;44m", 27);
+	} else if (config.Color == 2) {
+		cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
 	}
-	
+
+
 	cprintf(" Lump          Old         New     %%Change      %%Limit      Time Elapsed\n\r");
-	
+
 	if (config.Color) {
-        	PrintColorOff();
+		PrintColorOff();
 	}
 
 	GetXY ( &startX, &startY );
@@ -1117,14 +1134,14 @@ void PrintMapHeader(char *map) {
 
 void ProgressBar(char *lump, double progress, int width) {
 
-        char prog[256];
+	char prog[256];
 
-        double counter = 0;
-        double divisor = 0;
-        double total = 0;
+	double counter = 0;
+	double divisor = 0;
+	double total = 0;
 
 
-	 cprintf("\r         %-s", lump);
+	cprintf("\r         %-s", lump);
 	if (progress < 1.0) {
 		cprintf(" %5.2f%% ", 100.0 * progress);
 	} else {
@@ -1134,26 +1151,26 @@ void ProgressBar(char *lump, double progress, int width) {
 	sprintf(prog, "");
 
 	if (config.Color) {
-                cprintf ( "%c[0;37m", 27);
-        }
+		cprintf ( "%c[0;37m", 27);
+	}
 	cprintf("[");
 
 	if (config.Color) {
 		cprintf ( "%c[1;30m", 27);
 	}
 
-/*
-        for (int i = 0; i != width; i++) {
+	/*
+	   for (int i = 0; i != width; i++) {
 
-		double d = (double) i / (double) width;
+	   double d = (double) i / (double) width;
 
-                if ( progress >= d) {
-                        strcat(prog, "#");
-                } else {
-                        strcat(prog, " ");
-                }
-        }
-*/
+	   if ( progress >= d) {
+	   strcat(prog, "#");
+	   } else {
+	   strcat(prog, " ");
+	   }
+	   }
+	   */
 	sprintf(prog, "%*s", width, (char *)" ");
 
 	int hashes = progress * (double) width;
@@ -1162,10 +1179,32 @@ void ProgressBar(char *lump, double progress, int width) {
 		prog[i] = '#';
 	}
 
-	cprintf ( "%s", prog);
-	
+	if (config.Color == 2) {
+		for (int i = 0; i != hashes; i++) {
+			int r = 88 + (3 * i);
+			int g = 16 + i;
+			int b = 64 + (3 * i);
+
+			if (r > 255) {
+				r = 255;
+				g = g + i;
+			}
+			if (b > 255) {
+				b = 255;
+				g = g + 1;
+			}
+
+
+			cprintf ("\033[38;2;%d;%d;%dm#", r, g, b);
+		}
+		cprintf("%*s", width - hashes, (char *) " ");
+
+	} else {
+		cprintf ( "%s", prog);
+	}
+
 	if (config.Color) {
-        	cprintf ( "%c[0;37m", 27);
+		cprintf ( "%c[0;37m", 27);
 	}
 
 	cprintf("]");
@@ -1192,18 +1231,18 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 
 	double change, efficiency;
 
-	
+
 	if (old && nu) {
 		change = dNew / dOld;
 	}
-	
+
 	if (nu && limit) {
 		efficiency = dNew / dLimit;
 	}
- 
+
 
 	char ansicolor[8];
-	
+
 	if ((oldD > 0) && (nuD > 0)) {
 		change = oldD / nuD;
 		nu = 1;
@@ -1216,16 +1255,16 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 		} else if (change >= 1.1) {
 			sprintf(ansicolor, "0;33");
 		} else if (change > 1.0) {
-                        sprintf(ansicolor, "1;33");
+			sprintf(ansicolor, "1;33");
 		} else if ((nuD == dOld) || (old == nu)) {
-                        sprintf(ansicolor, "0;37");
-                } else if (change >= 0.9) {
-                        sprintf(ansicolor, "0;32");
+			sprintf(ansicolor, "0;37");
+		} else if (change >= 0.9) {
+			sprintf(ansicolor, "0;32");
 		} else {
 			sprintf(ansicolor, "1;32");
 		}
 		cprintf ("%c[%sm", 27, ansicolor);
-	
+
 	}
 	if (old || (oldD > 0)) {
 		cprintf("     %6.2f%%", change * 100.0);
@@ -1241,11 +1280,11 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 		} else if (efficiency >= 0.95) {
 			sprintf(ansicolor, "0;31");
 		} else if ( efficiency >= 0.90) {
-                        sprintf(ansicolor, "1;31");
+			sprintf(ansicolor, "1;31");
 		} else if ( efficiency >= 0.85) {
-                        sprintf(ansicolor, "0;33");
+			sprintf(ansicolor, "0;33");
 		} else if ( efficiency >= 0.80) {
-                        sprintf(ansicolor, "1;33");
+			sprintf(ansicolor, "1;33");
 		} else {
 			sprintf(ansicolor, "0;37");
 		}
@@ -1261,7 +1300,7 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 	if (config.Color) {
 		PrintColorOff();
 	}
-	
+
 	// cprintf ( "\r\n" );
 }
 
@@ -1363,25 +1402,25 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		if ( saved >= 0 ) {
 			PrintMapLump((char * )"Blockmap", oldSize, newSize, 65536, 0, 0);
-			
+
 			/*
-			cprintf ( "Blockmap: %6d => %6d ", oldSize, newSize );
-			if ( oldSize ) cprintf ( "   %6.2f%%", ( float ) ( 100.0 * newSize / oldSize ));
-			else cprintf ( " - " );
-			cprintf ( "   Compressed: " );
-			  if ( newSize + saved ) cprintf ( "%3.2f%%", ( float ) ( 100.0 * newSize / ( newSize + saved ) ));
-			  else cprintf ( "(****)" );
-			  */
+			   cprintf ( "Blockmap: %6d => %6d ", oldSize, newSize );
+			   if ( oldSize ) cprintf ( "   %6.2f%%", ( float ) ( 100.0 * newSize / oldSize ));
+			   else cprintf ( " - " );
+			   cprintf ( "   Compressed: " );
+			   if ( newSize + saved ) cprintf ( "%3.2f%%", ( float ) ( 100.0 * newSize / ( newSize + saved ) ));
+			   else cprintf ( "(****)" );
+			   */
 			/*
-			double pct = ((double) newSize / 65535.0) * 100.0; 
-			
-			cprintf("   %6.2f%%", pct);
-			*/
+			   double pct = ((double) newSize / 65535.0) * 100.0; 
+
+			   cprintf("   %6.2f%%", pct);
+			   */
 		} else {
 			// PrintMapLumpError("Blockmap", newSize, 65536);
 			cprintf ( "       Blockmap   Failed to create a valid lump\n" );
 		}
-		
+
 
 		PrintTime ( blockTime );
 
@@ -1436,39 +1475,39 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		oldTotalSegs += oldSegCount;
 
 		/*
-		cprintf ( "Nodes: %9d => %6d    ", oldNodeCount,  curLevel->NodeCount ());
-		if ( oldNodeCount ) {
-			double pct = ( 100.0 * (curLevel->NodeCount () / (double) oldNodeCount) );
-			cprintf ( "%6.2f%%", pct);
-			//cprintf ( "%3.1f%%", ( 100.0 * (curLevel->NodeCount () / oldNodeCount) ));
+		   cprintf ( "Nodes: %9d => %6d    ", oldNodeCount,  curLevel->NodeCount ());
+		   if ( oldNodeCount ) {
+		   double pct = ( 100.0 * (curLevel->NodeCount () / (double) oldNodeCount) );
+		   cprintf ( "%6.2f%%", pct);
+		//cprintf ( "%3.1f%%", ( 100.0 * (curLevel->NodeCount () / oldNodeCount) ));
 		}
 		else {
-			cprintf ( "     -" );
+		cprintf ( "     -" );
 		}
-	
+
 		pct = ((double) curLevel->NodeCount() / 32878.0) * 100.0;
 		cprintf("   %6.2f%%", pct);
-		
+
 
 		//cprintf("\r\n");
 		cprintf("\r\n");
 		*/
 
 		/*
-		GotoXY ( startX, startY );
+		   GotoXY ( startX, startY );
 
-		cprintf ( "Segs: %10d => %6d ",  oldSegCount, curLevel->SegCount ());
+		   cprintf ( "Segs: %10d => %6d ",  oldSegCount, curLevel->SegCount ());
 
-		if ( oldSegCount ) {
-			pct = ( 100.0 * ( (double) curLevel->SegCount () / (double) oldSegCount) );
-			cprintf ( "   %6.2f%%", pct);
-		} else {
-			cprintf ( "     -" );
-		}
+		   if ( oldSegCount ) {
+		   pct = ( 100.0 * ( (double) curLevel->SegCount () / (double) oldSegCount) );
+		   cprintf ( "   %6.2f%%", pct);
+		   } else {
+		   cprintf ( "     -" );
+		   }
 
-		pct = ((double) curLevel->SegCount() / 32768.0) * 100.0;
-		cprintf("   %6.2f%%", pct);
-		*/
+		   pct = ((double) curLevel->SegCount() / 32768.0) * 100.0;
+		   cprintf("   %6.2f%%", pct);
+		   */
 
 		/*
 		   cprintf ( "\r\n   Nodes: %9d => %6d   ", oldNodeCount,  curLevel->NodeCount ());
@@ -1486,32 +1525,32 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		// PrintTime ( nodeTime );
 		/*
-		cprintf ( "\r\n" );
-		GotoXY ( startX, startY );
+		   cprintf ( "\r\n" );
+		   GotoXY ( startX, startY );
 
-		rows++;
-		*/
+		   rows++;
+		   */
 
 		PrintMapLump( (char *)  "Segs", oldSegCount, curLevel->SegCount (), 32768, 0, 0);
 		cprintf ( "\r\n" );
 		rows++;
-	
+
 		/*
-		cprintf ( "Subsecs: %7d => %6d ",  oldSubSectorCount, curLevel->SubSectorCount());
-		if ( oldSubSectorCount ) {
-			pct = ( 100.0 * ( (double) curLevel->SubSectorCount () / (double) oldSubSectorCount) );
-			cprintf ( "   %6.2f%%", pct);
-		} else {
-			cprintf ( "     -" );
-		}
-		pct = ((double) curLevel->SubSectorCount() / 32768.0) * 100.0;
-		cprintf("   %6.2f%%", pct);
+		   cprintf ( "Subsecs: %7d => %6d ",  oldSubSectorCount, curLevel->SubSectorCount());
+		   if ( oldSubSectorCount ) {
+		   pct = ( 100.0 * ( (double) curLevel->SubSectorCount () / (double) oldSubSectorCount) );
+		   cprintf ( "   %6.2f%%", pct);
+		   } else {
+		   cprintf ( "     -" );
+		   }
+		   pct = ((double) curLevel->SubSectorCount() / 32768.0) * 100.0;
+		   cprintf("   %6.2f%%", pct);
 
-		PrintTime ( nodeTime );
+		   PrintTime ( nodeTime );
 
-		cprintf("\r\n");
-		GotoXY ( startX, startY );
-		*/
+		   cprintf("\r\n");
+		   GotoXY ( startX, startY );
+		   */
 
 		PrintMapLump( (char *)  "Subsecs", oldSubSectorCount, curLevel->SubSectorCount (), 32768, 0, 0);
 		GetXY ( &dummyX, &startY );
@@ -1541,7 +1580,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			cprintf ( "    %6.2f%%         -", ((double) newEfficiency / (double) oldEfficiency) * 100.0);
 
 			cprintf ( "\r\n" );
-*/
+			*/
 			PrintMapLump( (char *)  "Reject", 0, 0, 0, oldEfficiency / 100.0, newEfficiency / 100.0);
 
 			PrintTime ( rejectTime );
@@ -1561,9 +1600,11 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		Status ( (char *) "" );
 		if ( changed ) {
 			MoveUp ( rows );
-			
-			if (config.Color) {
+
+			if (config.Color == 1) {
 				cprintf ( "%c[37;44;1m", 27);
+			} else if (config.Color == 2) {
+				cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
 			}
 
 			cprintf("\r");
@@ -1588,7 +1629,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	}
 	// delete [] curLevel->extraData->lineDefsUsed;
 	// delete curLevel->extraData;
-	
+
 	delete curLevel;
 
 	return changed;
@@ -1630,11 +1671,11 @@ void printTotals(void) {
 
 	// summary..
 	/*
-	GotoXY ( 0, startY );
-	cprintf ( "=================================================================");
-	cprintf("\r\n");
-	*/
-	
+	   GotoXY ( 0, startY );
+	   cprintf ( "=================================================================");
+	   cprintf("\r\n");
+	   */
+
 	PrintMapHeader((char *) "Total:");
 
 	GotoXY ( startX, startY );
