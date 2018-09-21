@@ -830,7 +830,7 @@ static UINT16 CreateSSector ( SEG *segs, int noSegs ) {
 	// Splits may have 'upset' the lineDef ordering - some special effects
 	//   assume the SEGS appear in the same order as the LINEDEFS
 	if ( noSegs > 1 ) {
-		qsort ( segs, noSegs, sizeof ( SEG ), SortByLineDef );
+		// qsort ( segs, noSegs, sizeof ( SEG ), SortByLineDef );
 	}
 
 	int count = noSegs;
@@ -3386,6 +3386,20 @@ wSegs *GetSegs () {
 	return finalSegs;
 }
 
+void PostSortSegs( wSSector *ssectors) {
+
+	for (int i = 0; i != ssectorCount; i++) {
+
+		if (ssectors[i].num > 1) {
+			qsort ( &segStart[ssectors[i].first], ssectors[i].num, sizeof ( SEG ), SortByLineDef );
+		}
+
+
+	}
+
+
+}
+
 
 void PostFindBounds( wNode *node) {
 
@@ -3578,6 +3592,9 @@ restart:
 
 	// new 29.05.2018 code
 	PostFindBounds(&nodePool[nodeCount - 1]);
+
+	// new 21.09.2018 code
+	PostSortSegs(ssectorPool);
 	
 	delete [] convexList;
 	if ( score ) delete [] score;
