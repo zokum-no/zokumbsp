@@ -1219,8 +1219,9 @@ void ProgressBar(char *lump, double progress, int width) {
 			g = 8 + (int) (stepsize * i * 75);
 			b = 270 - (int) (stepsize * i * 240);
 
-			if (i > (hashes / 2)) {
-				 g += (int) (stepsize * i * 85);
+			if (i > (width / 2)) {
+				g += (int) (stepsize * ((i - (width / 2)) * 115));
+				r += (int) (stepsize * ((i - (width / 2)) * 45));
 			}
 
 
