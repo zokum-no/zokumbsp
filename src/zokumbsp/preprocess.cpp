@@ -121,10 +121,12 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 			extraData->lineDefsRendered[i] = true;
 		}
 
-		if (lineDef [i].type == 1084) {
+		if (lineDef [i].type == 1085) {
 			extraData->lineDefsSegProperties[i] = 0x1;
-		} else if (lineDef [i].type == 1086) {
+		} else if (lineDef [i].type == 1084) {
 			extraData->lineDefsSegProperties[i] = 0x2;
+		} else if (lineDef [i].type == 1086) {
+			extraData->lineDefsSegProperties[i] = 0x1 + 0x2;
 		} else {
 			extraData->lineDefsSegProperties[i] = 0x0;
 		}

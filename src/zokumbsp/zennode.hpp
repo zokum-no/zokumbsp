@@ -115,25 +115,35 @@ struct sVertex {
 #define SEG_DONT_SPLIT	0x04
 #define SEG_FINAL	0x08
 
-struct SEG {
-	wSegs           Data;
-	const wLineDefInternal *LineDef;
-	int             Sector;
-	int             Side;
-	// int             AliasFlip;
+struct __attribute__((__packed__)) SEG {
+// struct SEG {
+	// wSegs           Data;
 
-	int flags;	
-/*
-	bool		AliasFlip;
-	bool            Split;
-	bool            DontSplit;
-	bool            final;
-*/
-	int 		vertexCoords[2][2];
+	UINT16 Datastart;
+	UINT16 Dataend;
+	UINT16 Dataangle;
+	UINT16 DatalineDef;
+	//UINT16 Dataflip;
+	char Dataflip;
+	UINT16 Dataoffset;
+	
+	const wLineDefInternal *LineDef;
+	UINT16          Sector;
+	char	        Side;
+	char 		flags;	
+	INT16 		vertexCoords[2][2];
 
 	sVertex         start;
 	sVertex         end;
 };
+
+struct NODE {
+    INT16       x, y;                   // starting point
+    INT16       dx, dy;                 // offset to ending point
+    // wBound      side[2];
+    UINT16      child[2];               // Node or SSector (if high bit is set)
+};
+
 
 struct vertexPair {
 	int startx;
@@ -339,7 +349,7 @@ struct sOptions {
 	bool             WriteWAD;
 	bool             Extract;
 	bool		 OutputWad;
-	bool		Color;
+	int 		Color;
 };
 
 struct sBlockMapExtraData;

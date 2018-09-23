@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #ifndef _MSC_VER
 #include <strings.h>
@@ -76,7 +77,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10-beta11"
+#define ZOKVERSION		"1.0.10-beta12"
 #define ZOKVERSIONSHORT		"1.0.10"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2018 Kim Roar Foldøy Hauge";
@@ -1173,14 +1174,23 @@ void ProgressBar(char *lump, double progress, int width) {
 	   */
 	sprintf(prog, "%*s", width, (char *)" ");
 
-	int hashes = progress * (double) width;
+	int hashes = lrint(progress * (double) width);
 
 	for (int i = 0; i != hashes; i++) {
 		prog[i] = '#';
 	}
 
 	if (config.Color == 2) {
+
+		int r = 56;
+		int g = 16;
+		int b = 224;
+
+		double stepsize = 1.0 / width ; 
+
 		for (int i = 0; i != hashes; i++) {
+
+			/*
 			int r = 88 + (3 * i);
 			int g = 16 + i;
 			int b = 64 + (3 * i);
@@ -1193,11 +1203,52 @@ void ProgressBar(char *lump, double progress, int width) {
 				b = 255;
 				g = g + 1;
 			}
+*/
+/*
+			r += 6;
+			g += 2;
+			b -= 4;
+*/
+/*
+		 	r = 56 + (int) (progress * 250);
+			g = 15 + (int) (progress * 110); 
+			b = 224 - (int) (progress * 224);
+*/
 
+			r = 32 + (int) (stepsize * i * 300);
+			g = 8 + (int) (stepsize * i * 75);
+			b = 270 - (int) (stepsize * i * 240);
+
+			if (i > (hashes / 2)) {
+				 g += (int) (stepsize * i * 85);
+			}
+
+
+			if (r > 255 ) { 
+				r = 255;
+			}
+			if (g > 255 ) {
+				g = 255;
+			}
+			if (b > 255 ) {
+				b = 255;
+			}
+
+			if (b < 0) {
+				b = 0;
+			}
+			if (g < 0) {
+				g = 0;
+			}
+			if (r < 0) {
+				r = 0;
+			}
 
 			cprintf ("\033[38;2;%d;%d;%dm#", r, g, b);
 		}
-		cprintf("%*s", width - hashes, (char *) " ");
+		if (hashes != width) {
+			cprintf("%*s", width - hashes, (char *) " ");
+		}
 
 	} else {
 		cprintf ( "%s", prog);
