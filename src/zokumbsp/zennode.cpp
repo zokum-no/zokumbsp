@@ -367,7 +367,8 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 			seg->Dataend     = lineDef->end;
 			seg->Dataangle   = angle;
 			seg->DatalineDef = ( UINT16 ) i;
-			seg->Dataflip    = 0;
+			// seg->Dataflip    = 0;
+
 			seg->LineDef      = lineDef;
 			seg->Sector       = sideRight->sector;
 			//seg->DontSplit    = split;
@@ -393,7 +394,8 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 			seg->Dataend     = lineDef->start;
 			seg->Dataangle   = ( BAM ) ( angle + BAM180 );
 			seg->DatalineDef = ( UINT16 ) i;
-			seg->Dataflip    = 1;
+			//seg->Dataflip    = 1;
+			seg->flags |= SEG_BACKSIDE;
 			seg->LineDef      = lineDef;
 			seg->Sector       = sideLeft->sector;
 			// seg->DontSplit    = split;
@@ -625,7 +627,10 @@ static int _WhichSide ( SEG *seg, sBSPOptions *options) {
 				double num = DX * ( _vertS->y - Y ) - DY * ( _vertS->x - X );
 				double l = num / det;
 
-				if ( seg->Dataflip != 0 ) l = 1.0 - l;
+				// if ( seg->Dataflip != 0 ) l = 1.0 - l;
+				if (seg->flags & SEG_BACKSIDE) {
+					l = 1.0 - l;
+				}
 
 				if ( l < vertS->l ) { y1 = 0.0; goto xx; }
 				if ( l > vertE->l ) { y2 = 0.0; goto xx; }
@@ -800,7 +805,28 @@ static int SortByLineDef ( const void *ptr1, const void *ptr2 ) {
 	int dif = (( SEG * ) ptr1)->DatalineDef - (( SEG * ) ptr2)->DatalineDef;
 	if ( dif ) return dif;
 
+
+	// What a nice hack for sorting things.
+	int a, b;
+
+	if (((SEG *) ptr1)->flags & SEG_BACKSIDE) {
+		a = 1;
+	} else {
+		a = 0;
+	}
+
+        if (((SEG *) ptr2)->flags & SEG_BACKSIDE) {
+                b = 1;
+        } else {
+                b = 0;
+        }
+
+	return a - b;
+
+
+	/*
 	return (( SEG * ) ptr1)->Dataflip - (( SEG * ) ptr2)->Dataflip;
+	*/
 }
 
 //----------------------------------------------------------------------------
@@ -927,7 +953,25 @@ static int SortByAngle ( const void *ptr1, const void *ptr2 ) {
 	if ( dif ) return dif;
 	dif = (( SEG * ) ptr1)->DatalineDef - (( SEG * ) ptr2)->DatalineDef;
 	if ( dif ) return dif;
-	return (( SEG * ) ptr1)->Dataflip - (( SEG * ) ptr2)->Dataflip;
+
+        int a, b;
+
+        if (((SEG *) ptr1)->flags & SEG_BACKSIDE) {
+                a = 1;
+        } else {
+                a = 0;
+        }
+
+        if (((SEG *) ptr2)->flags & SEG_BACKSIDE) {
+                b = 1;
+        } else {
+                b = 0;
+        }
+
+        return a - b;
+
+
+//	return (( SEG * ) ptr1)->Dataflip - (( SEG * ) ptr2)->Dataflip;
 }
 
 //----------------------------------------------------------------------------
@@ -1075,8 +1119,15 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg ) {
 	double sideS = DX * ( rSeg->start.y - Y ) - DY * ( rSeg->start.x - X );
 
 	// Get the correct endpoint of the base LINEDEF for the offset calculation
+/*
 	if ( rSeg->Dataflip ) vertS = vertE;
 	if ( rSeg->Dataflip ) l = 1.0 - l;
+*/
+
+	if (rSeg->flags & SEG_BACKSIDE) {
+		vertS = vertE;
+		l = 1.0 - l;
+	}
 
 	//rSeg->Split = true;
 	//lSeg->Split = true;
@@ -1617,6 +1668,13 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 	for ( i = 0; i < noSegs; i++ ) {
 		// if ( showProgress && (( i & 15 ) == 0 )) ShowProgress (); // obsolete, spammy
 		// int alias = testSeg->Split ? 0 : lineDefAlias [ testSeg->Data.lineDef ];
+		// int alias = testSeg->flags & SEG_SPLIT ? 0 : lineDefAlias [ testSeg->DatalineDef ];
+/*
+		if (segs[i].flags & SEG_EDGE) {
+			// printf("worked\n");
+			continue;
+		}
+*/
 		int alias = testSeg->flags & SEG_SPLIT ? 0 : lineDefAlias [ testSeg->DatalineDef ];
 
 		if (( alias == 0 ) || ( lineChecked [ alias ] == false )) {
@@ -1653,6 +1711,11 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 				}
 			}
 			// Only consider SEG if it is not a boundary line
+
+			if ( !(lCount * rCount + sCount )) {
+				segs[i].flags |= SEG_EDGE;
+			}
+
 			if ( lCount * rCount + sCount ) {
 				int lsCount = 0, rsCount = 0, ssCount = 0;
 				for ( int j = 0; j < sectorCount; j++ ) {
@@ -1711,6 +1774,7 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 				noScores++;
 			} else if ( alias != 0 ) {
 				// Eliminate outer edges of the map
+				// segs[i].flags |= SEG_EDGE;
 				*convexPtr++ = alias;
 			}
 		}
@@ -2371,16 +2435,16 @@ int MaxWidth(int depth, int segs, sBSPOptions *options) {
 	}
 
 	if (options->Width > 2) {
-		if (segs < 30) {
+		if (segs < 20) {
 			return 2;
 		}
 	} 
-	if (options->Width > 3) {
+/*	if (options->Width > 3) {
 		if (segs < 60) {
                         return 3;
                 }
 	}
-
+*/
 
 	return options->Width;
 
@@ -2398,6 +2462,9 @@ int MaxWidth(int depth, int segs, sBSPOptions *options) {
 #define COLOR true
 
 void ProgressBar(char *, double, int);
+
+
+double oldProgress = -1.0;
 
 void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
@@ -2428,7 +2495,10 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 		depthProgress[6] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * (double) MaxWidth(7, segs, o) * 128.0) +
 		depthProgress[7] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * (double) MaxWidth(7, segs, o) * (double) MaxWidth(7, segs, o)  * 256.0);
 
-	ProgressBar((char *) "BSP       ", progress, 51);
+	if (progress != oldProgress) {
+		ProgressBar((char *) "BSP       ", progress, 51);
+		oldProgress = progress;
+	}
 
 }
 
@@ -2522,10 +2592,11 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 	// June 2018 speedup
 	
 	if (maxWidth > *maxPicks) {
-		
+		/*
 		if ((maxWidth == 3) && (*maxPicks == 1)) {
 			printf("win! %d %d\n", *maxPicks, maxWidth);
 		}
+		*/
 
 		maxWidth = *maxPicks;
 		if (maxWidth < 2) {
@@ -2533,6 +2604,19 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 		}
 	}
 
+	if (maxWidth > 1) {
+		int noneEdges = 0;
+		for (int cnt = 0; cnt != *noSegs; cnt++) {
+			if (!(segs[cnt].flags & SEG_EDGE)) {
+				noneEdges++;
+				if (noneEdges == maxWidth) {
+					break;
+				}
+			}
+		}
+		// printf("win\n");
+		maxWidth = noneEdges;
+	}
 
 
 	int nodesLeftBackup = nodesLeft;
@@ -3239,7 +3323,15 @@ wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors, sBSPOptions *opti
 
 			segs[x].angle = segStart [start+x].Dataangle;
 			segs[x].lineDef = segStart [start+x].DatalineDef;
-			segs[x].flip = segStart [start+x].Dataflip;
+			
+			// segs[x].flip = segStart [start+x].Dataflip;
+			
+			if (segStart [start+x].flags & SEG_BACKSIDE) {
+				segs[x].flip = 1;
+			} else {
+				segs[x].flip = 0;
+			}
+
 			segs[x].offset = segStart [start+x].Dataoffset;
 
 
@@ -3355,7 +3447,8 @@ wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors, sBSPOptions *opti
 				}
 		
 				if (!options->segBAMs) {
-					if (segStart[start+x].Dataflip) {
+					// if (segStart[start+x].Dataflip) {
+					if (segStart[start+x].flags & SEG_BACKSIDE) {
 						angle =	( BAM ) ( angle + BAM180 );
 					}
 				}
