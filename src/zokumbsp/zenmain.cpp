@@ -1090,8 +1090,26 @@ int CheckREJECT ( DoomLevel *curLevel ) {
 void PrintTime ( UINT32 time ) {
 	FUNCTION_ENTRY ( NULL, "PrintTime", false );
 
-	GotoXY ( 68, startY );
-	cprintf ( "%4ld.%03ld sec%s\r\n", time / 1000, time % 1000, ( time == 1000 ) ? "" : "s" );
+	GotoXY ( 65, startY );
+
+
+	// time += random();
+
+	long ms = time % 1000;
+	long s = (time / 1000) % 60;
+	long m = (time / 1000) / 60;
+	long h = (time / 1000) / 3600;
+
+	if (h > 0) {
+		cprintf ( "%2ldh %02ldm %02ld %03ldms\r\n", h, m, s, ms);
+	} else if (m > 0) {
+		cprintf ( "    %02ldm %02ld %03ldms\r\n", m, s, ms);
+	} else if (s > 0) {
+		cprintf ( "       %2lds %03ldms\r\n", s, ms);
+	} else {
+		cprintf ( "           %3ldms\r\n", ms);
+	}
+	
 }
 
 
@@ -1191,29 +1209,29 @@ void ProgressBar(char *lump, double progress, int width) {
 		for (int i = 0; i != hashes; i++) {
 
 			/*
-			int r = 88 + (3 * i);
-			int g = 16 + i;
-			int b = 64 + (3 * i);
+			   int r = 88 + (3 * i);
+			   int g = 16 + i;
+			   int b = 64 + (3 * i);
 
-			if (r > 255) {
-				r = 255;
-				g = g + i;
-			}
-			if (b > 255) {
-				b = 255;
-				g = g + 1;
-			}
-*/
-/*
-			r += 6;
-			g += 2;
-			b -= 4;
-*/
-/*
-		 	r = 56 + (int) (progress * 250);
-			g = 15 + (int) (progress * 110); 
-			b = 224 - (int) (progress * 224);
-*/
+			   if (r > 255) {
+			   r = 255;
+			   g = g + i;
+			   }
+			   if (b > 255) {
+			   b = 255;
+			   g = g + 1;
+			   }
+			   */
+			/*
+			   r += 6;
+			   g += 2;
+			   b -= 4;
+			   */
+			/*
+			   r = 56 + (int) (progress * 250);
+			   g = 15 + (int) (progress * 110); 
+			   b = 224 - (int) (progress * 224);
+			   */
 
 			r = 32 + (int) (stepsize * i * 300);
 			g = 8 + (int) (stepsize * i * 75);

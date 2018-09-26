@@ -114,6 +114,8 @@ struct sVertex {
 #define SEG_SPLIT	0x02
 #define SEG_DONT_SPLIT	0x04
 #define SEG_FINAL	0x08
+#define SEG_BACKSIDE	0x10
+#define SEG_EDGE	0x20
 
 struct __attribute__((__packed__)) SEG {
 // struct SEG {
@@ -123,8 +125,6 @@ struct __attribute__((__packed__)) SEG {
 	UINT16 Dataend;
 	UINT16 Dataangle;
 	UINT16 DatalineDef;
-	//UINT16 Dataflip;
-	char Dataflip;
 	UINT16 Dataoffset;
 	
 	const wLineDefInternal *LineDef;

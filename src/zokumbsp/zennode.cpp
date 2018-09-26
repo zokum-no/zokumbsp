@@ -2520,7 +2520,7 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
 	}
 
-	if (progress != oldProgress) {
+	if (progress > oldProgress) {
 		ProgressBar((char *) "BSP       ", progress, 51);
 		oldProgress = progress;
 	}
@@ -2990,6 +2990,8 @@ differentpartition:
 		int rightPicks = *maxPicks;
 
 		// printf("rightPicks %d\n", rightPicks);
+
+	
 
 		rNode = CreateNode ( inSeg, &noRight, options, level, segGoal, subSectorGoal, &rightPicks);
 		DepthProgress(nodeDepth, initialSegs, options);
