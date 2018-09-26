@@ -163,6 +163,7 @@ int nodeDepth = 0;
 // may 2018 stupid hack!
 bool noMoreScores;
 
+double oldProgress;
 
 
 // metric = S ? ( L * R ) / ( X1 ? X1 * S / X2 : 1 ) - ( X3 * S + X4 ) * S : ( L * R );
@@ -2464,7 +2465,7 @@ int MaxWidth(int depth, int segs, sBSPOptions *options) {
 void ProgressBar(char *, double, int);
 
 
-double oldProgress = -1.0;
+// double oldProgress = -1.0;
 
 void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
@@ -3757,6 +3758,7 @@ restart:
 			DepthProgress(-1, 1, options);	
 
 			int picks = 32768;
+			oldProgress = -1.0; // reset progress in case we do many maps
 			CreateNode ( 0, &noSegs, options, level, 99999, 99999, &picks);
 
 			doomNodes = (wNode *) malloc (sizeof( wNode) * nodeCount);
