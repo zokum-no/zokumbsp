@@ -1,7 +1,7 @@
 # zennode makefile for Linux
 
 CC       = g++
-#CFLAGS  += -g -O -fstrength-reduce -fno-rtti
+CFLAGS  += -g -O -fstrength-reduce -fno-rtti
 #CFLAGS  += -fomit-frame-pointer -foptimize-sibling-calls
 #CFLAGS  += -fbranch-probabilities
 #CFLAGS  += -fprofile-arcs
@@ -10,8 +10,9 @@ CC       = g++
 #CFLAGS   = -g -O3
 #CFLAGS   = -fpermissive -O3 -pipe -march=k8
 #CFLAGS	  = -O0 -g -pipe 
-CFLAGS   = -O2 -pipe -static
-#CFLAGS   = -O2 -pipe -fomit-frame-pointer -foptimize-sibling-calls -fbranch-probabilities
+#CFLAGS   = -O2 -pipe -static
+CFLAGS   = -O2 -pipe -fomit-frame-pointer -foptimize-sibling-calls -fbranch-probabilities
+#CFLAGS    = -O2 -pipe -m32 -fomit-frame-pointer
 INCLUDES = -I../doom -I../common
 #TARGETS  = ZokumBSP bspdiff bspinfo compare
 TARGETS = zokumbsp
@@ -44,7 +45,7 @@ depend: clean
 clean:
 	rm -rf {.,../doom/,../common/logger}/{*.o,*~} $(TARGETS)
 
-zokumbsp:quicksort.cpp preprocess.o zenmain.o zennode.o zenreject.o zenrmb.o blockmap.o console.o endoom.o ../doom/wadlist.o ../doom/wad.o ../doom/level.o $(LOGGER)
+zokumbsp:quicksort.o preprocess.o zenmain.o zennode.o zenreject.o zenrmb.o blockmap.o console.o endoom.o ../doom/wadlist.o ../doom/wad.o ../doom/level.o $(LOGGER)
 	$(CC) $(LIBS) -o $@ $^ $(LINKFLAGS)
 
 bspdiff: bspdiff.o console.o ../doom/wad.o ../doom/wadlist.o ../doom/level.o $(LOGGER)
