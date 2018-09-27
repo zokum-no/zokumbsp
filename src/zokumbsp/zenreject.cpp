@@ -274,14 +274,29 @@ UINT8 *GetREJECT ( DoomLevel *level, bool empty )
     return reject;
 }
 
+void ProgressBar(char *, double, int);
+
 void UpdateProgress ( int stage, double percent )
 {
     FUNCTION_ENTRY ( NULL, "UpdateProgress", false );
 
     char buffer [32];
+/*
     sprintf ( buffer, ( stage == 1 ) ? "REJECT - Pruning sectors %0.1f%%" :
                       ( stage == 2 ) ? "REJECT - Analyzing lines %0.1f%%" : "REJECT - ??? %0.1f%%", percent );
     Status ( buffer );
+*/
+
+	double progress = percent / 100.0;
+
+	if (stage == 1) {
+		ProgressBar((char *) "Reject - Pruning sectors ", progress, 36);
+	} else if (stage == 2) {
+		ProgressBar((char *) "Reject - Analyzing lines ", progress, 36);
+	} else {
+		ProgressBar((char *) "Reject - Other ", progress, 46);
+	}
+
 }
 
 void MarkVisibility ( int sector1, int sector2, UINT8 visibility )
@@ -2401,7 +2416,7 @@ bool CreateREJECT ( DoomLevel *level, const sRejectOptions &options, const sBloc
                 double progress = ( 100.0 * done ) / total;
                 if ( progress >= nextProgress ) {
                     UpdateProgress ( 2, progress );
-                    nextProgress = progress + 0.1;
+                    nextProgress = progress + 0.11;
                 }
             }
 
