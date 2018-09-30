@@ -485,10 +485,12 @@ bool parseGEOMETRYArgs (char *&ptr, bool setting ) {
 
 	while ( *ptr ) {
 		int option = *ptr++;
+		/*
 		bool setting = true;
 		if (( *ptr == '+' ) || ( *ptr == '-' )) {
 			setting = ( *ptr++ == '+' ) ? true : false;
 		}
+		*/
 		switch ( option ) {
 			case 'S' :
 				if (ptr[0] && ptr[1]) {
@@ -1090,7 +1092,7 @@ int CheckREJECT ( DoomLevel *curLevel ) {
 void PrintTime ( UINT32 time ) {
 	FUNCTION_ENTRY ( NULL, "PrintTime", false );
 
-	GotoXY ( 65, startY );
+	GotoXY ( 64, startY );
 
 
 	// time += random();
@@ -1130,8 +1132,8 @@ void PrintMapHeader(char *map) {
 	   MAP20    Lump          Old        New      %Change     %Limit   Time Elapsed
 	   */
 
-	//                 0        10        20        30        40        50        60        70       79           
-	//                          Lump          Old        New      %Change       %Limit     Time Elapsed
+//0        10        20        30        40        50        60        70       79           
+//                          Lump          Old        New      %Change       %Limit     Time Elapsed
 	cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
 
 	if (config.Color == 1) {
@@ -1141,7 +1143,7 @@ void PrintMapHeader(char *map) {
 	}
 
 
-	cprintf(" Lump          Old         New     %%Change      %%Limit      Time Elapsed\n\r");
+	cprintf(" Lump          Old         New     %%Change      %%Limit     Time Elapsed\n\r");
 
 	if (config.Color) {
 		PrintColorOff();
@@ -1159,8 +1161,13 @@ void ProgressBar(char *lump, double progress, int width) {
 	double divisor = 0;
 	double total = 0;
 
+//	GetXY ( &startX, &startY );
+	
+	GotoXY (0, startY );
+	cprintf("         %-s", lump);
 
-	cprintf("\r         %-s", lump);
+	//cprintf("\r         %-s", lump);
+	
 	if (progress < 1.0) {
 		cprintf(" %5.2f%% ", 100.0 * progress);
 	} else {
@@ -1301,13 +1308,10 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 
 	double change, efficiency;
 
-
-	if (old && nu) {
-		change = dNew / dOld;
-	}
-
 	if (nu && limit) {
 		efficiency = dNew / dLimit;
+	} else {
+		efficiency = 1.0;
 	}
 
 
@@ -1316,8 +1320,14 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 	if ((oldD > 0) && (nuD > 0)) {
 		change = oldD / nuD;
 		nu = 1;
-		old = 0;
+		old = 1;
+	} else if (old && nu) {
+		change = (double) nu / (double) old;
+	} else {
+		change = 1.0;
 	}
+
+
 
 	if(config.Color) {
 		if(change >= 1.25) {
@@ -1336,7 +1346,7 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 		cprintf ("%c[%sm", 27, ansicolor);
 
 	}
-	if (old || (oldD > 0)) {
+	if (old || (oldD > 0.0)) {
 		cprintf("     %6.2f%%", change * 100.0);
 	} else {
 		cprintf("           -");
@@ -1383,7 +1393,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 	// cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
 	//cprintf ( "\r%-*.*s        Old       New    %%Change    %%Limit   Time Elapsed\n\r", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
-	//GetXY ( &startX, &startY );
+	GetXY ( &startX, &startY );
 
 	PrintMapHeader(name);	
 
