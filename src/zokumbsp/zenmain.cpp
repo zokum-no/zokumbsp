@@ -1103,9 +1103,9 @@ void PrintTime ( UINT32 time ) {
 	long h = (time / 1000) / 3600;
 
 	if (h > 0) {
-		cprintf ( "%2ldh %02ldm %02ld %03ldms\r\n", h, m, s, ms);
+		cprintf ( "%2ldh %02ldm %02lds %03ldms\r\n", h, m, s, ms);
 	} else if (m > 0) {
-		cprintf ( "    %02ldm %02ld %03ldms\r\n", m, s, ms);
+		cprintf ( "    %2ldm %02ld %03ldms\r\n", m, s, ms);
 	} else if (s > 0) {
 		cprintf ( "       %2lds %03ldms\r\n", s, ms);
 	} else {
@@ -1244,7 +1244,7 @@ void ProgressBar(char *lump, double progress, int width) {
 			g = 8 + (int) (stepsize * i * 75);
 			b = 270 - (int) (stepsize * i * 240);
 
-			if (i > (width / 2)) {
+			if (i > ((width - 1) / 2)) {
 				g += (int) (stepsize * ((i - (width / 2)) * 115));
 				r += (int) (stepsize * ((i - (width / 2)) * 45));
 			}
@@ -1252,6 +1252,7 @@ void ProgressBar(char *lump, double progress, int width) {
 
 			if (r > 255 ) { 
 				r = 255;
+				g += (int) (stepsize * ((i - (width / 2)) * 20));
 			}
 			if (g > 255 ) {
 				g = 255;

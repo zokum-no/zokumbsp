@@ -144,7 +144,6 @@ struct NODE {
     UINT16      child[2];               // Node or SSector (if high bit is set)
 };
 
-
 struct vertexPair {
 	int startx;
 	int starty;
@@ -176,6 +175,14 @@ struct sScoreInfo {
 	long      metric2;
 	int       invalid;
 	int       total;
+};
+
+struct BSPData {
+        static SEG      *segStart;
+        static int      segCount;
+        static int      maxSegs;
+
+        sBSPOptions *options;
 };
 
 #define TREE_METRIC_SUBSECTORS 0
@@ -359,4 +366,6 @@ extern int  CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options );
 extern void CreateNODES ( DoomLevel *level, sBSPOptions *options );
 extern bool CreateREJECT ( DoomLevel *level, const sRejectOptions &options, const sBlockMapOptions &blockMapOptions );
 extern void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, const sBlockMapOptions &options, int blockSize, int savings, int totalSize);
+void ProgressBar(char *, double, int);
+
 #endif
