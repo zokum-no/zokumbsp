@@ -1742,7 +1742,7 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 					 * */ 
 					curScore->metric1 -= ( X3 * sCount * (sCount / 3 ) + X4 ) * sCount;
 				} else if (options->SplitReduction & 0x01) {
-					curScore->metric1 = 0xffffffff - abs(lCount -rCount) ;
+					curScore->metric1 = 0xfffffff - abs(lCount -rCount) ;
 				}
 
 				// SubsSctorFactor
@@ -1769,7 +1769,7 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 					curScore->metric2 -= ( X3 * ssCount * ssf + X4 ) * sCount;
 					// curScore->metric2 -= ( X3 * ssCount + X4 ) * sCount * 5;
 				} else if (options->SplitReduction & 0x02) {
-					curScore->metric2 = 0xffffffff - abs(lsCount -rsCount);
+					curScore->metric2 = 0xffffff - abs(lsCount -rsCount);
 				}
 
 				noScores++;
@@ -1877,6 +1877,14 @@ next:
 	// printf("depth %d, width %d, index %d, noScores: %d, retval %d (%d)\n", nodeDepth, *width, score [(*width) - 1].index, noScores, retval, score [0].index);
 	
 	*picks = noScores;
+
+	for (int j = 0; j != noScores; j++) {
+                printf("Score %d\n", score[j].index);
+        }
+
+
+	printf("return %d\n", retval);
+
 	return retval;
 
 	// zokum 2017, sept
@@ -3007,6 +3015,13 @@ differentpartition:
 				delete [] bestLineChecked;
 				delete [] bestTempSeg;
 				delete [] bestSideInfo;
+/*
+				SEG *t = bestSegs;
+				bestSegs = segStart;
+				segStart = t;
+*/
+			} else {
+				// bestSegs = new SEG [maxSegs];
 			}
 
 			memcpy(&CNbestTempNode, &tempNode, sizeof(NODE));
@@ -3019,19 +3034,18 @@ differentpartition:
 			bestSegs = segStart;
 			segStart = new SEG [maxSegs];
 
-
-			// bestSSectors = new wSSector [ssectorPoolEntries];
-			// memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
-			bestSSectors = ssectorPool;
-			ssectorPool = new wSSector [ssectorPoolEntries];			
+			bestSSectors = new wSSector [ssectorPoolEntries];
+			memcpy (bestSSectors, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
+			//bestSSectors = ssectorPool;
+			//ssectorPool = new wSSector [ssectorPoolEntries];			
 
 
 			CNbestNodePoolEntries = nodePoolEntries;
 
-			// bestNodes = new NODE [nodePoolEntries];
-			// memcpy (bestNodes, nodePool, sizeof ( NODE) * nodePoolEntries);
-			bestNodes = nodePool;
-			nodePool = new NODE [nodePoolEntries];
+			bestNodes = new NODE [nodePoolEntries];
+			memcpy (bestNodes, nodePool, sizeof ( NODE) * nodePoolEntries);
+			// bestNodes = nodePool;
+			// nodePool = new NODE [nodePoolEntries];
 
 			bestConvexList = new int[convexListEntries];
 			memcpy (bestConvexList, convexList, sizeof ( int ) * (convexListEntries));
