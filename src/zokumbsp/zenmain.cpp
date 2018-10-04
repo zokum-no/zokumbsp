@@ -1105,7 +1105,7 @@ void PrintTime ( UINT32 time ) {
 	if (h > 0) {
 		cprintf ( "%2ldh %02ldm %02lds %03ldms\r\n", h, m, s, ms);
 	} else if (m > 0) {
-		cprintf ( "    %2ldm %02ld %03ldms\r\n", m, s, ms);
+		cprintf ( "   %2ldm %02lds %03ldms\r\n", m, s, ms);
 	} else if (s > 0) {
 		cprintf ( "       %2lds %03ldms\r\n", s, ms);
 	} else {
@@ -1152,8 +1152,15 @@ void PrintMapHeader(char *map) {
 	GetXY ( &startX, &startY );
 }
 
+int oldHashes = 0;
+double oldProgress = -1.0;
+
+char *oldLump;
 
 void ProgressBar(char *lump, double progress, int width) {
+
+	char output[2048]; // we write to this and then flush it to screen
+	char add[2048];
 
 	char prog[256];
 
@@ -1161,48 +1168,48 @@ void ProgressBar(char *lump, double progress, int width) {
 	double divisor = 0;
 	double total = 0;
 
-//	GetXY ( &startX, &startY );
-	
-	GotoXY (0, startY );
-	cprintf("         %-s", lump);
-
-	//cprintf("\r         %-s", lump);
-	
-	if (progress < 1.0) {
-		cprintf(" %5.2f%% ", 100.0 * progress);
-	} else {
-		cprintf(" %5.1f%% ", 100.0 * progress);
+	if (oldProgress > progress) {
+		oldProgress = -1.0;
 	}
 
-	sprintf(prog, "");
-
-	if (config.Color) {
-		cprintf ( "%c[0;37m", 27);
-	}
-	cprintf("[");
-
-	if (config.Color) {
-		cprintf ( "%c[1;30m", 27);
-	}
-
-	/*
-	   for (int i = 0; i != width; i++) {
-
-	   double d = (double) i / (double) width;
-
-	   if ( progress >= d) {
-	   strcat(prog, "#");
-	   } else {
-	   strcat(prog, " ");
-	   }
-	   }
-	   */
-	sprintf(prog, "%*s", width, (char *)" ");
+	if (progress < (oldProgress +  0.0001)) {
+		return;
+	} 
+	oldProgress = progress;
 
 	int hashes = lrint(progress * (double) width);
 
-	for (int i = 0; i != hashes; i++) {
-		prog[i] = '#';
+// Ok we will have to write something to screen!
+	GotoXY (0, startY );
+	
+	sprintf(output, "         %-s", lump);
+
+	if (progress < 1.0) {
+		// cprintf(" %5.2f%% ", 100.0 * progress);
+		sprintf(add, " %5.2f%% ", 100.0 * progress);
+	} else {
+		// cprintf(" %5.1f%% ", 100.0 * progress);
+		sprintf(add, " %5.1f%% ", 100.0 * progress);
+	}
+
+	// pile on the output into a write buffer
+	strcat(output, add);
+	
+	sprintf(prog, "");
+
+	if (config.Color) {
+		//cprintf ( "%c[0;37m", 27);
+		sprintf(add, "%c[0;37m", 27);
+		strcat(output, add);
+	}
+	// cprintf("[");
+	sprintf(add, "[");
+	strcat(output, add);
+
+	if (config.Color) {
+		// cprintf ( "%c[1;30m", 27);
+		sprintf(add, "%c[1;30m", 27);
+		strcat(output, add);
 	}
 
 	if (config.Color == 2) {
@@ -1271,21 +1278,37 @@ void ProgressBar(char *lump, double progress, int width) {
 				r = 0;
 			}
 
-			cprintf ("\033[38;2;%d;%d;%dm#", r, g, b);
+			// cprintf ("\033[38;2;%d;%d;%dm#", r, g, b);
+			sprintf(add, "\033[38;2;%d;%d;%dm#", r, g, b);
+			strcat(output, add);
 		}
 		if (hashes != width) {
-			cprintf("%*s", width - hashes, (char *) " ");
+			// cprintf("%*s", width - hashes, (char *) " ");
+			sprintf(add, "%*s", width - hashes, (char *) " ");
+			strcat(output, add);
 		}
 
 	} else {
-		cprintf ( "%s", prog);
+		sprintf(prog, "%*s", width, (char *)" ");
+
+		for (int i = 0; i != hashes; i++) {
+		        prog[i] = '#';
+		}
+		// cprintf ( "%s", prog);
+		strcat(output, prog);
 	}
 
 	if (config.Color) {
-		cprintf ( "%c[0;37m", 27);
+		// cprintf ( "%c[0;37m", 27);
+		sprintf (add, "%c[0;37m", 27);
+		strcat(output, add);
 	}
 
-	cprintf("]");
+	// cprintf("]");
+	sprintf(add, "]");
+	strcat(output, add);
+
+	cprintf(output);
 
 	if (config.Color) {
 		PrintColorOff();
