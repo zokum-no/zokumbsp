@@ -1878,13 +1878,13 @@ next:
 	
 	*picks = noScores;
 
-	for (int j = 0; j != noScores; j++) {
+/*	for (int j = 0; j != noScores; j++) {
                 printf("Score %d\n", score[j].index);
         }
 
 
 	printf("return %d\n", retval);
-
+*/
 	return retval;
 
 	// zokum 2017, sept
