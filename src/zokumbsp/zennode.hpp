@@ -125,7 +125,7 @@ struct __attribute__((__packed__)) SEG {
 	UINT16 Dataend;
 	UINT16 Dataangle;
 	UINT16 DatalineDef;
-	UINT16 Dataoffset;
+	// UINT16 Dataoffset;
 	
 	const wLineDefInternal *LineDef;
 	UINT16          Sector;
@@ -135,6 +135,22 @@ struct __attribute__((__packed__)) SEG {
 
 	sVertex         start;
 	sVertex         end;
+};
+
+struct subSector {
+	long firstSeg;
+	long amount;	
+};
+
+struct BSPNode {
+	double x, y;
+	double dx, dy;
+
+	BSPNode *leftNode;
+	BSPNode *rightNode;
+
+	subSector *leftSubSector;
+	subSector *rightSubsector;
 };
 
 struct NODE {
@@ -188,6 +204,7 @@ struct BSPData {
 #define TREE_METRIC_SUBSECTORS 0
 #define TREE_METRIC_SEGS 1
 #define TREE_METRIC_DEPTH 2 // not added yet
+#define TREE_METRIC_BALANCED 3
 
 #define TREE_METRIC_NODES 99 // useless, same as subsector in practice
 
@@ -282,6 +299,7 @@ struct sGeometryOptions {
 struct sStatisticsOptions {
 	bool			ShowVertices;
 	bool			ShowLineDefs;
+	bool			ShowSplits;
 	bool			ShowSectors;
 	bool			ShowThings;
 	bool			ShowTotals;

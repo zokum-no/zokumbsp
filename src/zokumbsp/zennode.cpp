@@ -163,7 +163,7 @@ int nodeDepth = 0;
 // may 2018 stupid hack!
 bool noMoreScores;
 
-double oldProgress;
+extern double oldProgress;
 
 
 // metric = S ? ( L * R ) / ( X1 ? X1 * S / X2 : 1 ) - ( X3 * S + X4 ) * S : ( L * R );
@@ -499,7 +499,7 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 		DY    = pSeg->end.y - pSeg->start.y;
 
 		if ((int) X != pSeg->vertexCoords[0][0]) {
-			printf ("\n%5.0f | %d\n", X, pSeg->vertexCoords[0][0]);
+			// printf ("\n%5.0f | %d\n", X, pSeg->vertexCoords[0][0]);
 		}
 
 		/* printf ("%d | %d\n", X, pSeg->vertexCoords[1][0]);
@@ -1158,7 +1158,7 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg ) {
 		lSeg->vertexCoords[0][1] = y;
 
 
-		lSeg->Dataoffset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
+		// lSeg->Dataoffset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
 	} else {
 #if defined ( DEBUG )
 		if (( lrint ( x ) == lrint ( rSeg->start.x )) && ( lrint ( y ) == lrint ( rSeg->start.y ))) {
@@ -1180,7 +1180,7 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg ) {
 		lSeg->vertexCoords[1][0] = x;
 		lSeg->vertexCoords[1][1] = y;
 
-		rSeg->Dataoffset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
+		// rSeg->Dataoffset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
 	}
 
 #if defined ( DEBUG )
@@ -2526,10 +2526,7 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
 	}
 
-	if (progress > oldProgress) {
-		ProgressBar((char *) "BSP       ", progress, 50);
-		oldProgress = progress;
-	}
+	ProgressBar((char *) "BSP       ", progress, 50);
 
 }
 
@@ -2616,7 +2613,20 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 		} else {
 			maxWidth = MaxWidth(nodeDepth, initialSegs, options );
 		}
+	} else if (options->Metric == TREE_METRIC_BALANCED) {
+		int mScore = ((subSectorGoal + 1) * 2) + segGoal;
+
+		if (mScore <= ((ssectorCount + 1 * 2 ) + segCount )) {
+			// printf("hmm\n");
+			maxWidth = 1;
+		} else {
+			maxWidth = MaxWidth(nodeDepth, initialSegs, options );
+		}
+
+		
 	} else {
+		
+
 		maxWidth = MaxWidth(nodeDepth, initialSegs, options );
 	}
 
@@ -2999,6 +3009,20 @@ differentpartition:
 					betterTree = true;
 				}
 			}
+		} else if (options->Metric == TREE_METRIC_BALANCED) {
+			int segdiff = segCount - CNbestSegsCount;
+			int ssdiff = (ssectorCount - CNbestSsectorsCount) * 2;
+
+			if ((segdiff + ssdiff) < 0) {
+				betterTree = true;
+			}
+
+			if ((segdiff + ssdiff) == 0) {
+				if (width == maxWidth) {
+					betterTree = true;
+				}
+			}
+
 		} 
 
 		// Was it a better set of sub trees, and do we have more to check?
@@ -3279,10 +3303,13 @@ differentpartition:
 
 	static wSegs *finalSegs;
 
-	wSSector *GetSSectors ( wSSector *ssectorList, int noSSectors, sBSPOptions *options) {
+	wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors, sBSPOptions *options) {
 		FUNCTION_ENTRY ( NULL, "GetSSectors", true );
 
 		wSegs *segs = finalSegs = new wSegs [ segCount ];
+	
+		wLineDefInternal *ld = level->GetLineDefs ();
+
 
 		for ( int i = 0; i < noSSectors; i++ ) {
 
@@ -3309,8 +3336,62 @@ differentpartition:
 					segs[x].flip = 0;
 				}
 
-				segs[x].offset = segStart [start+x].Dataoffset;
+				UINT16 offset = 0;
 
+				if (segs[x].flip == 0) {
+					if (segs [x].start != segStart[start+x].LineDef->start) {
+						// printf("SS %3d, seg %4d Frontside offset: %4d | ", i, x,  segStart [start+x].Dataoffset);
+
+						wVertex *vertA = &newVertices [segs [x].start];
+						wVertex *vertB = &newVertices [segStart[start+x].LineDef->start];
+
+						offset = ( hypot (( double ) ( vertB->x - vertA->x ), ( double ) ( vertB->y - vertA->y )) + 0.5 );
+
+						//printf("%4d (%d)\n", offset, segStart [start+x].Dataoffset - offset);
+
+					}
+				} else {
+					if (segs [x].start != segStart[start+x].LineDef->end) {
+						// printf("SS %3d, seg %4d Backside  offset: %4d | ", i, x, segStart [start+x].Dataoffset);
+
+						wVertex *vertA = &newVertices [segs [x].start];
+						wVertex *vertB = &newVertices [segStart[start+x].LineDef->end];
+
+						offset = ( hypot (( double ) ( vertB->x - vertA->x ), ( double ) ( vertB->y - vertA->y )) + 0.5 );
+
+						// printf("%4d (%d)\n", offset, segStart [start+x].Dataoffset - offset);
+
+			
+						
+
+					}
+					
+				}
+
+
+				// segs[x].offset = segStart [start+x].Dataoffset;
+
+				segs[x].offset = offset;
+
+				
+/*
+				wVertex *vertS = &newVertices [ ld[segStart[start+x].LineDef]->start ];
+				wVertex *vertE = &newVertices [ ld[ ]->end ];
+				// long dx = vertE->x - vertS->x;
+				// long dy = vertE->y - vertS->y;
+
+
+	
+				if (segs[x].flip == 0) {
+					if (segStart[start+x].start.x != ld[segStart[start+x].LineDef].x)
+
+				}					
+				DatalineDef
+*/
+								
+
+				// lSeg->Dataoffset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
+				// rSeg->Dataoffset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
 
 
 				// segs [x].start = ( UINT16 ) AddVertex ( lrint ( segStart[start+x].start.x), lrint ( segStart[start+x].start.y ));
@@ -3801,7 +3882,8 @@ restart:
 			PostSortSegs(ssectorPool);
 
 			// new 02.10.2018 code
-			PostVisplaneReduction();
+			// This doesn't quite work, yet :)
+			// PostVisplaneReduction();
 
 
 			delete [] convexList;
@@ -3820,7 +3902,7 @@ restart:
 
 			level->NewVertices ( noVertices, GetVertices ());
 			level->NewNodes ( nodeCount, GetNodes ( doomNodes, nodeCount ));
-			level->NewSubSectors ( ssectorCount, GetSSectors ( ssectorPool, ssectorCount, options ));
+			level->NewSubSectors ( ssectorCount, GetSSectors ( level, ssectorPool, ssectorCount, options ));
 			level->NewSegs ( segCount, GetSegs ());
 
 			free ( newVertices );
