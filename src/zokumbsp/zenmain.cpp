@@ -191,7 +191,8 @@ void printHelp () {
 
 	fprintf ( stdout, "    m=    Metric, what kind of node tree do you favor.\n" );
 	fprintf ( stdout, "%c     s   Favor fewer SEG splits.\n", ( config.Nodes.Metric == TREE_METRIC_SEGS ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     u   Favor fewer subsectors.\n\n", ( config.Nodes.Metric == TREE_METRIC_SUBSECTORS ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     u   Favor fewer subsectors.\n", ( config.Nodes.Metric == TREE_METRIC_SUBSECTORS ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     b   Favor 2 splits = 1 subsector.\n\n", ( config.Nodes.Metric == TREE_METRIC_BALANCED ) ? DEFAULT_CHAR : ' ' );
 
 	fprintf ( stdout, "    p=    Favor certain node selection picks for depth algorithm.\n");
 	fprintf ( stdout, "%c     z   No favoring, use old algorithm for a balanced tree.\n", ( config.Nodes.SplitReduction == 0 ) ? DEFAULT_CHAR : ' ' );
@@ -403,6 +404,8 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
 						config.Nodes.Metric = TREE_METRIC_SEGS;
 					} else if (ptr[1] == 'U') {
 						config.Nodes.Metric = TREE_METRIC_SUBSECTORS;
+					} else if (ptr[1] == 'B') {
+						config.Nodes.Metric = TREE_METRIC_BALANCED;
 					} else {
 						printf("Unsupported metric\n");
 						return true;
@@ -532,6 +535,7 @@ bool parseSTATISTICSArgs (char *&ptr, bool setting ) {
 		switch ( option ) {
 			case 'E' : config.Statistics.ShowSectors = setting;     break;
 			case 'L' : config.Statistics.ShowLineDefs = setting;	break;
+			case 'P' : config.Statistics.ShowSplits = setting;	break;
 			case 'M' : config.Statistics.ShowTotals = setting;	break;
 			case 'N' : config.Statistics.ShowNodes = setting;	break;
 			case 'S' : config.Statistics.ShowSubSectors = setting;  break;
@@ -1097,13 +1101,24 @@ void PrintTime ( UINT32 time ) {
 
 	// time += random();
 
-	long ms = time % 1000;
-	long s = (time / 1000) % 60;
-	long m = (time / 1000) / 60;
-	long h = (time / 1000) / 3600;
+	//time = random();
+	
+	long d = (time / 1000) / (3600 * 24);
+	time -= d * (24 * 3600 * 1000);
 
-	if (h > 0) {
-		cprintf ( "%2ldh %02ldm %02lds %03ldms\r\n", h, m, s, ms);
+	long h = (time / 1000) / 3600;
+	time -= h * (3600 * 1000);
+
+	long m = (time / 1000) / 60;
+	long s = (time / 1000) % 60;
+	long ms = time % 1000;
+
+	if (d > 0) {
+		cprintf ( "%3ldd %2ldh %02ldm %02lds\r\n", d, h, m, s);
+	} else if (h > 9) {
+		cprintf ( "%7ldh %02ldm %02lds\r\n", h, m, s);
+	} else if (h > 0) {
+		cprintf ( "%1ldh %02ldm %02lds %03ldms\r\n", h, m, s, ms);
 	} else if (m > 0) {
 		cprintf ( "   %2ldm %02lds %03ldms\r\n", m, s, ms);
 	} else if (s > 0) {
@@ -1120,30 +1135,41 @@ void PrintColorOff(void) {
 }
 
 void PrintMapHeader(char *map) {
-	//   cprintf ( "\r0        10        20        30        40        50        60        70       79\n\r");
-	GotoXY ( startX, startY );
-	if (config.Color == 1)  {
-		cprintf ( "%c[37;44;1m", 27);
-	} else if (config.Color == 2) {
-		cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
-	}
-	/*
-	   0        10        20        30        40        50        60        70       79
-	   MAP20    Lump          Old        New      %Change     %Limit   Time Elapsed
-	   */
+	GotoXY ( 0, startY );
 
-//0        10        20        30        40        50        60        70       79           
-//                          Lump          Old        New      %Change       %Limit     Time Elapsed
-	cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
+	char output[2048] = "";
+	char add[2048];
+
+	if (config.Color == 1)  {
+		// cprintf ( "%c[37;44;1m", 27);
+		sprintf (add, "%c[37;44;1m", 27);
+		strcat(output, add);
+	} else if (config.Color == 2) {
+		// cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
+		sprintf(add, "\033[48;2;%d;%d;%dm", 4,20,64);
+		strcat(output, add);
+	}
+	// cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
+	sprintf(add, "%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
+	strcat(output, add);
 
 	if (config.Color == 1) {
-		cprintf ( "%c[0;37;44m", 27);
+		// cprintf ( "%c[0;37;44m", 27);
+		sprintf (add, "%c[0;37;44m", 27);
+		strcat(output, add);
+
 	} else if (config.Color == 2) {
-		cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
+		// cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
+		sprintf (add, "\033[48;2;%d;%d;%dm", 4,20,64);
+		strcat(output, add);
+
 	}
 
-
-	cprintf(" Lump          Old         New     %%Change      %%Limit     Time Elapsed\n\r");
+	// cprintf(" Lump          Old         New     %%Change      %%Limit     Time Elapsed\n\r");
+	sprintf(add, " Entry         Old         New     %%%%Change      %%%%Limit     Time Elapsed\r\n");
+	strcat(output, add);
+	
+	cprintf (output);
 
 	if (config.Color) {
 		PrintColorOff();
@@ -1156,6 +1182,8 @@ int oldHashes = 0;
 double oldProgress = -1.0;
 
 char *oldLump;
+
+UINT32 oldTime;
 
 void ProgressBar(char *lump, double progress, int width) {
 
@@ -1171,6 +1199,14 @@ void ProgressBar(char *lump, double progress, int width) {
 	if (oldProgress > progress) {
 		oldProgress = -1.0;
 	}
+
+	// we only update 4 times per second
+	UINT32 now = CurrentTime ();
+	
+	if (now < (oldTime + 100)) {
+		return;
+	}
+	oldTime = now;
 
 	if (progress < (oldProgress +  0.0001)) {
 		return;
@@ -1319,6 +1355,8 @@ void ProgressBar(char *lump, double progress, int width) {
 
 void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nuD) {
 	GotoXY ( startX + 6, startY );
+
+	oldTime = 0;
 
 	if (nu) {
 		cprintf ( "%-8s   %6d  =>  %6d", lump, old, nu );
@@ -1537,6 +1575,17 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		int oldNodeCount = curLevel->NodeCount ();
 		int oldSegCount  = curLevel->SegCount ();
 		int oldSubSectorCount = curLevel->SubSectorCount ();
+		int oldSplits = 0;
+		int segCount = curLevel->SegCount();
+	
+		const wSegs *segs = curLevel->GetSegs ();
+
+		for (int i = 0; i != segCount; i++) {
+			if (segs[i].offset) {
+				oldSplits++;
+			}
+		}
+
 
 		bool *keep = new bool [ curLevel->SectorCount ()];
 		memset ( keep, config.Nodes.Unique, sizeof ( bool ) * curLevel->SectorCount ());
@@ -1634,10 +1683,27 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		   rows++;
 		   */
+		segCount = curLevel->SegCount();
 
-		PrintMapLump( (char *)  "Segs", oldSegCount, curLevel->SegCount (), 32768, 0, 0);
+		PrintMapLump( (char *)  "Segs", oldSegCount, segCount, 32768, 0, 0);
 		cprintf ( "\r\n" );
 		rows++;
+
+		if (config.Statistics.ShowSplits) {
+			int splits = 0;
+			//const wSegs *segs = curLevel->GetSegs ();
+			segs = curLevel->GetSegs ();
+
+			for (int i = 0; i != segCount; i++) {
+				if (segs[i].offset) {
+					splits++;
+				}
+			}
+
+			PrintMapLump( (char *)  "Splits",  oldSplits, splits, 0, 0, 0);
+			cprintf ( "\r\n" );
+			rows++;
+		}
 
 		/*
 		   cprintf ( "Subsecs: %7d => %6d ",  oldSubSectorCount, curLevel->SubSectorCount());
@@ -1922,7 +1988,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Nodes.SplitReduction = 3;
 	config.Nodes.MultipleSplitMethods = 0;
 	config.Nodes.Cache 	    = 1;
-	config.Nodes.Metric         = TREE_METRIC_SUBSECTORS;
+	config.Nodes.Metric         = TREE_METRIC_BALANCED;
 	config.Nodes.Width          = 2;
 	config.Nodes.Tuning		= 100;
 
@@ -1934,6 +2000,7 @@ int main ( int argc, const char *argv [] ) {
 
 	config.Statistics.ShowVertices = false;
 	config.Statistics.ShowLineDefs = false;
+	config.Statistics.ShowSplits = false;
 	config.Statistics.ShowSectors = false;
 	config.Statistics.ShowThings = false;
 	config.Statistics.ShowTotals = false;

@@ -116,20 +116,17 @@ struct sVertex {
 #define SEG_FINAL	0x08
 #define SEG_BACKSIDE	0x10
 #define SEG_EDGE	0x20
+#define SEG_LEFT	0x40
+#define SEG_RIGHT	0x80
 
 struct __attribute__((__packed__)) SEG {
-// struct SEG {
-	// wSegs           Data;
-
+//struct SEG {
 	UINT16 Datastart;
 	UINT16 Dataend;
 	UINT16 Dataangle;
 	UINT16 DatalineDef;
-	// UINT16 Dataoffset;
 	
-	const wLineDefInternal *LineDef;
 	UINT16          Sector;
-	char	        Side;
 	char 		flags;	
 	INT16 		vertexCoords[2][2];
 
