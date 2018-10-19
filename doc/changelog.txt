@@ -1,5 +1,20 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.10-rc1
+- Fixed windows text output.
+- Cleaned up help screen.
+- Win64 builds now available.
+- WinX builds now compiled with GCC 8.2.0
+
+ZokumBSP 1.0.10-beta13
+- Many minor speed and memory optimizations.
+
+ZokumBSP 1.0.10-beta12
+- Improvments to win32 console output.
+- Added balanced metric for multi-tree algorithm.
+- Balanced metric is now standard metric for MTA.
+- New algorithm for texture offsets on segs.
+
 ZokumBSP 1.0.10-beta11
 - Removed code that added 256 to all SEG angles for testing.
 
