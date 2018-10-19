@@ -1,7 +1,7 @@
 Author
 ======
 
-(c) 2016-2017 Kim Roar Foldøy Hauge
+(c) 2016-2018 Kim Roar Foldøy Hauge
 (c) 1995-2004 Marc Rousseau (ZenNode base)
 
 Description
@@ -111,6 +111,37 @@ Section 03: Doom v1.9 limits / algorithms
 There are a number of limitations size wise for a Doom map, and this document
 won't cover all of them, only the ones that are relevant to a node, blockmap
 and reject builder.
+
+In version 1.0.10 a new output format for the text output was created. This
+typically looks like this:
+
+MAP07  * Entry         Old         New     %Change      %Limit     Time Elapsed
+         Blockmap     1862  =>    1862     100.00%       2.84%             16ms
+         Segs          311  =>     311     100.00%       0.95%
+         Splits         28  =>      28     100.00%           -
+         Subsecs        92  =>      92     100.00%       0.28%        16s 806ms
+         Reject     14.03%  =>  14.03%     100.00%           -              3ms
+
+The %Limit column will give a percentage of how close to the Doom2.exe limits 
+the lump is. Splits are a sub type of segs, so the limit would be the same. The
+reject lump does not have a known limit, and is therefor not computed.
+
+02:04 Color output
+------------------
+-c Colored output, 16 colors.
+
+With the switch "-c" the output will be color coded and map headers get a 
+different background. This makes it easier to see if any entries are near
+or over the limit. The colors currently use standard vt220 ansi escape 
+sequences and might not be available on all consoles. Older windows terminals
+tend to lack the support.
+
+-cc Colored output, 24bit colors.
+
+This mode uses special terminal sequences to output 24 bit colors. This applies
+to the map header, which is now in Romero Blue and the progress bar which is 
+rendered with shades from purple to red to orange. Support for this is known
+to work on Linux with a modern terminal.
 
 03:01 Sidedefs
 --------------
@@ -612,7 +643,24 @@ segs. How man ythresholds to test can be adjusted by the thoroughness switch.
 The threshold will never be higher than the amount of SEGs the map initiially
 had.
 
-08:02 'q' - Don't display progress bar
+There is also a tuning factor to allow you to tweak at how many segs the 
+algorithm changes to low-split.
+
+a=m - Multi-tree algorithm.
+
+This algorithm will build multiple trees for every partition and compare them
+and pick the best tree. Other than that, it works like the depth algorithm.
+
+The different metrics operate with a score, and it will pick the tree with the
+lowest score. The balanced algorithm exists to avoid picking trees that have 
+a significantly higher amount of splits, with little reduction in the amount of
+subSectors. This is the default model.
+
+m=b - segSplits + (subSectors * 2). // Balanced
+m=s - segSplits                     // Reduce segs
+m=u - subSectors                    // Reduce subsectors.
+
+08:02 'q' - Don't display progress bar (Disabled in version 1.0.10)
 --------------------------------------
 
 This hides all the updates indicating the progress and depth of the BSP tree.
@@ -776,7 +824,8 @@ IRC: #nightmare
 Section 14: Changelog
 =====================
 
-The changelog is kept in a seperate file, 'changelog.txt'. 
+The changelog is kept in a seperate file, 'changelog.txt'. This document is 
+slightly more programmer-centric than this document.
 
 Section 15: Acknowledgements
 ============================
