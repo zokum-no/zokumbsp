@@ -135,7 +135,6 @@ void printHelp () {
 	fprintf ( stdout, " -x+ turn on option   -x- turn off option  %c = default\n", DEFAULT_CHAR );
 	fprintf ( stdout, "\n" );
 // Geometry	
-
 	fprintf ( stdout, "Switches to change level geometry and optimize geometry.\n\n");
 	
 	fprintf ( stdout, "%c -g      Geometry pass, 1 suboption.\n\n", config.Geometry.Perform ? DEFAULT_CHAR : ' ' );
@@ -147,7 +146,6 @@ void printHelp () {
 // Blockmap	
 	fprintf ( stdout, "\nSwitches to control BLOCKMAP strucure in a map.\n\n");
 
-//
 	fprintf ( stdout, "%c -b      Rebuild BLOCKMAP, 8 suboptions.\n", config.BlockMap.Rebuild ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c   b     Build big 32bit BLOCKMAP, N/A.\n", config.BlockMap.blockBig ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c   c     Compress BLOCKMAP.\n", config.BlockMap.Compress ? DEFAULT_CHAR : ' ' );
@@ -168,7 +166,6 @@ void printHelp () {
 	fprintf ( stdout, "%c     1   Conventional zero header.\n", (config.BlockMap.ZeroHeader == 1) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     2   Zero footer.\n", (config.BlockMap.ZeroHeader == 2) ? DEFAULT_CHAR : ' ' );
 // Nodes
-
 	fprintf ( stdout, "\nSwitches to control BSP tree and related structures in a map.\n\n");
 
 	fprintf ( stdout, "%c -n      Rebuild NODES.\n\n", config.Nodes.Rebuild ? DEFAULT_CHAR : ' ' );
@@ -187,12 +184,12 @@ void printHelp () {
 	fprintf ( stdout, "%c     d   Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     f   Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
 	fprintf ( stdout, "%c     a   Adaptive tree.\n", ( config.Nodes.Method == 4 ) ? DEFAULT_CHAR : ' ');
-	fprintf ( stdout, "%c     m   Multiple trees. BROKEN!\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "%c     m   Multi-tree. (Slow)\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
 
 	fprintf ( stdout, "    m=    Metric, what kind of node tree do you favor.\n" );
+	fprintf ( stdout, "%c     b   Favor 2 splits = 1 subsector.\n", ( config.Nodes.Metric == TREE_METRIC_BALANCED ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     s   Favor fewer SEG splits.\n", ( config.Nodes.Metric == TREE_METRIC_SEGS ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     u   Favor fewer subsectors.\n", ( config.Nodes.Metric == TREE_METRIC_SUBSECTORS ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     b   Favor 2 splits = 1 subsector.\n\n", ( config.Nodes.Metric == TREE_METRIC_BALANCED ) ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c     u   Favor fewer subsectors.\n\n", ( config.Nodes.Metric == TREE_METRIC_SUBSECTORS ) ? DEFAULT_CHAR : ' ' );
 
 	fprintf ( stdout, "    p=    Favor certain node selection picks for depth algorithm.\n");
 	fprintf ( stdout, "%c     z   No favoring, use old algorithm for a balanced tree.\n", ( config.Nodes.SplitReduction == 0 ) ? DEFAULT_CHAR : ' ' );
@@ -208,7 +205,7 @@ void printHelp () {
 	fprintf ( stdout, "    t=    Tuning factor, varies from algorithm to algorithm.\n" );
 	fprintf ( stdout, "      100 Default for adaptive tree.\n");
 
-	fprintf ( stdout, "    w=    Sub tress to generate with multi-tree algorithm.\n" );
+	fprintf ( stdout, "    w=    Number of sub trees to generate in multi-tree mode.\n" );
 	fprintf ( stdout, "%c     2   Default width and also minimum.\n", ( config.Nodes.Width == 2 ) ? DEFAULT_CHAR : ' ');
 	
 	// Reject
@@ -222,7 +219,8 @@ void printHelp () {
 
 	fprintf ( stdout, "\nSwitches to control other options.\n\n");
 
-	fprintf ( stdout, "%c -c      Enable colored output\n", config.Color ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c -c      Enable 16 color output.\n", config.Color ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c -cc     Enable 24bit color output.\n", config.Color ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c -t      Don't write output file (test mode).\n\n", ! config.WriteWAD ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "  -s=     Which output stats to show.\n");
 	fprintf ( stdout, "%c    m    Show a total for all computed levels.\n", config.Reject.UseRMB ? DEFAULT_CHAR : ' ' );
@@ -1226,10 +1224,10 @@ void ProgressBar(char *lump, double progress, int width) {
 
 	if (progress < 1.0) {
 		// cprintf(" %5.2f%% ", 100.0 * progress);
-		sprintf(add, " %5.2f%%| ", 100.0 * progress);
+		sprintf(add, "%6.2f%%%% ", 100.0 * progress);
 	} else {
 		// cprintf(" %5.1f%% ", 100.0 * progress);
-		sprintf(add, " %5.1f%%| ", 100.0 * progress);
+		sprintf(add, "%6.1f%%%% ", 100.0 * progress);
 	}
 
 	// pile on the output into a write buffer
@@ -1358,14 +1356,14 @@ void ProgressBar(char *lump, double progress, int width) {
 
 
 void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nuD) {
-	GotoXY ( 9, startY );
+	GotoXY ( 8, startY );
 
 	oldTime = 0;
 
 	if (nu) {
-		cprintf ( "%-8s   %6d  =>  %6d", lump, old, nu );
+		cprintf ( " %-8s   %6d  =>  %6d", lump, old, nu );
 	} else {
-		cprintf ( "%-8s  %6.2f%%  => %6.2f%%", lump, oldD, nuD );
+		cprintf ( " %-8s  %6.2f%%  => %6.2f%%", lump, oldD, nuD );
 	}
 
 	double dNew = nu;

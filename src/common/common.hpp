@@ -107,7 +107,7 @@ template < class T > inline void swap ( T &item1, T &item2 )
 #if defined ( __OS2__ ) || defined ( __WIN32__ )
 
 #define SEPERATOR	'\\'
-#define DEFAULT_CHAR	'û'
+#define DEFAULT_CHAR	'*'
 
 #elif defined ( __GNUC__ ) || defined ( __INTEL_COMPILER )
 
