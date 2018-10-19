@@ -399,7 +399,7 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 			seg->flags |= SEG_BACKSIDE;
 			/// seg->LineDef      = lineDef;
 			seg->Sector       = sideLeft->sector;
-			// seg->DontSplit    = split;
+			//  seg->DontSplit    = split;
 			seg->start.x      = vertE->x;
 			seg->start.y      = vertE->y;
 			seg->start.l      = 0.0;
@@ -469,11 +469,25 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 		Y     = vertS->y;
 		DX    = vertE->x - vertS->x;
 		DY    = vertE->y - vertS->y;
+/*
+		int flip;
+		if (pSeg->flags & SEG_ALIAS_FLIP) {
+			flip = 1;
+		} else {
+			flip = 0;		
+		}
+
+		X = pSeg->vertexCoords[flip][0];
+		Y = pSeg->vertexCoords[flip][1];
+
+		DX = pSeg->vertexCoords[flip][0];
+		DY = pSeg->vertexCoords[flip][1];
+*/
 
 		// if (pSeg->AliasFlip) {
 		if (pSeg->flags & SEG_ALIAS_FLIP) {
 			if ((int ) X != pSeg->vertexCoords[1][0]) {
-				//printf ("\nF %4.0f | %d (%d)\n", X, pSeg->vertexCoords[1][0], pSeg->vertexCoords[0][0]);
+				// printf ("\nF %4.0f | %d (%d)\n", X, pSeg->vertexCoords[1][0], pSeg->vertexCoords[0][0]);
 				// exit(1);
 			}
 		} else {
@@ -1540,7 +1554,7 @@ static int AlgorithmFewerSplits ( SEG *segs, int noSegs, sBSPOptions *options, D
 		if (( alias == 0 ) || ( lineChecked [ alias ] == false )) {
 			lineChecked [ alias ] = -1;
 			count [0] = count [1] = count [2] = 0;
-			//ComputeStaticVariables ( testSeg );
+			// ComputeStaticVariables ( testSeg );
 
 			ComputeStaticVariables(segs, i);
 
@@ -2622,11 +2636,13 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 
 	double sc = segCount;
 
-	int expander = ((int) (sc * 1.02)) + 4;
+	int expander = ((int) (sc * 1.02)) + 3;
 
 	if (expander > maxSegs) {
 
-		expander = ((double) maxSegs * 1.02) + 4;
+		expander = ((double) maxSegs * 1.02) + 3;
+
+		// printf("expanded %d > %d\n", expander, maxSegs);
 
 		SEG *s = new SEG [expander];
 		memcpy(s, segStart, maxSegs * sizeof(SEG));
@@ -2746,9 +2762,12 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 
 	// We only backup if we plan to do more than one line pick
 	if (maxWidth > 1) {
+		// int delta = (float) segCountBackup * 1.02 + 4;
+		//maxSegsBackup = (float) segCountBackup * 1.02 + 10;
+		
 		segsStartBackup = new SEG [segCount];
 		memcpy(segsStartBackup, segStart, sizeof ( SEG) * (segCount));
-
+		
 		convexListBackup = new int[noAliases];
 		memcpy (convexListBackup, convexList, sizeof( int) * (noAliases));
 
@@ -2844,8 +2863,20 @@ differentpartition:
 		segGoal = segCount;
 
 		// 2018 sept
-		memcpy (segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup));
-		segs = &segStart[inSeg];		
+
+		// 2018 oct 
+		/*
+		if (width == maxWidth) {
+			delete [] segStart;
+			segStart = segsStartBackup;
+			segsStartBackup = NULL;
+			
+			maxSegs = maxSegsBackup;
+
+		} else { */
+			memcpy (segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup));
+		/* } */
+		segs = &segStart[inSeg];	
 
 		// restore data from our saved backup
 
@@ -2860,8 +2891,19 @@ differentpartition:
 
 		nodesLeft =  nodesLeftBackup;
 
-		memcpy (convexList, convexListBackup, sizeof( int) * (convexListEntries));
-		memcpy (lineUsed, lineUsedBackup, sizeof(char) * ( noAliases));
+		if (width == maxWidth) {
+			//delete [] convexList;
+			//convexList = convexListBackup;
+			//convexListBackup = NULL;
+				
+			delete [] lineUsed;
+			lineUsed = lineUsedBackup;
+			lineUsedBackup = NULL;
+
+		} else {
+			memcpy (convexList, convexListBackup, sizeof( int) * (convexListEntries));
+			memcpy (lineUsed, lineUsedBackup, sizeof(char) * ( noAliases));
+		}
 
 		convexPtr = convexPtrBackup;
 		cptr = cptrBackup;
@@ -2890,8 +2932,13 @@ differentpartition:
 			if (segsStartBackup) {
 				delete [] segsStartBackup;
 			}
-			delete [] convexListBackup;
-			delete [] lineUsedBackup;
+			if (convexListBackup) {
+				delete [] convexListBackup;
+			}
+			
+			if (lineUsedBackup) {
+				delete [] lineUsedBackup;
+			}
 			delete [] sideInfoBackup;
 			delete [] nodePoolBackup;
 			delete [] ssectorPoolBackup;
@@ -3002,6 +3049,7 @@ differentpartition:
 		lineUsed [ alias ] = false;
 
 		// if ( nodesLeft-- == 0 ) {
+
 		if (nodeCount == nodePoolEntries) {
 			int delta  = ( 5 * nodeCount ) / 100 + 1;
 
@@ -3070,8 +3118,8 @@ differentpartition:
 				delete [] bestSegs;
 				delete [] bestSSectors;
 				delete [] bestNodes;
-				delete [] bestConvexList;
-				delete [] bestLineUsed;
+				// delete [] bestConvexList;
+				// delete [] bestLineUsed;
 				delete [] bestTempSeg;
 				delete [] bestSideInfo;
 				/*
@@ -3095,18 +3143,23 @@ differentpartition:
 			bestNodes = nodePool;
 			nodePool = new NODE [nodePoolEntries];
 
-			bestConvexList = new int[convexListEntries];
+			if (bestConvexList == NULL) {
+				bestConvexList = new int[convexListEntries];
+			}
 			memcpy (bestConvexList, convexList, sizeof ( int ) * (convexListEntries));
 
-			bestLineUsed = lineUsed;
-			lineUsed = new char[noAliases];
+			if (bestLineUsed == NULL) {
+				bestLineUsed = lineUsed;
+				lineUsed = new char[noAliases];
+			} else {
+				char *tmp = bestLineUsed;
+				bestLineUsed = lineUsed;
+				lineUsed = tmp;
+			}
 
 			char *temp = new char [sideInfoEntries];
 			bestSideInfo = (char **) temp;
 			memcpy(bestSideInfo, sideInfo, sizeof(char) * (sideInfoEntries));
-
-			// CNbestRNode = rNode;
-			// CNbestLNode = lNode;
 
 			CNbestSegsCount = segCount;
 			CNbestSsectorsCount = ssectorCount;
@@ -3153,15 +3206,18 @@ differentpartition:
 		if (segsStartBackup) {
 			delete [] segsStartBackup;
 		}
-		delete [] convexListBackup;
-		delete [] lineUsedBackup;
+		if (convexListBackup) {
+			delete [] convexListBackup;
+		}
+		if (lineUsedBackup) {
+			delete [] lineUsedBackup;
+		}
 		delete [] sideInfoBackup;
 		delete [] nodePoolBackup;
 		delete [] ssectorPoolBackup;
 	}
 
 	// Last tree was not best, restore that one
-	//
 
 	bool reassigned = false;
 
@@ -3186,15 +3242,6 @@ differentpartition:
 		delete [] ssectorPool;
 		ssectorPool = bestSSectors;
 
-		//		delete [] bestConvexList;
-		//		convexList = bestConvexList;
-
-		//		delete [] lineUsed;
-		//		lineUsed = bestLineUsed;
-
-		//		delete [] sideInfo;
-		//		sideInfo = bestSideInfo;
-
 		nodeCount = CNbestNodesCount;
 		nodesLeft = CNbestNodesLeft;
 		ssectorCount = CNbestSsectorsCount;
@@ -3213,11 +3260,11 @@ differentpartition:
 		nodePoolEntries = CNbestNodePoolEntries;
 		ssectorPoolEntries = CNbestSsectorPoolEntries;
 
-		X = CNbestX;
-		Y = CNbestY;
-		DX = CNbestDX;
-		DY = CNbestDY;
-		ANGLE = CNbestANGLE;
+		// X = CNbestX;
+		// Y = CNbestY;
+		// DX = CNbestDX;
+		// DY = CNbestDY;
+		// ANGLE = CNbestANGLE;
 	}
 
 	nodeDepth--;

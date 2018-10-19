@@ -77,7 +77,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10-beta12"
+#define ZOKVERSION		"1.0.10-rc1"
 #define ZOKVERSIONSHORT		"1.0.10"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2018 Kim Roar Foldøy Hauge";
@@ -145,7 +145,7 @@ void printHelp () {
 	fprintf ( stdout, "%c     1   Only if same sector.\n", (config.Geometry.Simplification == 1) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     2   Also 1-sided lines in different sectors.\n", (config.Geometry.Simplification == 2) ? DEFAULT_CHAR : ' ' );
 // Blockmap	
-	fprintf ( stdout, "\nSwitches to control BLOCKMAP strucure in a map.\n");
+	fprintf ( stdout, "\nSwitches to control BLOCKMAP strucure in a map.\n\n");
 
 //
 	fprintf ( stdout, "%c -b      Rebuild BLOCKMAP, 8 suboptions.\n", config.BlockMap.Rebuild ? DEFAULT_CHAR : ' ' );
@@ -201,14 +201,14 @@ void printHelp () {
 	fprintf ( stdout, "%c     b   Favor both of the above equally.\n", (config.Nodes.SplitReduction == 3 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     m   Try all of the above.\n\n", (config.Nodes.MultipleSplitMethods == 1 ) ? DEFAULT_CHAR : ' ' );
 
-	fprintf ( stdout, "    s=    Split handling algorithm.\n" );
+/*	fprintf ( stdout, "    s=    Split handling algorithm.\n" );
 	fprintf ( stdout, "%c     z   Ignore rounding problems. N/A\n", ( config.Nodes.SplitHandling == 0 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     a   Avoid slime trail rounding problems. N/A\n", ( config.Nodes.SplitHandling == 1 ) ? DEFAULT_CHAR : ' ' );
-
-	fprintf ( stdout, "    t=    Tuning factor, varies from algorith to algorithm.\n" );
+*/
+	fprintf ( stdout, "    t=    Tuning factor, varies from algorithm to algorithm.\n" );
 	fprintf ( stdout, "      100 Default for adaptive tree.\n");
 
-	fprintf ( stdout, "    w=    How many sub trees to try wide-algorithms.\n" );
+	fprintf ( stdout, "    w=    Sub tress to generate with multi-tree algorithm.\n" );
 	fprintf ( stdout, "%c     2   Default width and also minimum.\n", ( config.Nodes.Width == 2 ) ? DEFAULT_CHAR : ' ');
 	
 	// Reject
@@ -1096,7 +1096,7 @@ int CheckREJECT ( DoomLevel *curLevel ) {
 void PrintTime ( UINT32 time ) {
 	FUNCTION_ENTRY ( NULL, "PrintTime", false );
 
-	GotoXY ( 64, startY );
+	GotoXY ( 63, startY );
 
 
 	// time += random();
@@ -1213,6 +1213,10 @@ void ProgressBar(char *lump, double progress, int width) {
 	} 
 	oldProgress = progress;
 
+	if (progress > 1.0) {
+		progress = 1.0;
+	}
+
 	int hashes = lrint(progress * (double) width);
 
 // Ok we will have to write something to screen!
@@ -1222,10 +1226,10 @@ void ProgressBar(char *lump, double progress, int width) {
 
 	if (progress < 1.0) {
 		// cprintf(" %5.2f%% ", 100.0 * progress);
-		sprintf(add, " %5.2f%% ", 100.0 * progress);
+		sprintf(add, " %5.2f%%| ", 100.0 * progress);
 	} else {
 		// cprintf(" %5.1f%% ", 100.0 * progress);
-		sprintf(add, " %5.1f%% ", 100.0 * progress);
+		sprintf(add, " %5.1f%%| ", 100.0 * progress);
 	}
 
 	// pile on the output into a write buffer
@@ -1354,7 +1358,7 @@ void ProgressBar(char *lump, double progress, int width) {
 
 
 void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nuD) {
-	GotoXY ( startX + 6, startY );
+	GotoXY ( 9, startY );
 
 	oldTime = 0;
 
@@ -1540,7 +1544,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		int newSize = curLevel->BlockMapSize ();
 
 		Status ( (char *) "" );
-		GotoXY ( startX, startY );
+		// GotoXY ( startX, startY );
+		GotoXY(0, startY);
 
 		if ( saved >= 0 ) {
 			PrintMapLump((char * )"Blockmap", oldSize, newSize, 65536, 0, 0);
@@ -1758,7 +1763,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			cprintf ( "         Reject special effects detected, use -rf to force an update." );
 			cprintf ( "\r\n" );
 		}
-
+		cprintf ( "\r\n" );
 		GetXY ( &dummyX, &startY );
 		rows++;
 	}
@@ -1769,7 +1774,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		changed = curLevel->UpdateWAD ();
 		Status ( (char *) "" );
 		if ( changed ) {
-			MoveUp ( rows );
+			GetXY ( &dummyX, &startY );
+			MoveUp ( rows + 1 );
 
 			if (config.Color == 1) {
 				cprintf ( "%c[37;44;1m", 27);
@@ -1777,8 +1783,9 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 				cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
 			}
 
-			cprintf("\r");
-			GotoXY(startX + 2 /*strlen(name)*/, startY);
+			// cprintf("\r");
+			GetXY ( &dummyX, &startY );
+			GotoXY(7, startY);
 			cprintf("*");
 			MoveDown ( rows );
 			if (config.Color) {

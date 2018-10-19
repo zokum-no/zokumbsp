@@ -516,6 +516,9 @@ void GetXY ( UINT32 *x, UINT32 *y )
 
 void GotoXY ( UINT32 x, UINT32 y )
 {
+	x++;
+	y++;
+
 //    fprintf ( console, "\033[%d;%dH", y, x );
     fprintf ( console, "\033[%dG", x );
     fflush ( console );
