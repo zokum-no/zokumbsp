@@ -290,11 +290,11 @@ void UpdateProgress ( int stage, double percent )
 	double progress = percent / 100.0;
 
 	if (stage == 1) {
-		ProgressBar((char *) "Reject - Pruning sectors ", progress, 36);
+		ProgressBar((char *) "Reject - Pruning sectors ", progress, 35);
 	} else if (stage == 2) {
-		ProgressBar((char *) "Reject - Analyzing lines ", progress, 36);
+		ProgressBar((char *) "Reject - Analyzing lines ", progress, 35);
 	} else {
-		ProgressBar((char *) "Reject - Other ", progress, 46);
+		ProgressBar((char *) "Reject - Other ", progress, 45);
 	}
 
 }

@@ -538,7 +538,7 @@ int CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options ) {
 				} else {
 					sprintf(zokoutput, "Blockmap      N/A bytes  ");
 				}
-				ProgressBar(zokoutput, progress, 36);
+				ProgressBar(zokoutput, progress, 35);
 			}
 
 			if (bailout) {
