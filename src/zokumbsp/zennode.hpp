@@ -107,7 +107,7 @@ typedef long double REAL;		// Must have at least 50 significant bits
 struct sVertex {
 	double x;
 	double y;
-	double l;
+	// double l;
 };
 
 #define SEG_ALIAS_FLIP	0x01
@@ -129,6 +129,9 @@ struct __attribute__((__packed__)) SEG {
 	UINT16          Sector;
 	char 		flags;	
 	INT16 		vertexCoords[2][2];
+
+	float 		startL;
+	float		endL;
 
 	sVertex         start;
 	sVertex         end;
