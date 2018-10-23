@@ -376,10 +376,10 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 
 			seg->start.x      = vertS->x;
 			seg->start.y      = vertS->y;
-			seg->start.l      = 0.0;
+			seg->startL      = 0.0;
 			seg->end.x        = vertE->x;
 			seg->end.y        = vertE->y;
-			seg->end.l        = 1.0;
+			seg->endL        = 1.0;
 
 			seg->vertexCoords[0][0] = lrint(vertS->x);
 			seg->vertexCoords[0][1] = lrint(vertS->y);
@@ -402,10 +402,10 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 			//  seg->DontSplit    = split;
 			seg->start.x      = vertE->x;
 			seg->start.y      = vertE->y;
-			seg->start.l      = 0.0;
+			seg->startL      = 0.0;
 			seg->end.x        = vertS->x;
 			seg->end.y        = vertS->y;
-			seg->end.l        = 1.0;
+			seg->endL        = 1.0;
 
 			seg->vertexCoords[0][0] = lrint(vertE->x);
 			seg->vertexCoords[0][1] = lrint(vertE->y);
@@ -650,8 +650,17 @@ static int _WhichSide ( SEG *seg, sBSPOptions *options, DoomLevel *level) {
 					l = 1.0 - l;
 				}
 
-				if ( l < vertS->l ) { y1 = 0.0; goto xx; }
-				if ( l > vertE->l ) { y2 = 0.0; goto xx; }
+				// if ( l < vertS->l ) { y1 = 0.0; goto xx; }
+				//if ( l > vertE->l ) { y2 = 0.0; goto xx; }
+
+				if (l < seg->startL) {
+					y1 = 0.0; 
+					goto xx; 
+				}
+				if (l > seg->endL) {
+					y2 = 0.0; 
+					goto xx;
+				}
 
 				long x = lrint ( _vertS->x + num * dx / det );
 				long y = lrint ( _vertS->y + num * dy / det );
@@ -1168,16 +1177,16 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg, DoomLevel *level ) {
 #if defined ( DEBUG )
 		if (( lrint ( x ) == lrint ( lSeg->start.x )) && ( lrint ( y ) == lrint ( lSeg->start.y ))) {
 			fprintf ( stderr, "DivideSeg: split didn't work (%10.3f,%10.3f) == L(%10.3f,%10.3f) - %d\n", x, y, lSeg->start.x, lSeg->start.y, currentAlias );
-		} else if (( l < lSeg->start.l ) || ( l > lSeg->end.l )) {
-			fprintf ( stderr, "DivideSeg: warning - split is outside line segment (%7.5f-%7.5f) %7.5f\n", lSeg->start.l, lSeg->end.l, l );
+		} else if (( l < lSeg->startL ) || ( l > lSeg->endL )) {
+			fprintf ( stderr, "DivideSeg: warning - split is outside line segment (%7.5f-%7.5f) %7.5f\n", lSeg->startL, lSeg->endL, l );
 		}
 #endif
 		rSeg->end.x       = x;
 		rSeg->end.y       = y;
-		rSeg->end.l       = l;
+		rSeg->endL       = l;
 		lSeg->start.x     = x;
 		lSeg->start.y     = y;
-		lSeg->start.l     = l;
+		lSeg->startL     = l;
 
 		rSeg->vertexCoords[1][0] = x;
 		rSeg->vertexCoords[1][1] = y;
@@ -1191,16 +1200,16 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg, DoomLevel *level ) {
 #if defined ( DEBUG )
 		if (( lrint ( x ) == lrint ( rSeg->start.x )) && ( lrint ( y ) == lrint ( rSeg->start.y ))) {
 			fprintf ( stderr, "DivideSeg: split didn't work (%10.3f,%10.3f) == R(%10.3f,%10.3f) - %d\n", x, y, rSeg->start.x, rSeg->start.y, currentAlias  );
-		} else if (( l < lSeg->start.l ) || ( l > lSeg->end.l )) {
-			fprintf ( stderr, "DivideSeg: warning - split is outside line segment (%7.5f-%7.5f) %7.5f\n", lSeg->start.l, lSeg->end.l, l );
+		} else if (( l < lSeg->startL ) || ( l > lSeg->endL )) {
+			fprintf ( stderr, "DivideSeg: warning - split is outside line segment (%7.5f-%7.5f) %7.5f\n", lSeg->startL, lSeg->endL, l );
 		}
 #endif
 		lSeg->end.x       = x;
 		lSeg->end.y       = y;
-		lSeg->end.l       = l;
+		lSeg->endL       = l;
 		rSeg->start.x     = x;
 		rSeg->start.y     = y;
-		rSeg->start.l     = l;
+		rSeg->startL     = l;
 
 		rSeg->vertexCoords[0][0] = x;
 		rSeg->vertexCoords[0][1] = y;	
@@ -1801,7 +1810,7 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 					 * */ 
 					curScore->metric1 -= ( X3 * sCount * (sCount / 3 ) + X4 ) * sCount;
 				} else if (options->SplitReduction & 0x01) {
-					curScore->metric1 = 0xfffffff - abs(lCount -rCount) ;
+					curScore->metric1 = 0xfffffff - abs(lCount - rCount) ;
 				}
 
 				// SubsSctorFactor
@@ -2689,8 +2698,6 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 
 
 	} else {
-
-
 		maxWidth = MaxWidth(nodeDepth, initialSegs, options );
 	}
 
@@ -2716,7 +2723,6 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 				}
 			}
 		}
-		// printf("win\n");
 		maxWidth = noneEdges;
 	}
 
@@ -2730,7 +2736,6 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 	int ssectorCountBackup = ssectorCount;
 	int ssectorsLeftBackup = ssectorsLeft;
 	int noSegsBackup = *noSegs;
-	int noVerticesBackup = noVertices;
 	int nodeCountBackup = nodeCount;
 	int nodePoolEntriesBackup = nodePoolEntries; // how many did we have at start
 	int ssectorPoolEntriesBackup = ssectorPoolEntries;
@@ -2772,7 +2777,6 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 		memcpy (convexListBackup, convexList, sizeof( int) * (noAliases));
 
 		lineUsedBackup    = new char [ noAliases ];
-
 		memcpy(lineUsedBackup, lineUsed, sizeof(char) * (noAliases));
 
 		char *temp = new char [sideInfoEntries];
@@ -2781,13 +2785,13 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 
 		ANGLE = ANGLEBackup;
 
-		noVerticesBackup = noVertices;
-
 		ssectorPoolBackup = new wSSector [ssectorPoolEntries];
-		memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
+		// memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
+		memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
 
 		nodePoolBackup = new NODE [nodePoolEntries];
-		memcpy (nodePoolBackup, nodePool, sizeof ( NODE) * (nodePoolEntries));
+		// memcpy (nodePoolBackup, nodePool, sizeof ( NODE) * (nodePoolEntries));
+		memcpy (nodePoolBackup, nodePool, sizeof ( NODE) * (nodeCount));
 	}
 	nodeDepth++;
 
@@ -2887,7 +2891,6 @@ differentpartition:
 		ssectorCount = ssectorCountBackup;
 		ssectorsLeft = ssectorsLeftBackup;
 		segCount = segCountBackup;
-		noVertices = noVerticesBackup;
 
 		nodesLeft =  nodesLeftBackup;
 
@@ -2901,9 +2904,10 @@ differentpartition:
 			lineUsedBackup = NULL;
 
 		} else {
-			memcpy (convexList, convexListBackup, sizeof( int) * (convexListEntries));
 			memcpy (lineUsed, lineUsedBackup, sizeof(char) * ( noAliases));
 		}
+		memcpy (convexList, convexListBackup, sizeof( int) * (convexListEntries));
+		
 
 		convexPtr = convexPtrBackup;
 		cptr = cptrBackup;
@@ -2911,7 +2915,18 @@ differentpartition:
 		memcpy(sideInfo, sideInfoBackup, sizeof(char) * (sideInfoEntries));
 		currentSide = currentSideBackup;
 
-		memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
+		// memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
+		/*
+		int compare = memcmp(ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup));
+		if (compare == 0) {
+			// printf("nodepool backup pointless\n");
+		} else {
+			if (abs(compare) < 8) {
+				printf("nodepool backup important %d %d\n", compare, nodeDepth);
+			}
+		}
+		*/
+
 		memcpy ( nodePool, nodePoolBackup, sizeof ( NODE) * (nodePoolEntriesBackup));
 
 		X = XBackup;
@@ -3137,7 +3152,11 @@ differentpartition:
 
 			bestSSectors = ssectorPool;
 			ssectorPool = new wSSector [ssectorPoolEntries];
-
+	
+			// moved down here
+			//memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
+			memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * ( ssectorCountBackup));
+			
 			CNbestNodePoolEntries = nodePoolEntries;
 
 			bestNodes = nodePool;
