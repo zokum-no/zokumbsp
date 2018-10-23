@@ -249,12 +249,20 @@ The sections further down will describe them in more detail.
 
 Numeric Effect
 48      Exactly like regular doom, except tag decides scroll speed.
+998     Do not render this linedef.
+999     Do not add this linedef to the blockmap.
 1048    Remote scroll nearest wall with same tag.
+1078    Change start vertex of all with same tag to be same as this line. 
+        Make line non-render. Also copies sidedefs.
+1079    Change end vertex of all with same tag to be the same as this line. 
+        Make line non-render. Also copies sidedefs.
 1080    Rotate the rendered wall N degrees, where degrees is taken from tag.
 1081    Set the wall rotation to a hardcoded degree, degree taken from tag.
 1082    Rotate the rendered wall N BAMs, BAMs taken from tag.
 1083    Set the wall rotation to a hardoced BAM, taken from tag.
 1084    Do not render seg on the second side of a linedef.
+1085    Do not render seg on the front side of a lindedef.
+1086    Do not render segs on any side of a linedef.
 
 05:01 Seg manipulation specials
 -------------------------------
@@ -279,6 +287,8 @@ Numeric Effect
 1083    Set the wall rotation to a hardoced BAM, taken from tag.
 
 1084    Do not render seg on the second side of a linedef.
+1085    Do not render seg on the front side of a lindedef.
+1086    Do not render segs on any side of a linedef.
 
 05:02 Scrolling wall specials / changes
 ---------------------------------------
@@ -401,10 +411,10 @@ It should be noted that not all IWAD maps have been built with DoomBSP, and
 using it on these maps could break demo compability. This most likely applies
 to: 
 
-Ultimate Doom: e4m7.
-Doom 2: None of the maps.
-Final Doom TNT.wad: All the maps.
-Final Doom Plutonia.wad: All the maps.
+Ultimate Doom: e4m7 was not built with DoomBSP.
+Doom 2: All maps were built with DoomBSP
+Final Doom TNT.wad: None were built with DoomBSP
+Final Doom Plutonia.wad: None were built with DoomBSP.
 
 The following pwad is built with DoomBSP:
 id Map01 idmap01.wad: map01
