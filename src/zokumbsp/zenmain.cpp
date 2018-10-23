@@ -77,7 +77,7 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10-rc1"
+#define ZOKVERSION		"1.0.10"
 #define ZOKVERSIONSHORT		"1.0.10"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2018 Kim Roar Foldøy Hauge";
@@ -1361,7 +1361,7 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 	oldTime = 0;
 
 	if (nu) {
-		cprintf ( " %-8s   %6d  =>  %6d", lump, old, nu );
+		cprintf ( " %-8s  %7d  => %7d", lump, old, nu );
 	} else {
 		cprintf ( " %-8s  %6.2f%%  => %6.2f%%", lump, oldD, nuD );
 	}
@@ -1772,8 +1772,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		changed = curLevel->UpdateWAD ();
 		Status ( (char *) "" );
 		if ( changed ) {
-			GetXY ( &dummyX, &startY );
-			MoveUp ( rows + 1 );
+			// GetXY ( &dummyX, &startY );
+			MoveUp ( rows );
 
 			if (config.Color == 1) {
 				cprintf ( "%c[37;44;1m", 27);
@@ -1782,7 +1782,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			}
 
 			// cprintf("\r");
-			GetXY ( &dummyX, &startY );
+			// GetXY ( &dummyX, &startY );
 			GotoXY(7, startY);
 			cprintf("*");
 			MoveDown ( rows );
