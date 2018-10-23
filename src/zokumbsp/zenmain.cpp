@@ -1773,7 +1773,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		Status ( (char *) "" );
 		if ( changed ) {
 			// GetXY ( &dummyX, &startY );
-			MoveUp ( rows );
+			MoveUp ( rows + 1);
 
 			if (config.Color == 1) {
 				cprintf ( "%c[37;44;1m", 27);
@@ -1785,7 +1785,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			// GetXY ( &dummyX, &startY );
 			GotoXY(7, startY);
 			cprintf("*");
-			MoveDown ( rows );
+			MoveDown ( rows + 1);
 			if (config.Color) {
 				PrintColorOff();
 			}
