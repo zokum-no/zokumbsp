@@ -2767,21 +2767,21 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 
 	// We only backup if we plan to do more than one line pick
 	if (maxWidth > 1) {
-		// int delta = (float) segCountBackup * 1.02 + 4;
-		//maxSegsBackup = (float) segCountBackup * 1.02 + 10;
-		
 		segsStartBackup = new SEG [segCount];
 		memcpy(segsStartBackup, segStart, sizeof ( SEG) * (segCount));
+
+		// printf("copied seg %d, ", sizeof ( SEG) * (segCount));
+
 		
 		convexListBackup = new int[noAliases];
 		memcpy (convexListBackup, convexList, sizeof( int) * (noAliases));
 
+		// printf("cvxlist & lineused %d, ", sizeof( int) * (noAliases) * 2);
+
 		lineUsedBackup    = new char [ noAliases ];
 		memcpy(lineUsedBackup, lineUsed, sizeof(char) * (noAliases));
 
-		char *temp = new char [sideInfoEntries];
-		sideInfoBackup = (char **) temp;
-		memcpy(sideInfoBackup, sideInfo, sizeof(char) * (sideInfoEntries));
+		// printf("sideinfo %d, ", sizeof(char) * (sideInfoEntries));
 
 		ANGLE = ANGLEBackup;
 
@@ -2789,9 +2789,15 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 		// memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
 		memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
 
+		// printf("ssectors %d, ", sizeof ( wSSector) * (ssectorCount) );
+
 		nodePoolBackup = new NODE [nodePoolEntries];
 		// memcpy (nodePoolBackup, nodePool, sizeof ( NODE) * (nodePoolEntries));
 		memcpy (nodePoolBackup, nodePool, sizeof ( NODE) * (nodeCount));
+
+		// printf("nodes %d", sizeof ( NODE) * (nodeCount));
+
+		// printf("\n");
 	}
 	nodeDepth++;
 
@@ -2814,13 +2820,7 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 
 	int CNbestNoRight, CNbestNoLeft;
 
-	char **CNbestSideInfo;
 	char *CNbestCurrentSide;
-
-	// UINT16 CNbestRNode;
-	// UINT16 CNbestLNode;
-
-	// NODE CNbestTempNode; 
 
 	double CNbestX;
 	double CNbestY;
@@ -2835,7 +2835,6 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 	NODE *bestNodes = NULL;
 	int *bestConvexList = NULL;
 	char *bestLineUsed = NULL;
-	char **bestSideInfo = NULL;
 
 	int wideSegs[options->Width];
 
@@ -2844,42 +2843,12 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 	}
 
 differentpartition:
-	/*
-	   static time_t update = 0;
-	   time_t nuh = time(NULL);
-	   static char tree[120] = "                                                                                                                       ";
-
-	   tree[nodeDepth] = width + 48;
-
-	   if (update < nuh) {
-
-	//fprintf ( stdout, "\r\033[80C\033[%dC%d", nodeDepth, width );
-	fprintf ( stdout, "\r\033[80C%s", tree);
-	fflush ( stdout );
-	update = nuh;
-	}
-	*/
-	// segs = &segStart[inSeg];
-
 	if (width != 1) {
 
 		subSectorGoal = ssectorCount;
 		segGoal = segCount;
 
-		// 2018 sept
-
-		// 2018 oct 
-		/*
-		if (width == maxWidth) {
-			delete [] segStart;
-			segStart = segsStartBackup;
-			segsStartBackup = NULL;
-			
-			maxSegs = maxSegsBackup;
-
-		} else { */
-			memcpy (segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup));
-		/* } */
+		memcpy (segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup));
 		segs = &segStart[inSeg];	
 
 		// restore data from our saved backup
@@ -2895,10 +2864,6 @@ differentpartition:
 		nodesLeft =  nodesLeftBackup;
 
 		if (width == maxWidth) {
-			//delete [] convexList;
-			//convexList = convexListBackup;
-			//convexListBackup = NULL;
-				
 			delete [] lineUsed;
 			lineUsed = lineUsedBackup;
 			lineUsedBackup = NULL;
@@ -2911,21 +2876,7 @@ differentpartition:
 
 		convexPtr = convexPtrBackup;
 		cptr = cptrBackup;
-
-		memcpy(sideInfo, sideInfoBackup, sizeof(char) * (sideInfoEntries));
 		currentSide = currentSideBackup;
-
-		// memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
-		/*
-		int compare = memcmp(ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup));
-		if (compare == 0) {
-			// printf("nodepool backup pointless\n");
-		} else {
-			if (abs(compare) < 8) {
-				printf("nodepool backup important %d %d\n", compare, nodeDepth);
-			}
-		}
-		*/
 
 		memcpy ( nodePool, nodePoolBackup, sizeof ( NODE) * (nodePoolEntriesBackup));
 
@@ -2954,7 +2905,7 @@ differentpartition:
 			if (lineUsedBackup) {
 				delete [] lineUsedBackup;
 			}
-			delete [] sideInfoBackup;
+//			delete [] sideInfoBackup;
 			delete [] nodePoolBackup;
 			delete [] ssectorPoolBackup;
 		}
@@ -3136,15 +3087,7 @@ differentpartition:
 				// delete [] bestConvexList;
 				// delete [] bestLineUsed;
 				delete [] bestTempSeg;
-				delete [] bestSideInfo;
-				/*
-				   SEG *t = bestSegs;
-				   bestSegs = segStart;
-				   segStart = t;
-				   */
-			} else {
-				// bestSegs = new SEG [maxSegs];
-			}
+			} 
 
 			// October 2018
 			bestSegs = segStart;
@@ -3154,7 +3097,6 @@ differentpartition:
 			ssectorPool = new wSSector [ssectorPoolEntries];
 	
 			// moved down here
-			//memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * (ssectorPoolEntriesBackup) );
 			memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * ( ssectorCountBackup));
 			
 			CNbestNodePoolEntries = nodePoolEntries;
@@ -3175,11 +3117,6 @@ differentpartition:
 				bestLineUsed = lineUsed;
 				lineUsed = tmp;
 			}
-
-			char *temp = new char [sideInfoEntries];
-			bestSideInfo = (char **) temp;
-			memcpy(bestSideInfo, sideInfo, sizeof(char) * (sideInfoEntries));
-
 			CNbestSegsCount = segCount;
 			CNbestSsectorsCount = ssectorCount;
 			CNbestSsectorsLeft = ssectorsLeft;
@@ -3231,7 +3168,6 @@ differentpartition:
 		if (lineUsedBackup) {
 			delete [] lineUsedBackup;
 		}
-		delete [] sideInfoBackup;
 		delete [] nodePoolBackup;
 		delete [] ssectorPoolBackup;
 	}
@@ -3243,11 +3179,8 @@ differentpartition:
 	if (betterTree == false) {
 		maxSegs = CNbestMaxSegs;
 
-		// printf("%d %d\n", nodePoolEntries, CNbestNodePoolEntries);
-
 		memcpy(convexList,      bestConvexList, sizeof ( int ) *        (convexListEntries));
 		memcpy(lineUsed,        bestLineUsed, sizeof( char ) *          (noAliases));
-		memcpy(sideInfo,	bestSideInfo, sizeof (char) *           (sideInfoEntries));
 
 		// Working
 		reassigned = true;
@@ -3295,7 +3228,6 @@ differentpartition:
 	}
 	delete [] bestConvexList;
 	delete [] bestLineUsed;
-	delete [] bestSideInfo;
 
 	return ( UINT16 ) nodeCount++;
 }
