@@ -121,8 +121,8 @@ struct sVertex {
 
 struct __attribute__((__packed__)) SEG {
 //struct SEG {
-	UINT16 Datastart;
-	UINT16 Dataend;
+//	UINT16 Datastart;
+//	UINT16 Dataend;
 	UINT16 Dataangle;
 	UINT16 DatalineDef;
 	

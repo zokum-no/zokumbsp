@@ -364,8 +364,8 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 
 		if ( sideRight ) {
 
-			seg->Datastart   = lineDef->start;
-			seg->Dataend     = lineDef->end;
+			// seg->Datastart   = lineDef->start;
+			// seg->Dataend     = lineDef->end;
 			seg->Dataangle   = angle;
 			seg->DatalineDef = ( UINT16 ) i;
 			// seg->Dataflip    = 0;
@@ -391,8 +391,8 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 		}
 
 		if ( sideLeft ) {
-			seg->Datastart   = lineDef->end;
-			seg->Dataend     = lineDef->start;
+			//seg->Datastart   = lineDef->end;
+			//seg->Dataend     = lineDef->start;
 			seg->Dataangle   = ( BAM ) ( angle + BAM180 );
 			seg->DatalineDef = ( UINT16 ) i;
 			//seg->Dataflip    = 1;
@@ -454,21 +454,36 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 
 		//wVertex *vertS = &newVertices [ pSeg->AliasFlip ? pSeg->Data.end : pSeg->Data.start ];
 		//wVertex *vertE = &newVertices [ pSeg->AliasFlip ? pSeg->Data.start : pSeg->Data.end ];
-		
+/*		
 		wVertex *vertS = &newVertices [ (pSeg->flags & SEG_ALIAS_FLIP) ? pSeg->Dataend : pSeg->Datastart ];
 		wVertex *vertE = &newVertices [ (pSeg->flags & SEG_ALIAS_FLIP) ? pSeg->Datastart : pSeg->Dataend ];
-
+*/
 /*
 		if ( (int) lrint(pSeg->start.x) != (int) vertS->x) {
 			printf("ERROR %f %d\n", pSeg->start.x, vertS->x);
 			printf("ERROR %f %d\n", pSeg->start.x, vertE->x);
 		}
 */
-		
+/*		
 		X     = vertS->x;
 		Y     = vertS->y;
 		DX    = vertE->x - vertS->x;
 		DY    = vertE->y - vertS->y;
+*/
+		if (!(pSeg->flags & SEG_ALIAS_FLIP)) {
+			X = pSeg->start.x;
+			Y = pSeg->start.y;
+
+			DX = pSeg->end.x - pSeg->start.x;
+			DY = pSeg->end.y - pSeg->start.y;
+		} else {
+			X = pSeg->end.x;
+			Y = pSeg->end.y;
+
+			DX = pSeg->start.x - pSeg->end.x;
+			DY = pSeg->start.y - pSeg->end.y;
+		}
+
 /*
 		int flip;
 		if (pSeg->flags & SEG_ALIAS_FLIP) {
@@ -2770,18 +2785,16 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 		segsStartBackup = new SEG [segCount];
 		memcpy(segsStartBackup, segStart, sizeof ( SEG) * (segCount));
 
-		// printf("copied seg %d, ", sizeof ( SEG) * (segCount));
+//		printf("copied seg %d, ", sizeof ( SEG) * (segCount));
 
 		
 		convexListBackup = new int[noAliases];
 		memcpy (convexListBackup, convexList, sizeof( int) * (noAliases));
 
-		// printf("cvxlist & lineused %d, ", sizeof( int) * (noAliases) * 2);
+//		printf("cvxlist & lineused %d, ", sizeof( int) * (noAliases) * 2);
 
 		lineUsedBackup    = new char [ noAliases ];
 		memcpy(lineUsedBackup, lineUsed, sizeof(char) * (noAliases));
-
-		// printf("sideinfo %d, ", sizeof(char) * (sideInfoEntries));
 
 		ANGLE = ANGLEBackup;
 
@@ -2789,15 +2802,15 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 		// memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorPoolEntries) );
 		memcpy ( ssectorPoolBackup, ssectorPool, sizeof ( wSSector) * (ssectorCount) );
 
-		// printf("ssectors %d, ", sizeof ( wSSector) * (ssectorCount) );
+//		printf("ssectors %d, ", sizeof ( wSSector) * (ssectorCount) );
 
 		nodePoolBackup = new NODE [nodePoolEntries];
 		// memcpy (nodePoolBackup, nodePool, sizeof ( NODE) * (nodePoolEntries));
 		memcpy (nodePoolBackup, nodePool, sizeof ( NODE) * (nodeCount));
 
-		// printf("nodes %d", sizeof ( NODE) * (nodeCount));
+//		printf("nodes %d", sizeof ( NODE) * (nodeCount));
 
-		// printf("\n");
+//		printf("\n");
 	}
 	nodeDepth++;
 
@@ -3519,8 +3532,8 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 			void PostAddVertices(void) {
 
 				for ( int i = 0; i < segCount; i++ ) {
-					segStart[i].Datastart = ( UINT16 ) AddVertex ( lrint ( segStart[i].start.x ), lrint ( segStart[i].start.y ));
-					segStart[i].Dataend   = ( UINT16 ) AddVertex ( lrint ( segStart[i].end.x ),  lrint ( segStart[i].end.y ));
+					// segStart[i].Datastart = ( UINT16 ) AddVertex ( lrint ( segStart[i].start.x ), lrint ( segStart[i].start.y ));
+					// segStart[i].Dataend   = ( UINT16 ) AddVertex ( lrint ( segStart[i].end.x ),  lrint ( segStart[i].end.y ));
 				}
 
 			}
@@ -3840,7 +3853,7 @@ restart:
 				PostMakeDoomNodes(doomNodes);
 
 				// new 22.09.2018 code
-				PostAddVertices();
+				// PostAddVertices();
 
 				// new 29.05.2018 code
 				PostFindBounds(&doomNodes[nodeCount - 1]);
@@ -3867,9 +3880,11 @@ restart:
 
 				sideInfo = NULL;
 
-				level->NewVertices ( noVertices, GetVertices ());
+				// level->NewVertices ( noVertices, GetVertices ());
 				level->NewNodes ( nodeCount, GetNodes ( doomNodes, nodeCount ));
 				level->NewSubSectors ( ssectorCount, GetSSectors ( level, ssectorPool, ssectorCount, options ));
+
+				level->NewVertices ( noVertices, GetVertices ());
 				level->NewSegs ( segCount, GetSegs ());
 
 				free ( newVertices );
