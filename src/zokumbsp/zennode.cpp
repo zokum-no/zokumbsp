@@ -381,10 +381,10 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 			seg->end.y        = vertE->y;
 			seg->endL        = 1.0;
 
-			seg->vertexCoords[0][0] = lrint(vertS->x);
-			seg->vertexCoords[0][1] = lrint(vertS->y);
-			seg->vertexCoords[1][0] = lrint(vertE->x);
-			seg->vertexCoords[1][1] = lrint(vertE->y);
+//			seg->vertexCoords[0][0] = lrint(vertS->x);
+//			seg->vertexCoords[0][1] = lrint(vertS->y);
+//			seg->vertexCoords[1][0] = lrint(vertE->x);
+//			seg->vertexCoords[1][1] = lrint(vertE->y);
 
 			seg++;
 			// printf(", B: %5d", angle);
@@ -407,10 +407,10 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 			seg->end.y        = vertS->y;
 			seg->endL        = 1.0;
 
-			seg->vertexCoords[0][0] = lrint(vertE->x);
-			seg->vertexCoords[0][1] = lrint(vertE->y);
-			seg->vertexCoords[1][0] = lrint(vertS->x);
-			seg->vertexCoords[1][1] = lrint(vertS->y);		
+//			seg->vertexCoords[0][0] = lrint(vertE->x);
+//			seg->vertexCoords[0][1] = lrint(vertE->y);
+//			seg->vertexCoords[1][0] = lrint(vertS->x);
+//			seg->vertexCoords[1][1] = lrint(vertS->y);		
 
 			seg++;
 
@@ -500,6 +500,7 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 */
 
 		// if (pSeg->AliasFlip) {
+		/*
 		if (pSeg->flags & SEG_ALIAS_FLIP) {
 			if ((int ) X != pSeg->vertexCoords[1][0]) {
 				// printf ("\nF %4.0f | %d (%d)\n", X, pSeg->vertexCoords[1][0], pSeg->vertexCoords[0][0]);
@@ -511,7 +512,7 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 				// exit(1);
 			}
 		}
-
+*/
 #if defined ( DIAGNOSTIC )
 		if (vertS != vertE) {
 		        different++;
@@ -526,11 +527,11 @@ static void ComputeStaticVariables (SEG *list, int offset) {
 		Y     = pSeg->start.y;
 		DX    = pSeg->end.x - pSeg->start.x;
 		DY    = pSeg->end.y - pSeg->start.y;
-
+/*
 		if ((int) X != pSeg->vertexCoords[0][0]) {
 			// printf ("\n%5.0f | %d\n", X, pSeg->vertexCoords[0][0]);
 		}
-
+*/
 		/* printf ("%d | %d\n", X, pSeg->vertexCoords[1][0]);
 	
 		printf ("%d | %d\n", X, pSeg->vertexCoords[0][1]);
@@ -978,10 +979,10 @@ static UINT16 CreateSSector ( SEG *segs, int noSegs ) {
 		segs->Data.start = ( UINT16 ) AddVertex ( lrint ( segs->start.x ), lrint ( segs->start.y ));
 		segs->Data.end   = ( UINT16 ) AddVertex ( lrint ( segs->end.x ),   lrint ( segs->end.y ));
 */
-		segs->vertexCoords[0][0] = lrint ( segs->start.x );
-		segs->vertexCoords[0][1] = lrint ( segs->start.y );
-		segs->vertexCoords[1][0] = lrint ( segs->end.x );
-		segs->vertexCoords[1][1] = lrint ( segs->end.y );
+//		segs->vertexCoords[0][0] = lrint ( segs->start.x );
+//		segs->vertexCoords[0][1] = lrint ( segs->start.y );
+//		segs->vertexCoords[1][0] = lrint ( segs->end.x );
+//		segs->vertexCoords[1][1] = lrint ( segs->end.y );
 
 		segs++;
 	}
@@ -1178,7 +1179,7 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg, DoomLevel *level ) {
 */
 
 	if (rSeg->flags & SEG_BACKSIDE) {
-		vertS = vertE;
+		// vertS = vertE;
 		l = 1.0 - l;
 	}
 
@@ -1203,11 +1204,11 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg, DoomLevel *level ) {
 		lSeg->start.y     = y;
 		lSeg->startL     = l;
 
-		rSeg->vertexCoords[1][0] = x;
-		rSeg->vertexCoords[1][1] = y;
+//		rSeg->vertexCoords[1][0] = x;
+//		rSeg->vertexCoords[1][1] = y;
 		
-		lSeg->vertexCoords[0][0] = x;
-		lSeg->vertexCoords[0][1] = y;
+//		lSeg->vertexCoords[0][0] = x;
+//		lSeg->vertexCoords[0][1] = y;
 
 
 		// lSeg->Dataoffset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
@@ -1226,11 +1227,11 @@ static void DivideSeg ( SEG *rSeg, SEG *lSeg, DoomLevel *level ) {
 		rSeg->start.y     = y;
 		rSeg->startL     = l;
 
-		rSeg->vertexCoords[0][0] = x;
-		rSeg->vertexCoords[0][1] = y;	
+//		rSeg->vertexCoords[0][0] = x;
+//		rSeg->vertexCoords[0][1] = y;	
 
-		lSeg->vertexCoords[1][0] = x;
-		lSeg->vertexCoords[1][1] = y;
+//		lSeg->vertexCoords[1][0] = x;
+//		lSeg->vertexCoords[1][1] = y;
 
 		// rSeg->Dataoffset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
 	}
@@ -1521,10 +1522,10 @@ retry:
 			seg[i].flags |= SEG_FINAL;
 
 
-			seg [i].vertexCoords[0][0] = startX;
-			seg [i].vertexCoords[0][1] = startY;
-			seg [i].vertexCoords[1][0] = endX;					
-			seg [i].vertexCoords[1][1] = endY;
+//			seg [i].vertexCoords[0][0] = startX;
+//			seg [i].vertexCoords[0][1] = startY;
+//			seg [i].vertexCoords[1][0] = endX;					
+//			seg [i].vertexCoords[1][1] = endY;
 
 
 		}
@@ -1555,7 +1556,7 @@ retry:
 static int AlgorithmFewerSplits ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs, int *picks ) {
 	FUNCTION_ENTRY ( NULL, "AlgorithmFewerSplits", true );
 
-	SEG *pSeg = NULL, *testSeg = segs;
+	SEG /**pSeg = NULL,*/ *testSeg = segs;
 	int count [3];
 	int &lCount = count [0], &sCount = count [1], &rCount = count [2];
 	// Compute the maximum value maxMetric can possibly reach
@@ -1631,7 +1632,7 @@ static int AlgorithmFewerSplits ( SEG *segs, int noSegs, sBSPOptions *options, D
 						|| ((metric == bestMetric) && !diagonal && decentBalance)
 				   ) {
 					bestOffset = i;
-					pSeg       = testSeg;
+					// pSeg       = testSeg;
 					bestSplits = sCount + 2;
 					bestMetric = metric;
 					bestEdgeBalance = edgeBalance;
@@ -1746,7 +1747,13 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 	int count [3], noScores = 0, rank, i;
 	int &lCount = count [0], &sCount = count [1], &rCount = count [2];
 
-	memset ( score, -1, sizeof ( sScoreInfo ) * noAliases );
+// This is a pointless memset, we should run without it!
+/*	if (noAliases < noSegs) {
+		memset ( score, -1, sizeof ( sScoreInfo ) * noAliases );
+	} else {
+		memset(  score, -1, sizeof ( sScoreInfo ) * noAliases );
+	}
+*/
 	score [0].index = 0;
 
 	for ( i = 0; i < noSegs; i++ ) {
@@ -1826,6 +1833,7 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 					curScore->metric1 -= ( X3 * sCount * (sCount / 3 ) + X4 ) * sCount;
 				} else if (options->SplitReduction & 0x01) {
 					curScore->metric1 = 0xfffffff - abs(lCount - rCount) ;
+					// curScore->metric1 = 0xfffffff - sCount;
 				}
 
 				// SubsSctorFactor
@@ -1853,6 +1861,7 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, sBSPOptions *options, DoomLeve
 					// curScore->metric2 -= ( X3 * ssCount + X4 ) * sCount * 5;
 				} else if (options->SplitReduction & 0x02) {
 					curScore->metric2 = 0xffffff - abs(lsCount -rsCount);
+					// curScore->metric2 = 0xffffff - ssCount;
 				}
 
 				noScores++;
@@ -2620,6 +2629,12 @@ int deep[256];
 bool deepinit = false;
 
 int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level, int segGoal, int subSectorGoal, int *maxPicks) {
+
+	if (inSeg > 2000) {
+		printf("inseg %d, nosegs %d\n", inSeg, *noSegs);
+	}
+
+
 	/*
 	   if (deepinit == false) {
 	   for (int i = 0; i != 256; i++) {
@@ -2753,13 +2768,13 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 	int noSegsBackup = *noSegs;
 	int nodeCountBackup = nodeCount;
 	int nodePoolEntriesBackup = nodePoolEntries; // how many did we have at start
-	int ssectorPoolEntriesBackup = ssectorPoolEntries;
-	int maxVerticesBackup = maxVertices;
+	//int ssectorPoolEntriesBackup = ssectorPoolEntries;
+	// int maxVerticesBackup = maxVertices;
 	int maxSegsBackup = maxSegs;
 	int *convexPtrBackup = convexPtr;
 	int *cptrBackup = cptr;
 
-	SEG *CNbestSegs = NULL;
+	// SEG *CNbestSegs = NULL;
 
 	char *currentSideBackup = currentSide;
 
@@ -2835,12 +2850,12 @@ int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level,
 
 	char *CNbestCurrentSide;
 
-	double CNbestX;
-	double CNbestY;
-	double CNbestDX;
-	double CNbestDY;
+//	double CNbestX;
+//	double CNbestY;
+//	double CNbestDX;
+//	double CNbestDY;
 
-	long CNbestANGLE;
+//	long CNbestANGLE;
 
 	SEG *bestSegs = NULL;
 	SEG *bestTempSeg = NULL;
@@ -2862,6 +2877,9 @@ differentpartition:
 		segGoal = segCount;
 
 		memcpy (segStart, segsStartBackup, sizeof ( SEG) * (segCountBackup));
+
+		// memcpy (segStart + (inSeg * sizeof(SEG)), segsStartBackup, sizeof ( SEG) * (segCountBackup - inSeg));
+
 		segs = &segStart[inSeg];	
 
 		// restore data from our saved backup
@@ -3112,7 +3130,7 @@ differentpartition:
 			// moved down here
 			memcpy ( ssectorPool, ssectorPoolBackup, sizeof ( wSSector) * ( ssectorCountBackup));
 			
-			CNbestNodePoolEntries = nodePoolEntries;
+			// CNbestNodePoolEntries = nodePoolEntries;
 
 			bestNodes = nodePool;
 			nodePool = new NODE [nodePoolEntries];
@@ -3137,7 +3155,7 @@ differentpartition:
 
 			CNbestNodesCount = nodeCount;
 			CNbestNodesLeft = nodesLeft;
-			CNbestSegs = segs;
+			// CNbestSegs = segs;
 			CNbestNoSegs = *noSegs;
 			CNbestMaxSegs = maxSegs;
 			CNbestCptr = cptr;
@@ -3149,11 +3167,11 @@ differentpartition:
 			CNbestCurrentAlias = currentAlias;
 			CNbestCurrentSide = currentSide;
 
-			CNbestX = X;
-			CNbestY = Y;
-			CNbestDX = DX;
-			CNbestDY = DY;
-			CNbestANGLE = ANGLE;
+			// CNbestX = X;
+			// CNbestY = Y;
+			// CNbestDX = DX;
+			// CNbestDY = DY;
+			// CNbestANGLE = ANGLE;
 
 			CNbestNodePoolEntries = nodePoolEntries;
 			CNbestSsectorPoolEntries = ssectorPoolEntries;
@@ -3218,7 +3236,7 @@ differentpartition:
 		convexPtr = CNbestConvexPtr;
 		noRight = CNbestNoRight;
 		noLeft = CNbestNoLeft;
-		segs = &segStart[inSeg];
+		// segs = &segStart[inSeg];
 		currentAlias = CNbestCurrentAlias;
 		currentSide = CNbestCurrentSide;
 
@@ -3273,7 +3291,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 
 	wSegs *segs = finalSegs = new wSegs [ segCount ];
 
-	wLineDefInternal *ld = level->GetLineDefs ();
+	wLineDefInternal *ld; //  = level->GetLineDefs ();
 
 
 	for ( int i = 0; i < noSSectors; i++ ) {

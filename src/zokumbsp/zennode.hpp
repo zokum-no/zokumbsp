@@ -107,6 +107,8 @@ typedef long double REAL;		// Must have at least 50 significant bits
 struct sVertex {
 	double x;
 	double y;
+	//float x;
+	//float y;
 	// double l;
 };
 
@@ -128,7 +130,7 @@ struct __attribute__((__packed__)) SEG {
 	
 	UINT16          Sector;
 	char 		flags;	
-	INT16 		vertexCoords[2][2];
+//	INT16 		vertexCoords[2][2];
 
 	float 		startL;
 	float		endL;
