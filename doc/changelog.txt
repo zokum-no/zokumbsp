@@ -1,5 +1,11 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.11-rc1
+- Major speed optimizations in multi-tree algorithm.
+- Major speed optimization in the balanced (default) algorithm.
+- Fixed -nu parameter that was broken.
+- Made -nu default to ON, this makes invisible floors work like expected.
+
 ZokumBSP 1.0.10-rc1
 - Fixed windows text output.
 - Cleaned up help screen.

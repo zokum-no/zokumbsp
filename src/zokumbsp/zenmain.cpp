@@ -1132,15 +1132,29 @@ void PrintColorOff(void) {
 	cprintf ( "%c[0m", 27);
 }
 
-void PrintMapHeader(char *map) {
+void PrintMapHeader(char *map, bool highlight) {
 	GotoXY ( 0, startY );
 
 	char output[2048] = "";
 	char add[2048];
 
+	int color, color2, bcolor, bright;
+
+	if (highlight) {
+		color = 32;
+		color2 = 37;
+		bcolor = 44;
+		bright = 1;
+	} else {
+		color = 37;
+		color2 = 37;
+		bcolor = 44;
+		bright = 44;
+	}
+
 	if (config.Color == 1)  {
 		// cprintf ( "%c[37;44;1m", 27);
-		sprintf (add, "%c[37;44;1m", 27);
+		sprintf (add, "%c[%d;%d;%dm", 27, color, bcolor, bright );
 		strcat(output, add);
 	} else if (config.Color == 2) {
 		// cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
@@ -1153,7 +1167,7 @@ void PrintMapHeader(char *map) {
 
 	if (config.Color == 1) {
 		// cprintf ( "%c[0;37;44m", 27);
-		sprintf (add, "%c[0;37;44m", 27);
+		sprintf (add, "%c[0;%d;%d;%dm", 27, color2, bcolor, bright);
 		strcat(output, add);
 
 	} else if (config.Color == 2) {
@@ -1459,7 +1473,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	//cprintf ( "\r%-*.*s        Old       New    %%Change    %%Limit   Time Elapsed\n\r", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
 	GetXY ( &startX, &startY );
 
-	PrintMapHeader(name);	
+	PrintMapHeader(name, false );
 
 	// startX = 4;
 
@@ -1772,20 +1786,25 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		changed = curLevel->UpdateWAD ();
 		Status ( (char *) "" );
 		if ( changed ) {
-			// GetXY ( &dummyX, &startY );
-			MoveUp ( rows + 1);
+			GetXY ( &dummyX, &startY );
+			MoveUp ( rows );
 
 			if (config.Color == 1) {
-				cprintf ( "%c[37;44;1m", 27);
+				// cprintf ( "%c[37;44;1m", 27);
+				PrintMapHeader(name, true);
+				
 			} else if (config.Color == 2) {
 				cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
 			}
 
 			// cprintf("\r");
 			// GetXY ( &dummyX, &startY );
-			GotoXY(7, startY);
-			cprintf("*");
-			MoveDown ( rows + 1);
+			
+			if (config.Color == 0) {
+				GotoXY(7, startY);
+				cprintf("*");
+			}
+			MoveDown ( rows );
 			if (config.Color) {
 				PrintColorOff();
 			}
@@ -1851,7 +1870,7 @@ void printTotals(void) {
 	   cprintf("\r\n");
 	   */
 
-	PrintMapHeader((char *) "Total:");
+	PrintMapHeader((char *) "Total:", false);
 
 	GotoXY ( startX, startY );
 
@@ -1986,7 +2005,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Nodes.Method         = 2;
 	config.Nodes.Thoroughness   = 1;
 	config.Nodes.Quiet          = isatty ( fileno ( stdout )) ? false : true;
-	config.Nodes.Unique         = false;
+	config.Nodes.Unique         = true;
 	config.Nodes.ReduceLineDefs = false;
 	config.Nodes.SegBAMs		= true;
 	config.Nodes.SplitHandling  = 1;

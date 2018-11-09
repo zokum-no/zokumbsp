@@ -187,6 +187,19 @@ struct sBSPOptions {
 	int 	Tuning;
 };
 
+struct nodeBuilderData {
+	sBSPOptions *options;
+	DoomLevel *level;
+	int *width;
+	int *wideSegs;
+	// int *picks;
+
+	int segGoal;
+	int subSectorGoal;
+	int *maxPicks;
+};
+
+
 struct sScoreInfo {
 	int       index;
 	long      metric1;
