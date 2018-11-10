@@ -680,8 +680,11 @@ the node building process slightly.
 08:03 'u' - Ensure all sub-sectors contain only 1 sector
 --------------------------------------------------------
 
-This will try to make sure that sub sectors only contain one sector. A sub
-sector is a convex area that are used to construct a convex sector out of
+This will try to make sure that sub sectors only contain one sector. This is 
+important to have turned on when designing areas with invisible floors and 
+other similar effects. 
+
+A subsector is a convex area that are used to construct a convex area out of
 concave sub sectors. This property is important when designing a 3d engine
 since it allows for much faster rendering if all of the areas are convex.
 
@@ -691,7 +694,9 @@ since it allows for much faster rendering if all of the areas are convex.
 This option is similar to a blockmap option that removes non-collidable lines
 from the level geometry. It does however check for the presence of a middle
 texture, since those need to be rendered even if a linedef has sidefs
-belonging to the same sector.
+belonging to the same sector. This will also check for the presence of a lower
+texture to avoid these lines to be ignored when designig maps with invisible
+floors.
 
 08:05 't' - Thoroughness
 ------------------------

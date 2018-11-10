@@ -92,8 +92,16 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 
 	extraData->multiSectorSpecial = false;
 
-	extraData->rightMostVertex = extraData->leftMostVertex = vertex [0].x;
-	extraData->bottomVertex = extraData->topVertex = vertex [0].y;
+
+//	extraData->rightMostVertex = extraData->leftMostVertex = vertex [0].x;
+//	extraData->bottomVertex = extraData->topVertex = vertex [0].y;
+
+
+
+	extraData->rightMostVertex = extraData->topVertex = -32766;
+	extraData->leftMostVertex = extraData->bottomVertex = 32767;
+
+	
 
 
 	// For simplicity we set them all to true, then to false if needed :)
