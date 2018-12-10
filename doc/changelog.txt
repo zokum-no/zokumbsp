@@ -1,5 +1,12 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.0.11
+- Doom 25 year anniversary release.
+
+ZokumBSP 1.0.11-rc2
+- Cleanups and further speed optimizations.
+- Experimental code to show tree progress, uses #define for now.
+
 ZokumBSP 1.0.11-rc1
 - Major speed optimizations in multi-tree algorithm.
 - Major speed optimization in the balanced (default) algorithm.

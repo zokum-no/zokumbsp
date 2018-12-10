@@ -196,7 +196,11 @@ struct nodeBuilderData {
 
 	int segGoal;
 	int subSectorGoal;
-	int *maxPicks;
+	// int *maxPicks;
+	int localMaxWidth;
+	int scoresFound;
+	int goodScoresFound;
+
 };
 
 
