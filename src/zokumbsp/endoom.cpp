@@ -375,8 +375,10 @@ unsigned int endoomzbsp_bin_len = 4000;
 
 // const wadDirEntry *WAD::FindDir ( const char *name, const wadDirEntry *start, const wadDirEntry *end ) const
 WAD * MakeENDOOMLump(wadList *myList, char *wadFileName) {
-/*
-	const wadListDirEntry *dir = myList->FindWAD ("ENDOOM");
+
+	return NULL;
+
+	const wadListDirEntry *dir = myList->FindWAD ("ENDOOM2");
 
 	if (dir) {
 		printf("ENDOOM found!\n");
@@ -386,8 +388,14 @@ WAD * MakeENDOOMLump(wadList *myList, char *wadFileName) {
 		printf("ENDOOM not found\n");
 		
 		void *ptr = ( void * ) &endoomzbsp_bin;
+
 		// bool WAD::InsertBefore ( const wLumpName *name, UINT32 newSize, void *newStuff, bool owner, const wadDirEntry *entry )
-		int ret = newWad->InsertAfter (( const wLumpName * ) "ENDOOM", (UINT32) 4000, ptr, false, NULL);
+		
+		const wadListDirEntry *dir = myList->FindWAD ( wadFileName );
+		
+		// int ret = myList->InsertAfter (( const wLumpName * ) "ENDOOM", (UINT32) 4000, ptr, false, NULL);
+
+		int ret = 0;
 
 		dir = myList->FindWAD ("ENDOOM");
 
@@ -402,7 +410,7 @@ WAD * MakeENDOOMLump(wadList *myList, char *wadFileName) {
 		printf("ret %d", ret);
 	}
 	printf("\n");
-	*/
+	
 	return NULL;
 	
 }

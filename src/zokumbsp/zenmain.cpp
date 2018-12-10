@@ -77,8 +77,8 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.10"
-#define ZOKVERSIONSHORT		"1.0.10"
+#define ZOKVERSION		"1.0.11"
+#define ZOKVERSIONSHORT		"1.0.11"
 
 const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2018 Kim Roar Foldøy Hauge";
 const char BANNER []            = "Based on: ZenNode Version " ZENVERSION " (c) 1994-2004 Marc Rousseau";
@@ -531,6 +531,7 @@ bool parseSTATISTICSArgs (char *&ptr, bool setting ) {
 			setting = ( *ptr++ == '+' ) ? true : false;
 		}
 		switch ( option ) {
+			case 'A' : config.Statistics.ShowSectors = config.Statistics.ShowLineDefs = config.Statistics.ShowSplits = config.Statistics.ShowNodes = config.Statistics.ShowSubSectors = config.Statistics.ShowThings = config.Statistics.ShowTopSummary = config.Statistics.ShowVertices = setting;    break;
 			case 'E' : config.Statistics.ShowSectors = setting;     break;
 			case 'L' : config.Statistics.ShowLineDefs = setting;	break;
 			case 'P' : config.Statistics.ShowSplits = setting;	break;
@@ -1496,6 +1497,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		int oldSectorCount = curLevel->SectorCount ();
 		// int oldSubSectorCount = curLevel->SubSectorCount ();
 		int oldLineCount = curLevel->LineDefCount();
+		bool showTime = false;
 
 		MapExtraData(curLevel, &config);
 		*elapsed += preTime = CurrentTime () - preTime;
@@ -1508,7 +1510,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		double pct;
 
 		if (config.Statistics.ShowLineDefs) {
-			Status ( (char *) "" );
+/*			Status ( (char *) "" );
 			GotoXY ( startX, startY );
 
 			cprintf ( "LineDefs: %6d => %6d ", (int) oldLineCount,  curLevel->LineDefCount ());
@@ -1521,13 +1523,16 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 			pct = ((double) curLevel->LineDefCount () / 32768.0) * 100.0;
 			cprintf("   %6.2f%%", pct);
+*/
+			PrintMapLump((char * )"Linedefs", oldLineCount, curLevel->LineDefCount (), 32767, 0, 0);
 
 			PrintTime (preTime);
-			cprintf ( "\r\n" );
+			showTime = true;
+			// cprintf ( "\r\n" );
 			rows++;
 		}
 		if (config.Statistics.ShowSectors) {
-			GotoXY ( startX, startY );
+			/*GotoXY ( startX, startY );
 
 			cprintf ( "Sectors:  %6d => %6d ", (int) oldSectorCount,  curLevel->SectorCount ());
 
@@ -1538,10 +1543,24 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			}
 
 			pct = ((double) curLevel->SectorCount () / 32768.0) * 100.0;
-			cprintf("   %6.2f%%", pct);
+			*/
+
+			PrintMapLump((char * )"Sectors", oldSectorCount, curLevel->SectorCount (), 32767, 0, 0);		
+
+			if (showTime == false) {
+				PrintTime (preTime);
+			}
+
+			// cprintf("   %6.2f%%", pct);
 			cprintf ( "\r\n" );
 			rows++;
 		}
+/*		if (config.Statistics.ShowVertices) {
+			PrintMapLump((char * )"Vertices", oldVertexCount, curLevel->VertexCount (), 32767, 0, 0);
+			cprintf ( "\r\n" );
+			rows++;
+		}
+*/
 
 		GetXY ( &dummyX, &startY );
 
@@ -1594,6 +1613,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		int oldSubSectorCount = curLevel->SubSectorCount ();
 		int oldSplits = 0;
 		int segCount = curLevel->SegCount();
+		int oldVertexCount = curLevel->VertexCount();
 	
 		const wSegs *segs = curLevel->GetSegs ();
 
@@ -1721,6 +1741,12 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			cprintf ( "\r\n" );
 			rows++;
 		}
+		if (config.Statistics.ShowVertices) {
+			PrintMapLump((char * )"Vertices", oldVertexCount, curLevel->VertexCount (), 32767, 0, 0);
+			cprintf ( "\r\n" );
+			rows++;
+		}
+
 
 		/*
 		   cprintf ( "Subsecs: %7d => %6d ",  oldSubSectorCount, curLevel->SubSectorCount());
@@ -1769,14 +1795,14 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			cprintf ( "\r\n" );
 			*/
 			PrintMapLump( (char *)  "Reject", 0, 0, 0, oldEfficiency / 100.0, newEfficiency / 100.0);
-
+			// GetXY ( &dummyX, &startY );
 			PrintTime ( rejectTime );
 		} else {
 			cprintf ( "         Reject special effects detected, use -rf to force an update." );
 			cprintf ( "\r\n" );
 		}
-		cprintf ( "\r\n" );
-		GetXY ( &dummyX, &startY );
+		// cprintf ( "\r\n" );
+		// GetXY ( &dummyX, &startY );
 		rows++;
 	}
 
@@ -1874,28 +1900,30 @@ void printTotals(void) {
 
 	GotoXY ( startX, startY );
 
-	cprintf ( "Segs: %10d => %6d ",  oldTotalSegs, totalSegs );
+	PrintMapLump( (char *)  "Segs", oldTotalSegs, totalSegs, 0, 0, 0);
+	// cprintf ( "Segs: %10d => %6d ",  oldTotalSegs, totalSegs );
 
-	if ( oldTotalSegs ) {
+/*	if ( oldTotalSegs ) {
 		pct = ( 100.0 * ( (double) totalSegs / (double) oldTotalSegs) );
 		cprintf ( "   %6.2f%%", pct);
 	} else {
 		cprintf ( "     -" );
 	}
-
+*/
 	cprintf("\r\n");
-	GotoXY ( startX, startY );
+	//GotoXY ( startX, startY );
 
 	// nodes to subsecs fix
 	oldTotalNodes++;
 	totalNodes++;
-
+/*
 	cprintf ( "Subsecs: %7d => %6d    ", oldTotalNodes, totalNodes );
 	if ( oldTotalNodes ) {
 		pct = ( 100.0 * (totalNodes / (double) oldTotalNodes) );
 		cprintf ( "%6.2f%%", pct);
 	}
-
+*/
+	PrintMapLump( (char *)  "Subsecs", oldTotalNodes, totalNodes, 0, 0, 0);
 
 	cprintf("\r\n");
 

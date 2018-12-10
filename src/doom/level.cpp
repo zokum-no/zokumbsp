@@ -269,7 +269,9 @@ void DoomLevel::CleanUpEntry ( sLevelLump *entry )
 {
     FUNCTION_ENTRY ( this, "DoomLevel::CleanUpEntry", true );
 
-    delete [] ( char * ) entry->rawData;
+	if (entry->rawData) {
+	    delete [] ( char * ) entry->rawData;
+	}
 
     entry->changed      = false;
     entry->byteOrder    = BYTE_ORDER;
