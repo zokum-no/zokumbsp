@@ -203,6 +203,11 @@ struct nodeBuilderData {
 
 };
 
+struct pool {
+	void *address;
+	size_t size;
+	bool used;
+};
 
 struct sScoreInfo {
 	int       index;
