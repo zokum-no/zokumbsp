@@ -1790,7 +1790,11 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, nodeBuilderData *nbd) {
 	*/
 
 
-	bool pickFix = false;
+	int ideal = 0;
+	int verygood = 0;
+	int decent = 0;
+	int meh = 0;
+	int bad = 0;
 
 	SEG *testSeg = segs;
 	int count [3], noScores = 0, rank, i;
@@ -1914,8 +1918,21 @@ int AlgorithmBalancedTree( SEG *segs, int noSegs, nodeBuilderData *nbd) {
 				}
 
 				if (!sCount && !ssCount) {
-					pickFix = true;
+					ideal++;
+				} else if ((sCount == 1) && (!ssCount)) {
+					verygood++;
+				} else if ((ssCount == 0) && (ssCount == 1)) {
+                                        verygood++;
+				} else if ((sCount <= 1) && (ssCount <= 2)) {
+					decent++;
+				} else if ((sCount <= 2) && (ssCount <= 1)) {
+					decent++;
+				} else if ((sCount <= 2) && (ssCount <= 2)) {
+					meh++;
+				} else {
+					bad++;
 				}
+			
 	
 
 				noScores++;
@@ -2040,13 +2057,33 @@ next:
 	}*/
 
 	// printf("depth %d, width %d, index %d, noScores: %d, retval %d (%d)\n", nodeDepth, *width, score [(*width) - 1].index, noScores, retval, score [0].index);
-	
-	if (pickFix && (noScores > 1)) {
+	/*
+	if (pickFix && (noScores > 0)) {
 		// printf("pick fix\n");
 		nbd->goodScoresFound = 1;
 	} else {
-		nbd->goodScoresFound = noScores;
+		nbd->goodScoresFound = 0;
+	}*/
+
+
+	nbd->goodScoresFound = ideal;
+
+	if (noSegs > 10) {
+		nbd->goodScoresFound += verygood;
 	}
+
+	if (noSegs > 20) {
+        	nbd->goodScoresFound += decent;
+	}	
+
+	if (noSegs > 30) {
+        	nbd->goodScoresFound += meh;
+	}
+
+	if (noSegs > 500) {
+		nbd->goodScoresFound += bad;
+	}
+
 
 	nbd->scoresFound = noScores;
 
@@ -2730,6 +2767,7 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
 int nodeCounter = 0;
 
+long long wideStats[6];
 
 int deep[256];
 bool deepinit = false;
@@ -2737,6 +2775,80 @@ bool deepinit = false;
 int maxDepth = 0;
 
 time_t updated = 0;
+
+
+bool segInited = false;
+
+#define SEG_POOL_SIZE 200
+pool segPool[SEG_POOL_SIZE];
+
+SEG *AllocateSeg(int minimum) {
+	if (!segInited) {
+		for (int i = 0; i != SEG_POOL_SIZE; i++) {
+			segPool[i].address = NULL;
+			segPool[i].size = 0;
+			segPool[i].used = false;
+		}
+		segInited = true;
+	}
+	
+	// try to find an unused allocated memory location
+	int bestFit = -1;	
+
+	for (int i = 0; i != SEG_POOL_SIZE; i++) {
+		if (segPool[i].address && (segPool[i].used == false)) { 
+			if ((segPool[i].size > minimum)) {
+				if (bestFit != -1) {
+					// find the smallest pool that is big enough
+					if (segPool[bestFit].size > segPool[i].size) {
+						bestFit = i;
+					}
+				} else {
+					bestFit = i;
+				}	
+			}
+		} else if (segPool[i].address == NULL) {
+			break;
+		}		
+	}
+
+	if (bestFit != -1) {
+		// printf("reused\n");
+		segPool[bestFit].used = true;
+		return (SEG *) segPool[bestFit].address;
+	}
+
+	// no entry big enough, let's try to allocate one
+
+	for (int i = 0; i != SEG_POOL_SIZE; i++) {
+		if (segPool[i].used == false) {
+			size_t newSize = (minimum * 110) / 100;
+
+			segPool[i].address = new SEG [newSize];
+			segPool[i].used = true;
+			segPool[i].size = newSize;
+			return (SEG *) segPool[i].address;
+		}
+	}
+
+	// last resort, since we've used all 200 slots.
+	
+	return new SEG [minimum];
+
+}
+
+
+void FreeSeg(SEG *address) {
+	for (int i = 0; i != 200; i++) {
+		if (address == segPool[i].address) {
+			segPool[i].used = false;
+			return;
+		}
+	}
+	// last resort
+	delete [] address;
+}
+
 
 // int CreateNode ( int inSeg, int *noSegs, sBSPOptions *options, DoomLevel *level, int segGoal, int subSectorGoal, int *maxPicks) {
 int CreateNode ( int inSeg, int *noSegs, nodeBuilderData *nbd) {
@@ -2941,8 +3053,14 @@ int CreateNode ( int inSeg, int *noSegs, nodeBuilderData *nbd) {
 
 	// We only backup if we plan to do more than one line pick
 	if (maxWidth > 1) {
-		segsStartBackup = new SEG [segCount];
+		// segsStartBackup = new SEG [segCount];
+		
+		segsStartBackup = (SEG *) AllocateSeg(segCount);
+		
 		memcpy(segsStartBackup, segStart, sizeof ( SEG) * (segCount));
+		//
+
+
 
 		//		printf("copied seg %d, ", sizeof ( SEG) * (segCount));
 
@@ -3075,7 +3193,7 @@ differentpartition:
 	int *oldWideSegs = nbd->wideSegs;
 	nbd->wideSegs = wideSegs;
 
-#undef DEPTHINFO
+#define DEPTHINFO
 
 #ifdef DEPTHINFO
 
@@ -3089,6 +3207,10 @@ differentpartition:
 		}
 
 		printf("\n%c[2A\n", 27);
+
+		for (int i = 0; i != 6; i++) {
+			wideStats[i] = 0;
+		}
 
 
 	} else {
@@ -3127,7 +3249,7 @@ differentpartition:
 							}
 						}
 
-						if (deep[i] > 1) {
+						if (deep[i] > 2) {
 							if (i < lowTwo) {
 								lowTwo = i;	
 							}
@@ -3142,7 +3264,8 @@ differentpartition:
 					// printf(" |");
 					//
 
-					printf(" - Lowest depth of +1: '%d'        ", lowTwo);
+					// the trailing space is actually important when going from 10 to 9 etc
+					printf(" - Lowest multi-depth: %d ", lowTwo);
 
 					printf("%c[2A\n", 27);
 
@@ -3175,7 +3298,8 @@ if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight, nb
 	// cleanup!
 	if (maxWidth > 1) {
 		if (segsStartBackup) {
-			delete [] segsStartBackup;
+			// delete [] segsStartBackup;
+			FreeSeg(segsStartBackup);
 		}
 		if (convexListBackup) {
 			delete [] convexListBackup;
@@ -3204,6 +3328,16 @@ if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight, nb
 	}
 	// if ( showProgress ) ShowDone ();
 	return ( UINT16 ) ( 0x8000 | CreateSSector ( segs, *noSegs ));
+}
+
+
+if (nbd->goodScoresFound == 1) {
+	// maxWidth = 1;
+
+	// printf("segs: %d\n", *noSegs);
+
+	// width = maxWidth;
+
 }
 
 nbd->wideSegs = oldWideSegs;
@@ -3351,9 +3485,11 @@ if (width != -1) {
 	if (options->Metric == TREE_METRIC_SUBSECTORS) {
 		if (ssectorCount < CNbestSsectorsCount) {
 			betterTree = true;
+			wideStats[width]++;
 		} else if (ssectorCount == CNbestSsectorsCount) {
 			if ((segCount < CNbestSegsCount)) {
 				betterTree = true;
+				wideStats[width]++;
 			} else if ((segCount == CNbestSegsCount) && (width == maxWidth)) {
 				betterTree = true;
 			}
@@ -3361,9 +3497,11 @@ if (width != -1) {
 	} else if (options->Metric == TREE_METRIC_SEGS) {
 		if (segCount < CNbestSegsCount) {
 			betterTree = true;
+			wideStats[width]++;
 		} else if (segCount == CNbestSegsCount) {
 			if (ssectorCount < CNbestSsectorsCount) {
 				betterTree = true;
+				wideStats[width]++;
 			} else if ((ssectorCount == CNbestSsectorsCount) && (width == maxWidth)) {
 				betterTree = true;
 			}
@@ -3401,6 +3539,7 @@ if (width != -1) {
 
 		if (bestSegs) {
 			delete [] bestSegs;
+			// FreeSeg(bestSegs);
 			delete [] bestSSectors;
 			delete [] bestNodes;
 			// delete [] bestConvexList;
@@ -3411,6 +3550,7 @@ if (width != -1) {
 		// October 2018
 		bestSegs = segStart;
 		segStart = new SEG [maxSegs];
+		// segStart = AllocateSeg(maxSegs);
 
 		bestSSectors = ssectorPool;
 		ssectorPool = new wSSector [ssectorPoolEntries];
@@ -3479,7 +3619,8 @@ if (width != -1) {
 // Cleanup if we looked for several trees
 if (maxWidth > 1) {
 	if (segsStartBackup) {
-		delete [] segsStartBackup;
+		// delete [] segsStartBackup;
+		FreeSeg(segsStartBackup);
 	}
 	if (convexListBackup) {
 		delete [] convexListBackup;
@@ -3505,6 +3646,7 @@ if (betterTree == false) {
 	reassigned = true;
 
 	delete [] segStart;
+	//FreeSeg (segStart);
 	segStart = bestSegs;
 
 	delete [] nodePool;
@@ -3542,6 +3684,7 @@ nodeDepth--;
 
 if (reassigned == false) {
 	delete [] bestSegs;
+	// FreeSeg(bestSegs);
 	delete [] bestNodes;
 	delete [] bestSSectors;		
 }
