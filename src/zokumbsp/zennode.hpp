@@ -190,13 +190,11 @@ struct sBSPOptions {
 struct nodeBuilderData {
 	sBSPOptions *options;
 	DoomLevel *level;
-	int *width;
+	int width;
 	int *wideSegs;
-	// int *picks;
 
 	int segGoal;
 	int subSectorGoal;
-	// int *maxPicks;
 	int localMaxWidth;
 	int scoresFound;
 	int goodScoresFound;

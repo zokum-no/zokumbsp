@@ -2041,7 +2041,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Nodes.MultipleSplitMethods = 0;
 	config.Nodes.Cache 	    = 1;
 	config.Nodes.Metric         = TREE_METRIC_BALANCED;
-	config.Nodes.Width          = 2;
+	config.Nodes.Width          = 1;
 	config.Nodes.Tuning		= 100;
 
 	config.Reject.Rebuild       = true;
