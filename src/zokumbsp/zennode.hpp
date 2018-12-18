@@ -28,6 +28,9 @@
 //
 //----------------------------------------------------------------------------
 
+#define MAX_SCORES 400
+
+
 #ifndef ZENNODE_HPP_
 #define ZENNODE_HPP_
 
@@ -77,6 +80,7 @@ struct sNodeOptions {
 	int   Metric;
 	int  	Width;
 	int 	Tuning;
+	bool vertexPartition;
 };
 
 struct sBlockList {
@@ -185,6 +189,8 @@ struct sBSPOptions {
 	int	Metric;
 	int	Width;
 	int 	Tuning;
+
+	bool 	vertexPartition;
 };
 
 struct nodeBuilderData {
@@ -199,6 +205,10 @@ struct nodeBuilderData {
 	int scoresFound;
 	int goodScoresFound;
 
+	int vertices;
+
+	SEG pSeg;
+
 };
 
 struct pool {
@@ -207,12 +217,29 @@ struct pool {
 	bool used;
 };
 
+struct vertexSpace {
+	int x;
+	int y;
+	int flags;
+};
+
+
 struct sScoreInfo {
 	int       index;
 	long      metric1;
 	long      metric2;
 	int       invalid;
 	int       total;
+
+	// int inner;
+	// int outer;
+	int startx;
+	int starty;
+	int endx;
+	int endy;
+
+	bool vertex;
+
 };
 
 struct BSPData {
@@ -406,6 +433,8 @@ extern int  CreateBLOCKMAP ( DoomLevel *level, sBlockMapOptions &options );
 extern void CreateNODES ( DoomLevel *level, sBSPOptions *options );
 extern bool CreateREJECT ( DoomLevel *level, const sRejectOptions &options, const sBlockMapOptions &blockMapOptions );
 extern void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, const sBlockMapOptions &options, int blockSize, int savings, int totalSize);
-void ProgressBar(char *, double, int);
+void ProgressBar(char *, double, int, int);
+
+
 
 #endif

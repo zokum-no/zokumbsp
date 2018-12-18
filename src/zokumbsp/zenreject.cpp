@@ -274,7 +274,7 @@ UINT8 *GetREJECT ( DoomLevel *level, bool empty )
     return reject;
 }
 
-void ProgressBar(char *, double, int);
+void ProgressBar(char *, double, int, int);
 
 void UpdateProgress ( int stage, double percent )
 {
@@ -290,11 +290,11 @@ void UpdateProgress ( int stage, double percent )
 	double progress = percent / 100.0;
 
 	if (stage == 1) {
-		ProgressBar((char *) "Reject - Pruning sectors ", progress, 35);
+		ProgressBar((char *) "Reject - Pruning sectors ", progress, 35, 0);
 	} else if (stage == 2) {
-		ProgressBar((char *) "Reject - Analyzing lines ", progress, 35);
+		ProgressBar((char *) "Reject - Analyzing lines ", progress, 35, 0);
 	} else {
-		ProgressBar((char *) "Reject - Other ", progress, 45);
+		ProgressBar((char *) "Reject - Other ", progress, 45, 0);
 	}
 
 }

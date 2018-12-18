@@ -184,7 +184,8 @@ void printHelp () {
 	fprintf ( stdout, "%c     d   Minimize BSP depth.\n", ( config.Nodes.Method == 2 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     f   Minimize time.\n", ( config.Nodes.Method == 3 ) ? DEFAULT_CHAR : ' ');
 	fprintf ( stdout, "%c     a   Adaptive tree.\n", ( config.Nodes.Method == 4 ) ? DEFAULT_CHAR : ' ');
-	fprintf ( stdout, "%c     m   Multi-tree. (Slow)\n\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "%c     m   Multi-tree. (Slow)\n", ( config.Nodes.Method == 5 ) ? DEFAULT_CHAR : ' ');
+	fprintf ( stdout, "%c     v   Vertex-tree (N/A)\n\n", ( config.Nodes.Method == 6 ) ? DEFAULT_CHAR : ' ');
 
 	fprintf ( stdout, "    m=    Metric, what kind of node tree do you favor.\n" );
 	fprintf ( stdout, "%c     b   Favor 2 splits = 1 subsector.\n", ( config.Nodes.Metric == TREE_METRIC_BALANCED ) ? DEFAULT_CHAR : ' ' );
@@ -386,6 +387,8 @@ bool parseNODESArgs ( char *&ptr, bool setting ) {
                                                    config.Nodes.Method = 4;
 					   } else if (ptr[1] == 'M') {
 						   config.Nodes.Method = 5;
+					   } else if (ptr[1] == 'V') {
+						   config.Nodes.Method = 6;
 					   } else {
 						   printf("error");
 						   return true;
@@ -719,10 +722,10 @@ int getLevels ( int argIndex, const char *argv [], char names [][MAX_LUMP_NAME],
 				if ( list->FindWAD ( ptr )) {
 					strcpy ( names [index++], ptr );
 				} else {
-					fprintf ( stderr, "  Could not find %s\n", ptr, errors++ );
+					fprintf ( stderr, "  Could not find '%s'. Errors: %d\n", ptr, errors++ );
 				}
 			} else {
-				fprintf ( stderr, "  %s is not a valid name for a level\n", ptr, errors++ );
+				fprintf ( stderr, "  %s is not a valid name for a level. Errors: %d\n", ptr, errors++ );
 			}
 			ptr = strtok ( NULL, "+" );
 		}
@@ -734,7 +737,7 @@ int getLevels ( int argIndex, const char *argv [], char names [][MAX_LUMP_NAME],
 				// Make sure it's really a level
 				if ( strcmp ( dir[1].entry->name, "THINGS" ) == 0 ) {
 					if ( index == MAX_LEVELS ) {
-						fprintf ( stderr, "ERROR: Too many levels in WAD - ignoring %s!\n", dir->entry->name, errors++ );
+						fprintf ( stderr, "ERROR: Too many levels in WAD - ignoring %s! Errors: %d\n", dir->entry->name, errors++ );
 					} else {
 						memcpy ( names [index++], dir->entry->name, MAX_LUMP_NAME );
 					}
@@ -1192,13 +1195,14 @@ void PrintMapHeader(char *map, bool highlight) {
 }
 
 int oldHashes = 0;
-double oldProgress = -1.0;
+double oldProgress[2] = {-1.0, 1-.0};
 
 char *oldLump;
 
-UINT32 oldTime;
+UINT32 oldTime[2];
+int lastRow = 0;
 
-void ProgressBar(char *lump, double progress, int width) {
+void ProgressBar(char *lump, double progress, int width, int row) {
 
 	char output[2048]; // we write to this and then flush it to screen
 	char add[2048];
@@ -1209,22 +1213,23 @@ void ProgressBar(char *lump, double progress, int width) {
 	double divisor = 0;
 	double total = 0;
 
-	if (oldProgress > progress) {
-		oldProgress = -1.0;
+	if (oldProgress[row]  > progress) {
+		oldProgress[row] = -1.0;
 	}
 
-	// we only update 4 times per second
-	UINT32 now = CurrentTime ();
+
+		// we only update 4 times per second
+		UINT32 now = CurrentTime ();
 	
-	if (now < (oldTime + 100)) {
-		return;
-	}
-	oldTime = now;
+		if (now < (oldTime[row] + 200)) {
+			return;
+		}
+		oldTime[row] = now;
 
-	if (progress < (oldProgress +  0.0001)) {
-		return;
-	} 
-	oldProgress = progress;
+		if (progress < (oldProgress[row] +  0.0001)) {
+			return;
+		} 
+		oldProgress[row] = progress;
 
 	if (progress > 1.0) {
 		progress = 1.0;
@@ -1233,6 +1238,14 @@ void ProgressBar(char *lump, double progress, int width) {
 	int hashes = lrint(progress * (double) width);
 
 // Ok we will have to write something to screen!
+
+	if (row) {
+		for (int i = 0; i != row; i++) {
+			printf("\n");
+		}
+	}
+
+
 	GotoXY (0, startY );
 	
 	sprintf(output, "         %-s", lump);
@@ -1367,15 +1380,21 @@ void ProgressBar(char *lump, double progress, int width) {
 		PrintColorOff();
 	}
 
+	if (row) {
+		MoveUp ( row );
+		GetXY ( &startX, &startY );
+	}
+
 }
 
 
 void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nuD) {
 	GotoXY ( 8, startY );
 
-	oldTime = 0;
+	oldTime[0] = 0;
+	oldTime[1] = 0;
 
-	if (nu) {
+	if (nu != -1) {
 		cprintf ( " %-8s  %7d  => %7d", lump, old, nu );
 	} else {
 		cprintf ( " %-8s  %6.2f%%  => %6.2f%%", lump, oldD, nuD );
@@ -1643,6 +1662,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		options.Metric = 	config.Nodes.Metric;
 		options.Width =		config.Nodes.Width;
 		options.Tuning = 	config.Nodes.Tuning;
+		options.vertexPartition = config.Nodes.vertexPartition;
 
 		ReadCustomFile ( curLevel, myList, &options );
 
@@ -2043,6 +2063,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Nodes.Metric         = TREE_METRIC_BALANCED;
 	config.Nodes.Width          = 1;
 	config.Nodes.Tuning		= 100;
+	config.Nodes.vertexPartition = false;
 
 	config.Reject.Rebuild       = true;
 	config.Reject.Empty         = false;

@@ -70,6 +70,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+
 #include "common.hpp"
 #include "logger.hpp"
 
@@ -1308,14 +1310,25 @@ static void SplitSegs ( SEG *segs, int noSplits, DoomLevel *level ) {
 }
 
 // static void SortSegs ( SEG *pSeg, SEG *seg, int noSegs, int *noLeft, int *noRight, sBSPOptions *options )
-static void SortSegs ( int inSeg, SEG *seg, int noSegs, int *noLeft, int *noRight, sBSPOptions *options, DoomLevel *level ) {
+static void SortSegs ( int inSeg, SEG *seg, int noSegs, int *noLeft, int *noRight, sBSPOptions *options, DoomLevel *level, nodeBuilderData *nbd) {
 	FUNCTION_ENTRY ( NULL, "SortSegs", true );
 
 	if (inSeg == -1) {
 		return;
 	}
 
-	SEG *pSeg = &seg[inSeg];
+	SEG *pSeg;
+
+	// if (options->algorithm == 6 ) {
+	if (options->vertexPartition ) {
+		// printf("vertex\n");
+		pSeg = &nbd->pSeg;
+
+		//printf("P-line       : %5.0f %5.0f %5.0f %5.0f\n", pSeg->start.x, pSeg->start.y, pSeg->end.x, pSeg->end.y); 
+
+	} else {
+		pSeg = &seg[inSeg];	
+	}
 
 	int count [3];
 
@@ -1347,8 +1360,14 @@ static void SortSegs ( int inSeg, SEG *seg, int noSegs, int *noLeft, int *noRigh
 	}
 
 	// ComputeStaticVariables ( pSeg );
-	//
-	ComputeStaticVariables(seg, inSeg);
+
+
+	// if (options->algorithm == 6) {	// BUG
+	if (options->vertexPartition ) {
+		ComputeStaticVariables(&nbd->pSeg, 0);
+	} else {
+		ComputeStaticVariables(seg, inSeg);
+	}
 
 	count [0] = count [1] = count [2] = 0;
 	int i;
@@ -1356,7 +1375,13 @@ static void SortSegs ( int inSeg, SEG *seg, int noSegs, int *noLeft, int *noRigh
 
 
 	for ( i = 0; i < noSegs; i++ ) {
-		side = WhichSide ( &seg [i], options, level );
+		if (nbd->options->vertexPartition ) {
+		// if (nbd->options->algorithm == 6) {
+			// printf("using slow algo\n");
+			side = _WhichSide ( &seg [i], options, level );
+		} else {
+			side = WhichSide ( &seg [i], options, level );
+		}
 		count [side + 1 ]++;
 
 		// seg [i].Side = side;
@@ -1522,7 +1547,13 @@ retry:
 	//SortSegs ( pSeg, seg, noSegs, noLeft, noRight, options );
 	
 	if (partitionOffset != -2) {
-		SortSegs ( partitionOffset, seg, noSegs, noLeft, noRight, nbd->options, nbd->level );
+		
+		// if (nbd->options->algorithm == 6 ) {
+		if (nbd->options->vertexPartition ) {
+			SortSegs ( -2, seg, noSegs, noLeft, noRight, nbd->options, nbd->level, nbd);
+		} else {
+			SortSegs ( partitionOffset, seg, noSegs, noLeft, noRight, nbd->options, nbd->level, nbd);
+		}
 	}
 
 	// Make sure the set of SEGs is still convex after we convert to integer coordinates
@@ -2084,7 +2115,7 @@ next:
 		nbd->goodScoresFound += quality[1];
 	}
 
-	if (noSegs < 50) { // 60
+	if (noSegs < 50) { // 50
         	nbd->goodScoresFound += quality[2];
 	}	
 
@@ -2170,11 +2201,385 @@ splitCache[cache][0] = score [0].index;
 //static SEG *AlgorithmQuick ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs )
 //int AlgorithmQuick ( SEG *segs, int noSegs, sBSPOptions *options, DoomLevel *level, int *width, int *wideSegs, int *picks ) {
 
+
+
+int GenerateVertexSpace(vertexSpace *vs, SEG *segs, int noSegs ) {
+
+	int vertices = 0;
+
+	for (int i = 0; i != noSegs; i++) {
+
+		int v = 0;
+		bool dupe = false;
+
+		while (	v != vertices) {
+			if ((segs[i].start.x == vs[v].x) && (segs[i].start.y == vs[v].y)) {
+				dupe = true;
+				break;
+			}
+			v++;
+		}
+		if (!dupe) {
+			vs[vertices].x = segs[i].start.x;
+			vs[vertices].y = segs[i].start.y;
+			vertices++;
+		}
+
+		// repeat once more, for end-vertices. These often occur after splits!
+		v = 0;
+		dupe = false;
+
+		while (	v != vertices) {
+			if ((segs[i].end.x == vs[v].x) && (segs[i].end.y == vs[v].y)) {
+				dupe = true;
+				break;
+			}
+			v++;
+		}
+		if (!dupe) {
+			vs[vertices].x = segs[i].end.x;
+			vs[vertices].y = segs[i].end.y;
+			vertices++;
+		}
+	}
+	return vertices;
+
+}
+
+
+void SortScores (int noScores, sScoreInfo *score) {
+	int rank, i;
+
+	if ( noScores > 1 ) {
+		qsort ( score, noScores, sizeof ( sScoreInfo ), sortMetric1 );
+		for ( rank = i = 0; i < noScores; i++ ) {
+			score [i].total = rank;
+			if ( score [i].metric1 != score [i+1].metric1 ) rank++;
+		}
+		qsort ( score, noScores, sizeof ( sScoreInfo ), sortMetric2 );
+		for ( rank = i = 0; i < noScores; i++ ) {
+			score [i].total += rank;
+			if ( score [i].metric2 != score [i+1].metric2 ) rank++;
+		}
+		qsort ( score, noScores, sizeof ( sScoreInfo ), sortTotalMetric );
+	}
+}
+
+bool IsConvex(SEG *segs, int noSegs, nodeBuilderData *nbd) {
+
+	SEG *testSeg = segs;
+
+	sBSPOptions *options = nbd->options;
+
+	int count [3], rank, i;
+	int &lCount = count [0], &sCount = count [1], &rCount = count [2];
+
+	for ( i = 0; i < noSegs; i++ ) {
+		int alias = testSeg->flags & SEG_SPLIT ? 0 : lineDefAlias [ testSeg->DatalineDef ];
+
+		if (( alias == 0 ) || ( lineChecked [ alias ] == false )) {
+
+			lineChecked [ alias ] = -1;
+			count [0] = count [1] = count [2] = 0;
+
+			ComputeStaticVariables(segs, i);
+
+			if (( fabs ( DX ) < EPSILON ) && ( fabs ( DY ) < EPSILON )) goto next;
+
+			memset ( usedSector, 0, sizeof ( UINT8 ) * sectorCount );
+			SEG *destSeg = segs;
+			for ( int j = 0; j < noSegs; j++, destSeg++ ) {
+				switch ( WhichSide ( destSeg, options, nbd->level )) {
+					case SIDE_LEFT  : 
+						lCount++; usedSector [ destSeg->Sector ] |= 0xF0;	
+						break;
+					case SIDE_SPLIT :
+						return false;
+						break;
+					case SIDE_RIGHT : 
+						rCount++; usedSector [ destSeg->Sector ] |= 0x0F;	
+						break;
+				}
+				if (rCount * lCount) {
+					return false;
+				}
+			}
+			// Only consider SEG if it is not a boundary line
+
+			if ( !(lCount * rCount + sCount )) {
+				segs[i].flags |= SEG_EDGE;
+			}
+
+			if ( lCount * rCount + sCount ) {
+				int lsCount = 0, rsCount = 0, ssCount = 0;
+				for ( int j = 0; j < sectorCount; j++ ) {
+					switch ( usedSector [j] ) {
+						case 0xF0 : lsCount++;	break;
+						case 0xFF : ssCount++;	break;
+						case 0x0F : rsCount++;	break;
+					}
+				}
+			}
+		}
+next:
+			testSeg++;
+		
+	}
+	return true;
+}
+
+int PartitionLineLastResort(SEG *segs, int noSegs, vertexSpace *vs, int vertices, nodeBuilderData *nbd) {
+
+	
+        int quality[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+        SEG *testSeg = segs;
+        int count [3], noScores = 0, rank, i;
+        int &lCount = count [0], &sCount = count [1], &rCount = count [2];
+
+        score [0].index = 0;
+
+
+	for ( int outer = 0; outer < vertices; outer++ ) {
+
+
+		if (noSegs > 5) {	
+			double progress = (double) outer / (double) noSegs;
+
+			ProgressBar((char *) "V-space   ", progress, 50, 1);
+		}
+
+		int bestSplit = 99999;
+
+
+		for ( int inner = outer; inner < vertices; inner++ ) {
+
+			int startx = vs[outer].x;
+			int starty = vs[outer].y;
+
+			int endx = vs[inner].x;
+			int endy = vs[inner].y;
+
+			if (! ((startx == endx) && ((starty == endy)))) {
+
+				X = startx;
+				Y = starty;
+
+				DX = endx - startx;
+				DY = endy - starty;
+
+				ANGLE = ComputeAngle(DX, DY);
+
+				count [0] = count [1] = count [2] = 0;
+
+				H = ( DX * DX ) + ( DY * DY );
+				currentAlias = 0;
+
+				nbd->pSeg.flags = SEG_FINAL; // clever hack
+
+
+				// printf("SEG %5.0f %5.0f %5.0f %5.0f %d\n", X, Y, DX, DY, ANGLE);
+
+				if (( fabs ( DX ) < EPSILON ) && ( fabs ( DY ) < EPSILON )) continue; //goto vertexnext;
+
+				sScoreInfo *curScore = &score [noScores];
+				curScore->invalid = 0;
+				curScore->vertex = true;
+
+				memset ( usedSector, 0, sizeof ( UINT8 ) * sectorCount );
+				SEG *destSeg = segs;
+				for ( int j = 0; j < noSegs; j++, destSeg++ ) {
+					switch ( WhichSide ( destSeg, nbd->options, nbd->level )) {
+						case SIDE_LEFT  : 
+							lCount++; usedSector [ destSeg->Sector ] |= 0xF0;	
+							break;
+						case SIDE_SPLIT :
+							if ( destSeg->flags & SEG_DONT_SPLIT) {
+								curScore->invalid++;
+							}
+							sCount++; usedSector [ destSeg->Sector ] |= 0xFF;
+							break;
+						case SIDE_RIGHT : 
+							rCount++; usedSector [ destSeg->Sector ] |= 0x0F;	
+							break;
+					}
+				}
+
+				if ( ((lCount * rCount + sCount) && (lCount && rCount) )) {
+
+					// printf("l: %d, r: %d, s: %d\n", count[0], count[1],count[2]);
+
+					int lsCount = 0, rsCount = 0, ssCount = 0;
+					for ( int j = 0; j < sectorCount; j++ ) {
+						switch ( usedSector [j] ) {
+							case 0xF0 : lsCount++;	break;
+							case 0xFF : ssCount++;	break;
+							case 0x0F : rsCount++;	break;
+						}
+					}
+					curScore->index = i;
+
+					curScore->metric1 = (0xffff / (sCount + 1)) - abs(rCount - lCount);
+					curScore->metric2 = 0;
+
+					curScore->startx = startx;
+					curScore->starty = starty;
+					curScore->endx = endx;
+					curScore->endy = endy;
+					int ssf = 1;
+
+					noScores++;
+				} 
+
+			}
+		}
+	}
+
+	if ( noScores > 1 ) {
+        	SortScores(noScores, score);
+	}	
+
+	return noScores;
+
+}
+
+void ComputeQuality (int *quality, int noSegs, nodeBuilderData *nbd) {
+	nbd->goodScoresFound = quality[0];
+
+	if (noSegs < 14) { // 14
+		nbd->goodScoresFound += quality[1];
+	}
+
+	if (noSegs < 50) { // 50
+		nbd->goodScoresFound += quality[2];
+	}	
+
+	if (noSegs < 200) { // 200
+		nbd->goodScoresFound += quality[3];
+	}
+
+	if (noSegs < 500) { // 500
+		nbd->goodScoresFound += quality[4];
+	} else {
+		nbd->goodScoresFound = quality[0] + quality[1] + quality[2] + quality[3] + quality[4] + quality[5] + quality[6] + quality[7] + quality[8] + quality[9];
+	}
+
+	if ( quality[0] > 6) {
+		// printf("hq %d\n", quality[0]);
+	}
+
+}
+
+int AlgorithmVertex( SEG *segs, int noSegs, nodeBuilderData *nbd) {
+
+	sBSPOptions *options = nbd->options;
+	DoomLevel *level = nbd->level;
+	int *width = &nbd->width;
+	int *wideSegs = nbd->wideSegs;
+	// int *picks = nbd->maxPicks;
+
+	nbd->goodScoresFound = 0;
+
+
+	FUNCTION_ENTRY ( NULL, "AlgorithmVertex", true );
+
+	int quality[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+	SEG *testSeg = segs;
+	int count [3], noScores = 0, rank, i;
+	int &lCount = count [0], &sCount = count [1], &rCount = count [2];
+
+	score [0].index = 0;
+
+	// Check if it is a sub sector!
+	if (IsConvex(segs, noSegs, nbd)) {
+		return -2;
+	}
+
+	int vertices;
+
+	vertexSpace vs[nbd->vertices];
+
+	vertices = GenerateVertexSpace(vs, segs, noSegs);
+
+	noScores = 0; // We have 0 scores, let's try to find a nice partition line
+
+	// This is the last resort, this will try pretty much anything and come up with something
+	noScores = PartitionLineLastResort(segs, noSegs, vs, vertices, nbd);
+
+	// We're done and we have at least 1 partition line, so let's have a look at it and return it.
+	if ( score [0].invalid ) {
+		int noBad = 0;
+		for ( int i = 0; i < noScores; i++ ) if ( score [i].invalid ) noBad++;
+		WARNING ( "Non-splittable linedefs have been split! ("<< noBad << "/" << noScores << ")" );
+	}
+
+	// printf("Scores: %d, rCount: %d, lCount: %d, sCount: %d\n", noScores, rCount, lCount, sCount);
+
+	int retval;
+
+	if (noScores == 1) {
+		retval =  score [0].index;
+		noMoreScores = true;
+	} else {
+		int w = *width;
+
+		for (int s = 0; s != noScores; s++) {
+			if (score[s].index > -1) {
+				retval = score[s].index;
+				w--;
+				if (w == 0) {
+					break;
+				}
+			}
+		}
+	}
+
+	if (noScores == *width) {
+		noMoreScores = true;
+	}
+
+	for (int i = 0; i != nbd->options->Width; i++) {
+		nbd->wideSegs[i] = score[i].index;
+
+		if ((i + 1) == noScores) {
+			break;
+		}
+
+	}
+
+	ComputeQuality(quality, noSegs, nbd);
+
+	nbd->scoresFound = noScores;
+
+	nbd->pSeg.start.x = score[0].startx;
+	nbd->pSeg.start.y = score[0].starty;
+
+	nbd->pSeg.end.x = score[0].endx;
+	nbd->pSeg.end.y = score[0].endy;
+
+	nbd->options->vertexPartition = true ; // score[0].vertex;
+
+	if (vertices < 5) {
+		for (int verts = 0; verts != vertices; verts++) {
+			// printf("%d %d\n",  vs[verts].x, vs[verts].y);
+		}
+	}
+
+	// printf("Best line was: %5.0f %5.0f %5.0f %5.0f segs: %d/%d, scores: %d, vertices: %d\n", nbd->pSeg.start.x, nbd->pSeg.start.y, nbd->pSeg.end.x, nbd->pSeg.end.y, noSegs, segCount, noScores, vertices );
+
+	for (int d = 0; d != noSegs; d++) {
+		// printf("%5.0f, %5.0f to %5.0f, %5.0f || ", segs[d].start.x, segs[d].start.y, segs[d].end.x, segs[d].end.y);
+	}
+	// printf ("\n");
+	
+	return 0;
+}
 int AlgorithmQuick ( SEG *segs, int noSegs, nodeBuilderData *nbd) {
 
 	sBSPOptions *options = nbd->options;
 	DoomLevel *level = nbd->level;
-	
+
 
 	FUNCTION_ENTRY ( NULL, "AlgorithmQuick", true );
 
@@ -2293,10 +2698,10 @@ static int AlgorithmMulti( SEG *segs, int noSegs, nodeBuilderData *nbd) {
 	int returnSeg;
 	// static wLineDefInternal *oldLine;
 
-/*	if (*width == 1) {
+	/*	if (*width == 1) {
 		returnSeg = AlgorithmFewerSplits (segs, noSegs, options, level, width, wideSegs );
-	}
-*/
+		}
+		*/
 	// returnSeg = AlgorithmBalancedTree (segs, noSegs, options, level, width, wideSegs, picks );
 	returnSeg = AlgorithmBalancedTree (segs, noSegs, nbd);
 
@@ -2307,10 +2712,13 @@ static int AlgorithmMulti( SEG *segs, int noSegs, nodeBuilderData *nbd) {
 static int AlgorithmAdaptive( SEG *segs, int noSegs, nodeBuilderData *nbd) {
 	if (noSegs > nbd->options->Tuning) {
 		//return AlgorithmBalancedTree (segs, noSegs, options, level, width, wideSegs, picks );
+		nbd->options->vertexPartition = false;
 		return AlgorithmBalancedTree (segs, noSegs, nbd);
 	} else {
 		// return AlgorithmFewerSplits (segs, noSegs, options, level, width, wideSegs, picks );
-		return AlgorithmFewerSplits (segs, noSegs, nbd);
+		// return AlgorithmFewerSplits (segs, noSegs, nbd);
+		nbd->options->vertexPartition = true;
+		return  AlgorithmVertex(segs, noSegs, nbd);
 	}
 }
 
@@ -2393,7 +2801,7 @@ static void PrintKeepUniqueSegs ( SEG *segs, int noSegs, const char *msg = NULL 
 			double dy = segs[i-1].end.y - segs[i-1].start.y;
 			double y1 = dx * ( segs[i].start.y - segs[i-1].start.y ) - dy * ( segs[i].start.x - segs[i-1].start.x );
 			if ( y1 != 0.0 ) fprintf ( stdout, "<< ERROR - seg[%d] is not colinear with seg[%d] - %f!!! >>\n", i, i-1, y1 );
-		
+
 			exit(0);
 		}
 		lastAngle = segs [i].Dataangle;
@@ -2563,14 +2971,14 @@ static void VerifyNode ( SEG *segs, int noSegs, double x1, double y1, double x2,
 			double p2 = ( dx * ( segs [j].end.y - y1 ) - dy * ( segs [j].end.x - x1 )) / h;
 			fprintf ( stdout, " [%d] #%4d  (%8.1f,%8.1f) - #%4d (%8.1f,%8.1f)  S:%5d  LD:%5d  y1:%10.3f  y2:%10.3f %s\n", j, segs[j].Datastart,  segs[j].start.x, segs[j].start.y, segs[j].Dataend, segs[j].end.x, segs[j].end.y, segs[j].Sector, segs[j].DatalineDef, p1, p2, (( p1 > 0.25 ) || ( p2 > 0.25 )) ? "<---" : "" );
 			/*
-			int datasx = newVertices[segs[j].Data.start].x;
-			int datasy = newVertices[segs[j].Data.start].y;
-			int dataex = newVertices[segs[j].Data.end].x;
-			int dataey = newVertices[segs[j].Data.end].y;
+			   int datasx = newVertices[segs[j].Data.start].x;
+			   int datasy = newVertices[segs[j].Data.start].y;
+			   int dataex = newVertices[segs[j].Data.end].x;
+			   int dataey = newVertices[segs[j].Data.end].y;
 
-			fprintf ( stdout, " [%d] Data: (%8.1f,%8.1f) - (%8.1f,%8.1f)\n", j,  datasx, datasy, dataex, dataey);
-			*/
-	
+			   fprintf ( stdout, " [%d] Data: (%8.1f,%8.1f) - (%8.1f,%8.1f)\n", j,  datasx, datasy, dataex, dataey);
+			   */
+
 		}
 		if (errors == true) {
 			exit(0);
@@ -2645,7 +3053,7 @@ static UINT16 GenerateUniqueSectors ( SEG *segs, int noSegs ) {
 		// NODE *nodePoolRealloc = ( NODE * ) realloc ( nodePool, sizeof ( NODE ) * ( nodeCount + delta ));
 		NODE *nodePoolRealloc = new NODE [nodeCount + delta];
 		memcpy (nodePoolRealloc, nodePool, sizeof ( NODE) * (nodeCount) );
-		
+
 
 		nodePoolEntries = nodeCount + delta;
 
@@ -2697,31 +3105,31 @@ int MaxWidth(int depth, int segs, sBSPOptions *options) {
 			return 2;
 		}
 	} 
-/*	if (options->Width > 3) {
+	/*	if (options->Width > 3) {
 		if (segs < 60) {
-                        return 3;
-                }
-	}
-*/
+		return 3;
+		}
+		}
+		*/
 
-//	printf("%d\n", options->Width);
+	//	printf("%d\n", options->Width);
 
 	return options->Width;
 
-/*
-	int ret = sqrt(segs / 8);
+	/*
+	   int ret = sqrt(segs / 8);
 
-	if (ret < 1) {
-		ret = 1;
-	}
+	   if (ret < 1) {
+	   ret = 1;
+	   }
 
-	return ret;
-*/
+	   return ret;
+	   */
 }
 
 #define COLOR true
 
-void ProgressBar(char *, double, int);
+// void ProgressBar(char *, double, int, int);
 
 void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
@@ -2746,7 +3154,7 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 
 		progress = prog / max;
 
-	// Tree based progress, the best solution for multi tree, but looks odd if tree is badly balanced.
+		// Tree based progress, the best solution for multi tree, but looks odd if tree is badly balanced.
 	} else {
 
 		segs = 30000;
@@ -2778,10 +3186,10 @@ void DepthProgress(int depth, int segs, sBSPOptions *o) {
 			depthProgress[8] / ((double) MaxWidth(1, segs, o) * (double) MaxWidth(2, segs, o) * (double) MaxWidth(3, segs, o) *(double) MaxWidth(4, segs, o) *(double) MaxWidth(5, segs, o) * (double) MaxWidth(6, segs, o) * (double) MaxWidth(7, segs, o) * (double) MaxWidth(7, segs, o) * (double) MaxWidth(8, segs, o) * 512.0);
 
 
-;
+		;
 
 	}
-	ProgressBar((char *) "BSP   ", progress, 54);
+	ProgressBar((char *) "BSP       ", progress, 50, 0);
 }
 
 int nodeCounter = 0;
@@ -2810,7 +3218,7 @@ SEG *AllocateSeg(int minimum) {
 		}
 		segInited = true;
 	}
-	
+
 	// try to find an unused allocated memory location
 	int bestFit = -1;	
 
@@ -2851,7 +3259,7 @@ SEG *AllocateSeg(int minimum) {
 	}
 
 	// last resort, since we've used all 200 slots.
-	
+
 	return new SEG [minimum];
 
 }
@@ -2900,10 +3308,13 @@ int CreateNode ( int inSeg, int *noSegs, nodeBuilderData *nbd) {
 
 		expander = ((double) maxSegs * 1.02) + 3;
 
-		SEG *s = new SEG [expander];
+		// SEG *s = new SEG [expander];
+		SEG *s = AllocateSeg(expander);
+
 		memcpy(s, segStart, maxSegs * sizeof(SEG));
 
-		delete [] segStart;
+		//delete [] segStart;
+		FreeSeg(segStart);
 		segStart = s;
 
 		maxSegs = expander;
@@ -3033,7 +3444,7 @@ NODE *nodePoolBackup;
 
 SEG *segsStartBackup = NULL;
 int *convexListBackup;
-char *lineUsedBackup;
+char *lineUsedBackup = NULL;;
 
 char **sideInfoBackup;
 int currentAliasBackup = currentAlias;
@@ -3185,7 +3596,7 @@ if (lnbd->width != 1) {
 int *oldWideSegs = lnbd->wideSegs;
 lnbd->wideSegs = wideSegs;
 
-#define DEPTHINFO
+#undef DEPTHINFO
 
 #ifdef DEPTHINFO
 
@@ -3233,6 +3644,9 @@ if (deepinit == false) {
 				int lowOne = 200;
 
 				// int maxValue = 0;
+
+				char output[512];
+
 				for (int i = 0; i != 180; i++) {
 					if (deep[i] > 0) {
 
@@ -3249,15 +3663,30 @@ if (deepinit == false) {
 
 				}
 
-				for (int i = 1; i != maxDepth; i++) {
-					printf("%d", deep[i]);
+				int i;
+
+				for (i = 1; i != maxDepth; i++) {
+
+					if (deep[i] < 10) {
+						output[i - 1] = 48 + deep[i];
+					} else if (deep[i] < 37) {
+						output[i - 1] = 87 + deep[i];
+					} else {
+						output[i - 1] = 46 + deep[i];
+					}
+
+					// printf("%d", deep[i]);
 				}
+
+				output[i] = 0;
+				printf(output);
+
 				// printf("%c[B", 27);
 				// printf(" |");
 				//
 
 				// the trailing space is actually important when going from 10 to 9 etc
-				printf(" | 1st wide: %d |                                  Good scores %d", lowTwo, goodScoresUsed);
+				printf(" | 1st wide: %d |                                  Good scores %d   ", lowTwo, goodScoresUsed);
 
 				printf("%c[2A\n", 27);
 
@@ -3328,9 +3757,9 @@ if (( *noSegs <= 1 ) || ( ChoosePartition ( segs, *noSegs, &noLeft, &noRight, ln
 bool goodScoreAbort = false;
 
 
-if ((lnbd->width == 1) && ( lnbd->goodScoresFound < maxWidth)) {
+if ((lnbd->width != 0) && ( lnbd->goodScoresFound < maxWidth)) {
 
-	if (maxWidth > 1) {
+	if (maxWidth - 1 == lnbd->width) {
 		goodScoreAbort = true;
 	}
 
@@ -3421,13 +3850,13 @@ if (lnbd->width != -1) {
 
 
 	deep[nodeDepth] = (lnbd->width * 2) - 0 ;
-/*
-	printf("%d\n", lnbd->width);
+	/*
+	   printf("%d\n", lnbd->width);
 
-	for (int i = nodeDepth + 1; i != 180; i++) {
-		deep[i] = 0;
-	}
-*/
+	   for (int i = nodeDepth + 1; i != 180; i++) {
+	   deep[i] = 0;
+	   }
+	   */
 	// lNode = CreateNode ( inSeg + noRight, &noLeft, options, level, segGoal, subSectorGoal, &leftPicks);
 	lNode = CreateNode ( inSeg + noRight, &noLeft, lnbd);
 
@@ -3539,7 +3968,17 @@ if (lnbd->width != -1) {
 			delete [] bestSSectors;
 			delete [] bestNodes;
 			delete [] bestTempSeg;
-                }
+		}
+
+		if (bestLineUsed) {
+			delete [] bestLineUsed;
+		}
+
+		if (bestConvexList) {
+			if (bestConvexList != convexList) {
+				delete [] bestConvexList;
+			}
+		}
 
 		if (segsStartBackup) {
 			FreeSeg(segsStartBackup);
@@ -3578,7 +4017,7 @@ if (lnbd->width != -1) {
 		// October 2018
 		bestSegs = segStart;
 		segStart = new SEG [maxSegs];
-		// segStart = AllocateSeg(maxSegs);
+		//segStart = AllocateSeg(maxSegs);
 
 		bestSSectors = ssectorPool;
 		ssectorPool = new wSSector [ssectorPoolEntries];
@@ -4231,6 +4670,8 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 					PartitionFunction = AlgorithmAdaptive;
 				} else if ( options->algorithm == 5 ) {
 					PartitionFunction = AlgorithmMulti;
+				} else if ( options->algorithm == 6 ) {
+					PartitionFunction = AlgorithmVertex;
 				} else { // usually == 1
 					PartitionFunction = AlgorithmFewerSplits;
 				}
@@ -4276,16 +4717,8 @@ restart:
 				lineUsed    = new char [ noAliases ];
 				memset ( lineUsed, false, sizeof ( char ) * noAliases );
 
-				Status ( (char *) "Creating Side Info ... " );
+				Status ( (char *) "      Creating Side Info ... " );
 				CreateSideInfo ( level );
-
-				// Score is used by balanced and multi
-				if ((options->algorithm == 2) || (options->algorithm == 5) || (options->algorithm == 4) ) {
-					score = new sScoreInfo [ noAliases ] ; // original
-					// score = new sScoreInfo [ noAliases * noAliases ] ; // idiot fix
-				} else {
-					score = NULL;
-				}
 
 				convexList = new int [ noAliases ];
 				convexListEntries = noAliases;
@@ -4335,6 +4768,25 @@ restart:
 				nbd.localMaxWidth = 999;
 
 				nbd.width = 1;
+
+				// Score is used by balanced and multi
+				if ((options->algorithm == 2) || (options->algorithm == 5)) {
+					score = new sScoreInfo [ noAliases ] ; // original
+					// score = new sScoreInfo [ noAliases * noAliases ] ; // idiot fix
+				} else if ((options->algorithm == 6) || (options->algorithm == 4)) {
+					// score = new sScoreInfo [ segCount * segCount * 4 ] ; // should be enough, i hope
+					vertexSpace *vs = new  vertexSpace [noSegs * 2];
+					// vertexSpace *vs, SEG *segs, int noSegs )
+
+					nbd.vertices = GenerateVertexSpace(vs, segStart, noSegs );
+
+					score = new sScoreInfo [(nbd.vertices * nbd.vertices / 2) + 2];
+
+					delete [] vs;
+
+				} else {
+					score = NULL;
+				}
 
 
 				CreateNode (0, &noSegs, &nbd);
