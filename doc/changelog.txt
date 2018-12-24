@@ -1,5 +1,11 @@
 Changelog for ZokumBSP
 
+ZokumBSP 1.1 
+- Yule release! Happy holidays!
+- New vertex based algorithm available for testing. -na=v to use it.
+- Support for two progress bars, used in vertex mode.
+- Minor text output bugs, nothing too bad.
+
 ZokumBSP 1.0.11
 - Doom 25 year anniversary release.
 

@@ -670,7 +670,39 @@ m=b - segSplits + (subSectors * 2). // Balanced
 m=s - segSplits                     // Reduce segs
 m=u - subSectors                    // Reduce subsectors.
 
-08:02 'q' - Don't display progress bar (Disabled in version 1.0.10)
+a=v Vertex algorithm
+
+This is a completely new way of picking partition lines. The current version in
+version 1.1 is set up to try to minimize splits. If it is possible to build a
+map without any split segs, this algorithm will find this build. On some maps 
+this new approach might make produce more splits than the old one. This will
+hopefully improve as more research is done. This approach to finding the 
+best partition line is a bit more complex and time consuming, so a lot of old
+assumptions and ideas are no longer applicable.
+
+Here is a list of maps that can be built without ANY splits:
+
+doom.wad: e2m8, e3m1, e4m2, e4m4.
+doom2.wad: map30, map31
+
+Quite a lot of maps can be built with a low split count. Some enhancements are
+possible to lower this count, but most likely not to eliminate them.
+
+1-2 splits:
+doom.wad: e1m9, e3m5, e3m8, e3m9, e4m8.
+doom2.wad: map04, map07, map22, map25, map28, map32
+
+This approach is well suited for smaller maps. The current approach is not too
+good at picking a good line when a split is the only option. This does lead to
+more splits as the map is built further. More research will have to be done in
+this field. There are bound to be improvements to be found.
+
+The values and algorithms chosen give good overall numbers for doom.wad and
+doom2.wad. Slightly different tunings have been shown to improve on some maps, 
+but give overall worse results when all the 68 maps are built. Finding and
+identifying why this happens will be an important research topic.
+
+08:02 'q' - Don't display progress bar (Disabled in version 1.0.10+)
 --------------------------------------
 
 This hides all the updates indicating the progress and depth of the BSP tree.

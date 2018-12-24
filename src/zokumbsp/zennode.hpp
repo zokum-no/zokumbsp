@@ -125,6 +125,9 @@ struct sVertex {
 #define SEG_LEFT	0x40
 #define SEG_RIGHT	0x80
 
+#define SEG_SPLIT_START 0x100
+#define SEG_SPLIT_END   0x200
+
 struct __attribute__((__packed__)) SEG {
 //struct SEG {
 //	UINT16 Datastart;
@@ -133,7 +136,7 @@ struct __attribute__((__packed__)) SEG {
 	UINT16 DatalineDef;
 	
 	UINT16          Sector;
-	char 		flags;	
+	UINT16 		flags;	
 //	INT16 		vertexCoords[2][2];
 
 	float 		startL;
@@ -231,12 +234,18 @@ struct sScoreInfo {
 	int       invalid;
 	int       total;
 
-	// int inner;
-	// int outer;
-	int startx;
-	int starty;
-	int endx;
-	int endy;
+	double startx;
+	double starty;
+	double endx;
+	double endy;
+
+	int rCount;
+	int sCount;
+	int lCount;
+
+	int rsCount;
+	int ssCount;
+	int lsCount;
 
 	bool vertex;
 
