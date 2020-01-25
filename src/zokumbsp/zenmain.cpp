@@ -1499,7 +1499,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 	const wadListDirEntry *dir = myList->FindWAD ( name );
 	DoomLevel *curLevel = new DoomLevel ( name, dir->wad );
-	if ( curLevel->IsValid ( ! config.Nodes.Rebuild ) == false ) {
+	if ( curLevel->IsValid ( false ) == false ) {
 		cprintf ( "This level is not valid... " );
 		cprintf ( "\r\n" );
 		delete curLevel;
