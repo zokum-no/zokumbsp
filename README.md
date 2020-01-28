@@ -11,32 +11,32 @@ Based on ZenNode 1.2.0 and available from GitHub.
 
 This is a work in progress and is an experimental node builder.
 
-## Proeject goals
+## Project goals
 
 A node / blockmap / reject builder that allows for larger maps that
-are compatible with the classic Doom dos executables and with the 
+are compatible with the classic Doom MS-DOS executables and with the
 Chocolate Doom project.
 
-## Compability
+## Compatibility
 
-It can produce compressed blockmaps that are compatible with the 
+It can produce compressed blockmaps that are compatible with the
 original Id Software blockmaps that should ensure 100% demo playback
-compability. It can also produce blockmaps that are compatible with
+compatibility. It can also produce blockmaps that are compatible with
 ZenNode 1.2.0 and BSP blockmaps, but with a possibly smaller size.
 
-The Blockmap in the original 'vanilla' Doom dos executables have an
+The Blockmap in the original 'vanilla' Doom MS-DOS executable has an
 upper limit of about 65 kilobyte. Bigger blockmaps would lead to the
 game crashing, putting an upper limit on the complexity and size of
 the maps one can create.
 
-By using better algorithms, some tricks and the added option of 
+By using better algorithms, some tricks and the added option of
 brute force testing up to 65k different blockmap offsets one can
 generate blockmaps that are significantly smaller than what was
 possible with ZenNode, BSP or Id's original node builder.
 
-Use the -bi+ switch to build blockmaps that can replace the 
-original blockmaps. The quality of compability has been tested
-mostly with multiple compet-n demos of multilevel recordings. 
+Use the -bi+ switch to build blockmaps that can replace the
+original blockmaps. The quality of compatibility has been tested
+mostly with multiple compet-n demos of multilevel recordings.
 Primarily 30nm2039.lmp, 30ns6155.lmp and 30famax2.lmp
 
 ## Project web page
