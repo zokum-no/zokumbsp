@@ -644,6 +644,8 @@ void ReadConfigFile ( const char *argv [] )
 {
 	FUNCTION_ENTRY ( NULL, "ReadConfigFile", true );
 
+	const char DOOM_BUILDER_CONFIG_HEADER[]  = "compilers\n";
+
 	FILE *configFile = fopen ( CONFIG_FILENAME, "rt" );
 	if ( configFile == NULL ) {
 		char fileName [ 256 ];
@@ -664,7 +666,12 @@ void ReadConfigFile ( const char *argv [] )
 		char lineBuffer [ 256 ];
 		if (fgets ( lineBuffer, sizeof ( lineBuffer ), configFile ) == NULL) {
 			fprintf(stderr, "Input error\n");
+		} else if (strcmp ( lineBuffer, DOOM_BUILDER_CONFIG_HEADER) == 0) {
+			errors = true;
+			fprintf ( stderr, "%s appears to be a Doom Builder config file. Skipping.\n", CONFIG_FILENAME );
+			break;
 		}
+
 		char *basePtr = strupr ( lineBuffer );
 		while ( *basePtr == ' ' ) basePtr++;
 		basePtr = strtok ( basePtr, "\n\x1A" );
