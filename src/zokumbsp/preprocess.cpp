@@ -678,7 +678,7 @@ void MapExtraData( DoomLevel *level, const sOptions *config) {
 	   UINT16      sector;               
 	 * */
 
-	int CompressSideDefs(DoomLevel *level, const sOptions *config) {
+	void CompressSideDefs(DoomLevel *level, const sOptions *config) {
 		int sideDefs = level->SideDefCount();
 
 		const wSideDef *sideDef = level->GetSideDefs ();
