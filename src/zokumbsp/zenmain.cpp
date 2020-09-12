@@ -86,6 +86,8 @@ const char CONFIG_FILENAME []   = "zokumbsp.cfg";
 const int  MAX_LEVELS           = 99;
 const int  MAX_OPTIONS          = 256;
 const int  MAX_WADS             = 32;
+const int  VANILLA_LIMIT        = 32768;
+const int  SOURCE_PORT_LIMIT    = 65535;
 
 char HammingTable [ 256 ];
 /*
@@ -210,7 +212,7 @@ void printHelp () {
 	fprintf ( stdout, "%c     2   Default width and also minimum.\n", ( config.Nodes.Width == 2 ) ? DEFAULT_CHAR : ' ');
 	
 	// Reject
-	fprintf ( stdout, "\nSwitches to control REJECT resouce in a map.\n\n");
+	fprintf ( stdout, "\nSwitches to control REJECT resource in a map.\n\n");
 
 	fprintf ( stdout, "%c -r      Rebuild REJECT resource.\n\n", config.Reject.Rebuild ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c   z     Insert empty REJECT resource.\n", config.Reject.Empty  ? DEFAULT_CHAR : ' ' );
@@ -223,10 +225,20 @@ void printHelp () {
 	fprintf ( stdout, "%c -c      Enable 16 color output.\n", config.Color ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c -cc     Enable 24bit color output.\n", config.Color ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c -t      Don't write output file (test mode).\n\n", ! config.WriteWAD ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "  -s=     Which output stats to show.\n");
-	fprintf ( stdout, "%c    m    Show a total for all computed levels.\n", config.Reject.UseRMB ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "\n" );
+
 	// Statistics
+	fprintf ( stdout, "  -s=     Which output stats to show.\n");
+	fprintf ( stdout, "%c   e     Sector count.\n", config.Statistics.ShowSectors ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   l     Linedef count.\n", config.Statistics.ShowLineDefs ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   p     Seg split count.\n", config.Statistics.ShowSplits ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   n     Nodes count.\n", config.Statistics.ShowNodes ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   s     Subsector count.\n", config.Statistics.ShowSubSectors ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   t     Thing count.\n", config.Statistics.ShowThings ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "%c   v     Vertices count.\n", config.Statistics.ShowVertices ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    a     Show all of the above.\n" );
+	fprintf ( stdout, "%c   m     Show a total for all computed levels.\n", config.Statistics.ShowTotals ? DEFAULT_CHAR : ' ' );
+	fprintf ( stdout, "    x     Count percentage by %d limit of source ports.\n", SOURCE_PORT_LIMIT );
+	fprintf ( stdout, "\n" );
 
 	// Misc
 	fprintf ( stdout, " level - ExMy for DOOM/Heretic or MAPxx for DOOM II/HEXEN.\n\n" );
@@ -534,7 +546,7 @@ bool parseSTATISTICSArgs (char *&ptr, bool setting ) {
 			setting = ( *ptr++ == '+' ) ? true : false;
 		}
 		switch ( option ) {
-			case 'A' : config.Statistics.ShowSectors = config.Statistics.ShowLineDefs = config.Statistics.ShowSplits = config.Statistics.ShowNodes = config.Statistics.ShowSubSectors = config.Statistics.ShowThings = config.Statistics.ShowTopSummary = config.Statistics.ShowVertices = setting;    break;
+			case 'A' : config.Statistics.ShowSectors = config.Statistics.ShowLineDefs = config.Statistics.ShowSplits = config.Statistics.ShowNodes = config.Statistics.ShowSubSectors = config.Statistics.ShowThings = config.Statistics.ShowVertices = setting;    break;
 			case 'E' : config.Statistics.ShowSectors = setting;     break;
 			case 'L' : config.Statistics.ShowLineDefs = setting;	break;
 			case 'P' : config.Statistics.ShowSplits = setting;	break;
@@ -542,8 +554,8 @@ bool parseSTATISTICSArgs (char *&ptr, bool setting ) {
 			case 'N' : config.Statistics.ShowNodes = setting;	break;
 			case 'S' : config.Statistics.ShowSubSectors = setting;  break;
 			case 'T' : config.Statistics.ShowThings = setting; 	break;
-			case 'U' : config.Statistics.ShowTopSummary = setting;	break;
 			case 'V' : config.Statistics.ShowVertices = setting;	break;
+			case 'X' : config.Statistics.MaxSize = SOURCE_PORT_LIMIT;	break;
 			default  : return true;
 		}
 		// config.Reject.Rebuild = true;
@@ -1543,7 +1555,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			pct = ((double) curLevel->LineDefCount () / 32768.0) * 100.0;
 			cprintf("   %6.2f%%", pct);
 */
-			PrintMapLump((char * )"Linedefs", oldLineCount, curLevel->LineDefCount (), 32767, 0, 0);
+			PrintMapLump((char * )"Linedefs", oldLineCount, curLevel->LineDefCount (), config.Statistics.MaxSize - 1, 0, 0);
 
 			PrintTime (preTime);
 			showTime = true;
@@ -1564,7 +1576,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			pct = ((double) curLevel->SectorCount () / 32768.0) * 100.0;
 			*/
 
-			PrintMapLump((char * )"Sectors", oldSectorCount, curLevel->SectorCount (), 32767, 0, 0);		
+			PrintMapLump((char * )"Sectors", oldSectorCount, curLevel->SectorCount (), config.Statistics.MaxSize - 1, 0, 0);		
 
 			if (showTime == false) {
 				PrintTime (preTime);
@@ -1575,7 +1587,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			rows++;
 		}
 /*		if (config.Statistics.ShowVertices) {
-			PrintMapLump((char * )"Vertices", oldVertexCount, curLevel->VertexCount (), 32767, 0, 0);
+			PrintMapLump((char * )"Vertices", oldVertexCount, curLevel->VertexCount (), config.Statistics.MaxSize - 1, 0, 0);
 			cprintf ( "\r\n" );
 			rows++;
 		}
@@ -1742,7 +1754,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		   */
 		segCount = curLevel->SegCount();
 
-		PrintMapLump( (char *)  "Segs", oldSegCount, segCount, 32768, 0, 0);
+		PrintMapLump( (char *)  "Segs", oldSegCount, segCount, config.Statistics.MaxSize, 0, 0);
 		cprintf ( "\r\n" );
 		rows++;
 
@@ -1762,7 +1774,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			rows++;
 		}
 		if (config.Statistics.ShowVertices) {
-			PrintMapLump((char * )"Vertices", oldVertexCount, curLevel->VertexCount (), 32767, 0, 0);
+			PrintMapLump((char * )"Vertices", oldVertexCount, curLevel->VertexCount (), config.Statistics.MaxSize - 1, 0, 0);
 			cprintf ( "\r\n" );
 			rows++;
 		}
@@ -1785,7 +1797,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		   GotoXY ( startX, startY );
 		   */
 
-		PrintMapLump( (char *)  "Subsecs", oldSubSectorCount, curLevel->SubSectorCount (), 32768, 0, 0);
+		PrintMapLump( (char *)  "Subsecs", oldSubSectorCount, curLevel->SubSectorCount (), config.Statistics.MaxSize, 0, 0);
 		GetXY ( &dummyX, &startY );
 		PrintTime ( nodeTime );
 
@@ -2071,6 +2083,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Reject.UseGraphs     = true;
 	config.Reject.UseRMB        = false;
 
+	config.Statistics.MaxSize = VANILLA_LIMIT;
 	config.Statistics.ShowVertices = false;
 	config.Statistics.ShowLineDefs = false;
 	config.Statistics.ShowSplits = false;

@@ -355,13 +355,13 @@ struct sGeometryOptions {
 };
 
 struct sStatisticsOptions {
+	int 			MaxSize;
 	bool			ShowVertices;
 	bool			ShowLineDefs;
 	bool			ShowSplits;
 	bool			ShowSectors;
 	bool			ShowThings;
 	bool			ShowTotals;
-	bool			ShowTopSummary;
 	bool			ShowSubSectors;
 	bool			ShowNodes;
 };
