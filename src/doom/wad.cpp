@@ -387,7 +387,7 @@ bool WAD::IsMap ( const char *name ) {
 		if (( episode < '1' ) || ( episode > '9' )) {
 			return false;
 		}
-		if (( mission < '1' ) || ( mission > '10' )) {
+		if (( mission < '1' ) || ( mission > '9' )) {
 			return false;
 		}
 		if ( name[4] != '\0' ) {
