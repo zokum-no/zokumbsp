@@ -4615,9 +4615,24 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 
 			UINT16 offset = 0;
 
+		
+			// moved out of if blocks
+			ld = &level->GetLineDefs ()[segStart[start+x].DatalineDef] ;
+
+			if (ld->type == 1088) {
+				int oldLD = segStart[start+x].DatalineDef;
+				int duplicatedLineDef = ld->tag;
+
+				segs[x].lineDef = ld->tag;
+
+				printf("Linedef changedfrom %d to %d.\n", oldLD, duplicatedLineDef );
+
+			}
+
+
 			if (segs[x].flip == 0) {
 
-				ld = &level->GetLineDefs ()[segStart[start+x].DatalineDef] ;
+				// ld = &level->GetLineDefs ()[segStart[start+x].DatalineDef] ;
 
 				// if (segs [x].start != segStart[start+x].LineDef->start) {
 				if (segs [x].start != ld->start) {
@@ -4633,7 +4648,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 
 				} 
 			} else {
-				ld = &level->GetLineDefs ()[segStart[start+x].DatalineDef] ;
+				// ld = &level->GetLineDefs ()[segStart[start+x].DatalineDef] ;
 
 				//if (segs [x].start != segStart[start+x].LineDef->end) {
 				if (segs [x].start != ld->end) {
@@ -4674,7 +4689,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 
 			}					
 			DatalineDef
-			*/
+			 */
 
 
 			// lSeg->Dataoffset = ( UINT16 ) ( hypot (( double ) ( x - vertS->x ), ( double ) ( y - vertS->y )) + 0.5 );
@@ -4706,8 +4721,8 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 
 
 			   );
-			   *//*
-				} else {*/
+			 *//*
+			      } else {*/
 			/*
 			   struct wSegs {
 			   UINT16      start;      
@@ -4717,7 +4732,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 			   UINT16      flip;       
 			   UINT16      offset;     
 			   };
-			   */
+			 */
 
 
 
@@ -4753,7 +4768,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 													      dx = (long) (newVertices[lineDef->start].x - newVertices[lineDef->end].x);
 													      dy = (long) (newVertices[lineDef->start].y - newVertices[lineDef->end].y);
 													      }
-													      */
+													    */
 			}
 
 			if (lineDef->type == 1081) { // linedef special to force angle to degrees
@@ -4768,7 +4783,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 				   angle = (dy == 0) ? (BAM)((dx < 0) ? BAM180 : 0) :
 				   (dx == 0) ? (BAM)((dy < 0) ? BAM270 : BAM90) :
 				   (BAM)(atan2((float)dy, (float)dx) * BAM180 / M_PI + 0.5 * sgn(dy));
-				   */
+				 */
 
 				angle = ComputeAngle(dx, dy);
 
@@ -4811,7 +4826,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 
 			/*else {
 			// printf("angle ok\n");
-			*/
+			 */
 			segs[x].angle = angle;
 			// }
 
@@ -4840,6 +4855,33 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 
 				return finalSegs;
 			}
+			/*
+			   void PostSegDuplication(DoomLevel *level, wSegs *seg) {
+
+			   const wLineDefInternal *lineDefs = level->GetLineDefs ();
+
+			   for ( int i = 0; i != segCount; i++) {
+			   wSegs currentSeg = seg[i];
+
+			   if (lineDefs[currentSeg.lineDef].type == 1088) {
+			   printf("Found linedef      %d, tag: %d\n", currentSeg.lineDef, lineDefs[currentSeg.lineDef].tag  );
+			// Here we do the swapping :)
+
+			// We fix X-alignement to ensure it renders correct in case of align/split walls
+			// if the current one is smaller, not much we can do other than add something silly like 2048
+			// add this fix later :D
+
+			// we we make this seg point to a different linedef, depending on tag
+			currentSeg.lineDef = lineDefs[currentSeg.lineDef].tag;
+			currentSeg.offset = 1;
+
+			printf("Changed to linedef %d, tag: %d\n", currentSeg.lineDef, lineDefs[currentSeg.lineDef].tag  );
+
+			}
+			}
+
+			}
+			 */
 
 			void PostAddVertices(void) {
 
@@ -4956,7 +4998,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 				   int rightTop, rightBottom, rightLeft, rightRight;
 				   int leftTop, leftBottom, leftLeft, leftRight;
 				   int rightChild, leftChild;
-				   */
+				 */
 
 				wNode *node;
 				wBound side;
@@ -4987,7 +5029,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 						  );
 						  printf(" %d %d %d %d\t", node->side[0].maxx, node->side[0].minx, node->side[0].maxy, node->side[0].miny);
 						  printf(" %d %d %d %d\n", node->side[1].maxx, node->side[1].minx, node->side[1].maxy, node->side[1].miny);
-						  */
+						 */
 						// [  2] need to swap 10240 VS 26624                -1440 -1472 -64 -384
 
 
@@ -5023,7 +5065,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 				PostVisplaneReduction( &doomNodes[node->child[nodeChild]]);
 				}
 				}
-				*/
+				 */
 			}
 
 
@@ -5039,7 +5081,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 			//----------------------------------------------------------------------------
 			/*
 			   bool lowestSegCountFound = false;
-			   */
+			 */
 			void CreateNODES ( DoomLevel *level, sBSPOptions *options ) {
 				FUNCTION_ENTRY ( NULL, "CreateNODES", true );
 
@@ -5208,7 +5250,6 @@ restart:
 				// This doesn't quite work, yet :)
 				// PostVisplaneReduction();
 
-
 				delete [] convexList;
 				if ( score ) delete [] score;
 
@@ -5228,7 +5269,16 @@ restart:
 				level->NewSubSectors ( ssectorCount, GetSSectors ( level, ssectorPool, ssectorCount, options ));
 
 				level->NewVertices ( noVertices, GetVertices ());
-				level->NewSegs ( segCount, GetSegs ());
+
+				// New 21.09.2020 code
+				// Post process seg stuff, duplicate textures for effects etc, 1088 tag
+
+				wSegs *finalSegList = GetSegs();
+
+				// Functiopnality moved to GetSSectors
+				// PostSegDuplication(level, finalSegList);
+
+				level->NewSegs ( segCount, finalSegList);
 
 				free ( newVertices );
 				// free ( ssectorPool );
