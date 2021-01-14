@@ -307,6 +307,30 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 			continue;
 		}
 
+
+		// do not add segs that have the BSPNOSEG texture as lower
+
+		if (sideLeft) {
+
+			if ( * ( UINT16 * )  sideLeft->text2 != ( UINT16 ) EMPTY_TEXTURE ) {
+				if (strncmp(sideLeft->text2, "BSPNOSEG", 8) == 0) {
+					sideLeft = ( const wSideDef * ) NULL;
+
+					// printf("\nno seg\n");
+				}
+			}
+		}
+
+		if (sideRight) {
+			if ( * ( UINT16 * ) sideRight->text2 != ( UINT16 ) EMPTY_TEXTURE ) {
+	                        if (strncmp(sideRight->text2, "BSPNOSEG", 8) == 0) {
+	                                sideRight = ( const wSideDef * ) NULL;
+
+					// printf("\nno seg\n");
+	                        }
+	                }
+		}
+
 		BAM angle;
 		/*
 		 * These 4 new linedef types allow for arbitrary rotation of the ways walls are rendered compared to
@@ -316,53 +340,21 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 		double a2;
 
 		if (lineDef->type == 1081) { // linedef special to force angle to degrees
-			// angle = ((BAM)lineDef->tag * BAM360) / (BAM)360;
 			angle = (BAM) ((lineDef->tag * BAM360) / 360);
 		} else if (lineDef->type == 1083) { // linedef special to force angle to BAM
 			angle = (BAM)lineDef->tag;
 		} else {
 			// based on BSP's code, cleaner and simpler :)
-
-			/*angle = (dy == 0) ? (BAM)((dx < 0) ? BAM180 : 0) :
-				(dx == 0) ? (BAM)((dy < 0) ? BAM270 : BAM90) :
-				(BAM)(atan2((float)dy, (float)dx) * BAM180 / M_PI + 0.5 * sgn(dy));
-			*/
 			angle = ComputeAngle(dx, dy);
 
-			// angle = (BAM)(atan2((float)dy, (float)dx) * BAM180 / M_PI + 0.5 * sgn(dy) );
-			// a2 = (atan2((float)dy, (float)dx) * 180 / M_PI + 0.5 * sgn(dy) + 90.0);
-
-			// a2 = atan2( (double) dy, (double) dx ) * 180.0 / M_PI  ;
-
 			if (lineDef->type == 1080) { // linedef special for additive degrees
-				// angle += ((double)lineDef->tag * (double)BAM360) / 360.0;
-				//printf("\n-- %u %d --\n", angle, lineDef->tag);
-				//double d = ( (double) lineDef->tag / 360.0) * (double) BAM360;
-
 				angle += (BAM) ((lineDef->tag * BAM360) / 360);
-				// angle += (BAM) d;
-				// printf("\n-- %u -- (%f)\n", angle, d);
 			} else if (lineDef->type == 1082) { // linedef special for additive bam
-				// printf("\n");
 				angle += (BAM)lineDef->tag;
-				// printf("\n");
 			}
 		}
 
-		/*
-		   BAM angle = ( dy == 0 ) ? ( BAM ) (( dx < 0 ) ? BAM180 : 0 ) :
-		   ( dx == 0 ) ? ( BAM ) (( dy < 0 ) ? BAM270 : BAM90 ) :
-		   ( BAM ) ( atan2 (( float ) dy, ( float ) dx ) * BAM180 / M_PI + 0.5 * sgn ( dy ));
-		   */ 
-
-		/*if (i != 758) {
-			printf ("Lindef: %3d (x: %4ld y:%4ld) [BAM: %5u / radians: %lf]\n", i, dx, dy, angle, atan2(dy,dx)  );
-		}
-		*/
-		// printf("A: %5d", angle);
-
 		bool split = options->dontSplit ? options->dontSplit [i] : false;
-
 		if (lineDef->type == 1087) {
 			split = true;
 		}
@@ -371,8 +363,6 @@ static SEG *CreateSegs ( DoomLevel *level, sBSPOptions *options ) {
 		if (level->extraData->lineDefsRendered[i] == false) {
 			continue;
 		}
-
-		// printf("dy: %d dx: %d -> %lf \n",  dy,dx, atan2 (dy, dx));
 
 
 		if (split) {
@@ -4625,7 +4615,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 
 				segs[x].lineDef = ld->tag;
 
-				printf("Linedef changedfrom %d to %d.\n", oldLD, duplicatedLineDef );
+				// printf("Linedef changedfrom %d to %d.\n", oldLD, duplicatedLineDef );
 
 			}
 
@@ -5112,7 +5102,7 @@ wSSector *GetSSectors ( DoomLevel *level, wSSector *ssectorList, int noSSectors,
 					PartitionFunction = AlgorithmFewerSplits;
 				}
 
-				if (PartitionFunction != AlgorithmMulti) {
+				if ( !((PartitionFunction == AlgorithmMulti) || (PartitionFunction == AlgorithmVertex)  )) {
 					options->Width = 1; // never build wide trees unless we have to :)
 				}
 restart:
