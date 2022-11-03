@@ -104,7 +104,7 @@ sOptions config;
 
 struct sOptionsRMB {
     const char         *wadName;
-    sRejectOptionRMB   *option [MAX_OPTIONS];
+    sRejectOptionRMB   option [MAX_OPTIONS];
 };
 
 sOptionsRMB rmbOptionTable [MAX_WADS];
@@ -798,8 +798,7 @@ bool ReadOptionsRMB ( const char *wadName, sOptionsRMB *options ) {
 		}
 		sRejectOptionRMB tempOption;
 		if ( ParseOptionRMB ( ++line, buffer, &tempOption ) == true ) {
-			options->option [index]  = new sRejectOptionRMB;
-			*options->option [index] = tempOption;
+			options->option [index] = tempOption;
 			index++;
 		}
 	}
@@ -903,7 +902,10 @@ wadList *getInputFiles ( const char *cmdLine, char *wadFileName )
 				delete wad;
 			} else {
 				if (( config.Reject.UseRMB == true ) && ( index < MAX_WADS )) {
-					if ( ReadOptionsRMB ( wadName, &rmbOptionTable [index] ) == true ) index++;
+					if ( ReadOptionsRMB ( wadName, &rmbOptionTable [index] ) == true ) {
+						config.Reject.rmb = rmbOptionTable[index].option;
+						index++;
+					}
 				} else if ( index == MAX_WADS ) {
 					fprintf ( stderr, "WARNING: Too many wads specified - RMB options ignored" );
 					index++;
