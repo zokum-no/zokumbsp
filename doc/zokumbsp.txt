@@ -723,12 +723,26 @@ since it allows for much faster rendering if all of the areas are convex.
 08:04 'i' - Ignore non-visible lineDefs
 ---------------------------------------
 
-This option is similar to a blockmap option that removes non-collidable lines
-from the level geometry. It does however check for the presence of a middle
-texture, since those need to be rendered even if a linedef has sidefs
-belonging to the same sector. This will also check for the presence of a lower
-texture to avoid these lines to be ignored when designig maps with invisible
-floors.
+When enabled, this will remove two sided linedefs that have the same sector 
+on both sides from the rendering / sub sector generation.
+
+Even with this on, it will however add sub sectors and segs if one of the 
+following conditions are met:
+* The line has a tag other than 0
+* There is a normal texture (render bars and fences).
+* There is a lower texture that will never be displayed anyway.
+
+The last one is there to make it easier to design maps with invisible 
+floors / deep water / self referencing sectors.
+
+If this option is turned off, it will generate more segs than strictly 
+necessary in some cases. With this on you can avoid dummy tags or a
+dummy lower texture. Turned off, it should build maps much more like
+most other node builders do, like BSP.
+
+Note: This document was updated in 2023 to clarify how the tool is
+intended to work, if it doesn't work like this, it is most likely a bug 
+in the implementation.
 
 08:05 't' - Thoroughness
 ------------------------
