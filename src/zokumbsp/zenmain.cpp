@@ -77,10 +77,10 @@
 DBG_REGISTER ( __FILE__ );
 
 #define ZENVERSION              "1.2.1"
-#define ZOKVERSION		"1.0.11"
-#define ZOKVERSIONSHORT		"1.0.11"
+#define ZOKVERSION		"1.1.1-alpha1"
+#define ZOKVERSIONSHORT		"1.1.1"
 
-const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2018 Kim Roar Foldøy Hauge";
+const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2023 Kim Roar Foldøy Hauge";
 const char BANNER []            = "Based on: ZenNode Version " ZENVERSION " (c) 1994-2004 Marc Rousseau";
 const char CONFIG_FILENAME []   = "zokumbsp.cfg";
 const int  MAX_LEVELS           = 99;
