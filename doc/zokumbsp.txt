@@ -1,7 +1,7 @@
 Author
 ======
 
-(c) 2016-2018 Kim Roar Foldøy Hauge
+(c) 2016-2023 Kim Roar Foldøy Hauge
 (c) 1995-2004 Marc Rousseau (ZenNode base)
 
 Description
@@ -17,7 +17,8 @@ features. The tool allows for the construction of bigger and more complex maps
 than ZenNode and many other similar tools.
 
 It has port-specific handling, but the main development is for vanilla 1.9
-executables and Chocolate Doom.
+executables and Chocolate Doom. Chances are that maps built with this tool that
+utilize some of the more advanced options will not work in many ports.
 
 Index
 =====
@@ -33,19 +34,20 @@ Index
 09. Reject builder
 10. Other options
 11. Compatibility
-12. Usage together with other tools
-13. Other resources
-14. Changelog
-15. Acknowledgements.
-16. Other node builders.
+12. Usage in projects.
+13. Usage together with other tools
+14. Other resources
+15. Changelog
+16. Acknowledgements.
+17. Other node builders.
 
 Section 01: Project goals
 =========================
 
-The main goal of ZokumBSP was to provide a node builder that is compatible
-with ZenNode and the classic version 1.9 Doom 2 executable, referred to in
-this document as classic Doom. Support for other source ports, feature and 
-limit wise is within the goal as long as it doesn't interfere with classic
+The main goal of ZokumBSP was to provide a node builder that is compatible with 
+ZenNode and the classic version 1.9 Doom 2 executable, referred to in this 
+document as classic Doom or just Doom. Support for other source ports, feature 
+and limit wise is within the goal as long as it doesn't interfere with classic
 Doom support.
 
 01:01 Non-Doom games
@@ -56,6 +58,10 @@ nice-to-have, the features for these executables that already exist in the
 game will be kept, but not tested when new code is added due to the added
 complexity this would cause.
 
+As of 2023, interest in these has been minimal, but if there is an actual need
+I could look into fixing bugs. As for adding specific features that are only
+usable in these games, that is not within the current project scope.
+
 01:02 Slot in for ZenNode
 -------------------------
 
@@ -63,6 +69,9 @@ An important aspect of ZokumBSP is to be a slot-in-replacement for ZenNode.
 One should be able to run it with the exact same paramaters as ZenNode and get
 a comparable result, hopefully with a better runtime performance or a better
 built structure.
+
+ZenNode has some bugs and defaults that are problematic. Some of that has been
+fixed and changed, so it will not build maps in the exact same way.
 
 01:03 Bigger and more complex maps in classic Doom
 --------------------------------------------------
@@ -75,8 +84,8 @@ playable in classic doom.
 ----------------------------------------
 
 Finally, by adding more switches, options and tweaks, the tool should enable
-mappers to add new special effects that rely on the final data structure
-output from the tool to have certain properties.
+mappers to add new special effects that rely on the final data structure output
+from the tool to have certain properties.
 
 Section 02: Basic usage
 =======================
@@ -88,7 +97,8 @@ The basic usage is just like ZenNode, although some argument parsing bugs has
 been cleaned up to allow for the addition of other parameters.
 
 To build a map for use in Doom, simply invoke: "zokumbsp mapfile.wad" where
-you substitute mapfile.wad with the name of your map.
+you substitute mapfile.wad with the name of your map. It is however STRONGLY
+recommended to use -o output.wad in case a bug overwrites your original file.
 
 02:02 Help screen
 -----------------
@@ -166,13 +176,13 @@ TODO: Fix max-linedefs limit crash bug!
 ----------
 
 Segs are linedef segments and are used by the rendering part of the engine.
-The limit is a 32768 segs. At least one seg is created for every linedef, two
-for a two-sided linedef etc. Additional segs are also created as part of the
-node building process, this happens when the node builder splits a sector into
-smaller subsectors, creating a new seg where a line is split. Different
-partitioning algorithms can change the amount of segs in a map. For more
-information about segs-count manipulation, see the special effects chapter of
-the manual.
+The limit is a 32768 segs. Susually, at least one seg is created for every 
+linedef, two for a two-sided linedef etc. Additional segs are also created as 
+part of the node building process, this happens when the node builder splits a 
+sector into smaller subsectors, creating a new seg where a line is split. 
+Different partitioning algorithms can change the amount of segs in a map. For 
+more information about segs-count manipulation, see the special effects chapter 
+of the manual.
 
 03:04 Vertices
 --------------
@@ -839,7 +849,8 @@ part of the code to avoid an overflow found in ZenNode.
 
 ZokumBSP was primarily developed on Linux, using gcc, and should hopefully
 work well on most distributions. ZokumBSP was developed on a x86 64bit system,
-and has not yet been tested on a 32 bit system. 
+and has not yet been tested on a 32 bit system. It may need a newer compiler 
+than ZenNode needed.
 
 * Windows *
 
@@ -859,19 +870,72 @@ No BSD builds have been tested.
 * DOS *
 
 No DOS ports have been tested. ZenNode supported DOS builds, and there hasn't
-been any changes to the code base that would make this an impossible feat
+been any major changes to the code base that would make this an impossible feat
 compiler-wise.
 
-Section 12: Usage together with other tools
+The tool will use a lot of memory in some situations, so it may not be possible
+to run every option on DOS-era appropriate hardware.
+
+* OSX *
+
+I currently don't have any hardware to test this on.
+
+Section 12: Usage in projects
+=============================
+
+This is a short and incomplete list of projects / wads that used this tool in
+some capacity. 
+
+* Doom / Doom 2 projects *
+This also includes some that requite Boom or limit removing support etc.
+
+1000 Lines 2 - Community Project 1.0
+Akeldama
+Arrival
+Bond of hatred
+BRutal EXtinction International Tournament
+BTSX Episode 2
+Bury My Heart Knee Deep
+BuzzSaw: City Under Siege
+CABIN: An Apocalyptic Nightmare
+Clock Out
+Delta Touch - 4PDA
+Dire Strait 
+Entropy
+Gore
+IMAJANA
+Jamal Jones
+Knee-Deep in KDiZD
+Lithubristics Under Sanguine Twilight
+Ozonia
+Suburbs (ChatGPT Edition)
+Technobabel
+
+* Hexen projects *
+It is nice to see that the untested Hexen functionality seems to work fine.
+
+Lost Luxury
+
+
+Section 13: Usage together with other tools
 ===========================================
 
-12:01 GZ Doom Builder
+13:01 GZ Doom Builder
 ---------------------
 
 ZokumBSP is a drop in replacement for ZenNode, so simply copying your current
 settings for ZenNode should suffice.
 
-Section 13: Other resources
+13:02 Other node builders or tools
+----------------------------------
+
+Each step can be disabled by adding a hyphen after the switch.
+
+-b- will disable the blockmap generation.
+-n- will disable the node building.
+-r- will disable the reject builder step.
+
+Section 14: Other resources
 ===========================
 
 If you are interested in more information about ZokumBSP and the Doom specs,
@@ -882,33 +946,39 @@ Github: https://github.com/zokum-no/zokumbsp
 Wiki: https://doomwiki.org
 IRC: #nightmare
 
-Section 14: Changelog
+Section 15: Changelog
 =====================
 
 The changelog is kept in a seperate file, 'changelog.txt'. This document is 
 slightly more programmer-centric than this document.
 
-Section 15: Acknowledgements
+Section 16: Acknowledgements
 ============================
 
 Marc Roussaeu            - ZenNode.
 Anotak                   - Bug fixes and improvments.
 Brad Spencer             - Web site layout and feedback.
+Helene                   - Being awesome
 Dew                      - Feedback and bug testing.
 Anders Johnsen           - Feedback and suggestions.
+Martin Aalen Hunsager    - Feedback and testing.
 Andrew 'Linguica' Stine  - Feedback and information.
 x38_ViTa_38              - Spell checking.
-Xaser                    - Tool output suggestions.
+Xaser                    - Tool output suggestions, bug reports.
 Eternity Engine          - Adding compatibility fixes and testing.
 #nightmare               - Feedback and support.
 #d****                   - Feedback and information.
-#noteternityenginere...  - Feedback and inforamtion.
+#noteternityenginere...  - Feedback and information.
+Cacowards 2022           - The project won an award!
 
-Section 16: Other node builders
+Section 17: Other node builders
 ===============================
 
-16:01 Regular node builders
+17:01 Regular node builders
 ---------------------------
+
+* AJBSP *
+https://gitlab.com/andwj/ajbsp
 
 * BSP *
 http://games.moria.org.uk/doom/bsp/
@@ -916,13 +986,16 @@ http://games.moria.org.uk/doom/bsp/
 * DoomBSP / IdBSP *
 https://www.doomworld.com/idgames/utils/level_edit/node_builders/ibsp102d
 
+* Vigilant BSP *
+https://github.com/vigilantdoomer/vigilantbsp
+
 * ZDBSP *
 https://zdoom.org/wiki/ZDBSP
 
 * ZenNode *
 http://www.mrousseau.org/programs/ZenNode/
 
-16:02 GL Node builders
+17:02 GL Node builders
 ----------------------
 
 * glBSP *
