@@ -1,4 +1,6 @@
 Changelog for ZokumBSP
+ZokumBSP 1.1.1
+- Many additions and corrections in the manual.
 
 ZokumBSP 1.1 
 - Yule release! Happy holidays!

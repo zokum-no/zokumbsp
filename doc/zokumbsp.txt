@@ -38,8 +38,8 @@ Index
 13. Usage together with other tools
 14. Other resources
 15. Changelog
-16. Acknowledgements.
-17. Other node builders.
+16. Acknowledgements
+17. Other relevant tools
 
 Section 01: Project goals
 =========================
@@ -48,7 +48,7 @@ The main goal of ZokumBSP was to provide a node builder that is compatible with
 ZenNode and the classic version 1.9 Doom 2 executable, referred to in this 
 document as classic Doom or just Doom. Support for other source ports, feature 
 and limit wise is within the goal as long as it doesn't interfere with classic
-Doom support.
+Doom support. The main goal is to improve ZenNode.
 
 01:01 Non-Doom games
 --------------------
@@ -61,6 +61,9 @@ complexity this would cause.
 As of 2023, interest in these has been minimal, but if there is an actual need
 I could look into fixing bugs. As for adding specific features that are only
 usable in these games, that is not within the current project scope.
+
+Hexen wads have been produced and founf working with a recent version of the
+tool.
 
 01:02 Slot in for ZenNode
 -------------------------
@@ -86,6 +89,12 @@ playable in classic doom.
 Finally, by adding more switches, options and tweaks, the tool should enable
 mappers to add new special effects that rely on the final data structure output
 from the tool to have certain properties.
+
+01:05 The name of the tool
+--------------------------
+
+The official name is ZokumBSP, but it can be referred to as Zokumbsp or 
+zokumbsp. Those are acceptable variations.
 
 Section 02: Basic usage
 =======================
@@ -115,6 +124,23 @@ the available information.
 
 Most supported parameters are explained in sections 5 to 10.
 
+02:04 Color output
+------------------
+-c Colored output, 16 colors.
+
+With the switch "-c" the output will be color coded and map headers get a
+different background. This makes it easier to see if any entries are near
+or over the limit. The colors currently use standard vt220 ansi escape
+sequences and might not be available on all consoles. Older windows terminals
+tend to lack the support.
+
+-cc Colored output, 24bit colors.
+
+This mode uses special terminal sequences to output 24 bit colors. This applies
+to the map header, which is now in Romero Blue and the progress bar which is
+rendered with shades from purple to red to orange. Support for this is known
+to work on Linux with a modern terminal.
+
 Section 03: Doom v1.9 limits / algorithms
 =========================================
 
@@ -135,23 +161,6 @@ MAP07  * Entry         Old         New     %Change      %Limit     Time Elapsed
 The %Limit column will give a percentage of how close to the Doom2.exe limits 
 the lump is. Splits are a sub type of segs, so the limit would be the same. The
 reject lump does not have a known limit, and is therefor not computed.
-
-02:04 Color output
-------------------
--c Colored output, 16 colors.
-
-With the switch "-c" the output will be color coded and map headers get a 
-different background. This makes it easier to see if any entries are near
-or over the limit. The colors currently use standard vt220 ansi escape 
-sequences and might not be available on all consoles. Older windows terminals
-tend to lack the support.
-
--cc Colored output, 24bit colors.
-
-This mode uses special terminal sequences to output 24 bit colors. This applies
-to the map header, which is now in Romero Blue and the progress bar which is 
-rendered with shades from purple to red to orange. Support for this is known
-to work on Linux with a modern terminal.
 
 03:01 Sidedefs
 --------------
@@ -179,7 +188,8 @@ Segs are linedef segments and are used by the rendering part of the engine.
 The limit is a 32768 segs. Susually, at least one seg is created for every 
 linedef, two for a two-sided linedef etc. Additional segs are also created as 
 part of the node building process, this happens when the node builder splits a 
-sector into smaller subsectors, creating a new seg where a line is split. 
+sector into smaller subsectors, creating a new seg where a seg is split. 
+
 Different partitioning algorithms can change the amount of segs in a map. For 
 more information about segs-count manipulation, see the special effects chapter 
 of the manual.
@@ -199,6 +209,9 @@ over the limit.
 
 Section 04: Special effects
 ===========================
+
+One of he goals that were added later in the development was the addition of
+new and interesting special effects.
 
 04:01 Invisible floors / deep water
 -----------------------------------
@@ -324,26 +337,35 @@ distance is the absolute distance from the starting vertex.
 --------------------------------------
 
 The normal speed is the speed most floors move up or down at, however, some
-types move faster or slower than this speed. 
+types move faster or slower than this speed. The donut is the only floor type
+that can move lower slower than the regular speed.
 
-These are the ones in Doom 2 that do not mover at the regular speed.
+These are the ones in Doom 2 that do not move at the regular speed. Heretic, 
+Hexen and Strife etc. have slightly different lists.
 
 Numeric Type Speed      Units per tic   Effect
 7       S1   Very slow  2               Raising stairs, 8 height
-9       S1   Slow       4               Donut
+
+9       S1   Slow       4               Donut (up+down)
 20      S1   Slow       4               Raise floor next higher floor, texture
 22      W1   Slow       4               Raise floor next higher floor, texture
-36      W1   Very fast  32              Lower floor 8 above highest
 68      SR   Slow       4               Raise floor next higher, texture
+
+36      W1   Very fast  32              Lower floor 8 above highest
 70      SR   Very fast  32              Lower floor 8 above highest
 71	S1   Very fast  32              Lower floor 8 above highest n. floor
 98      WR   Very fast  32              Lower floor 8 above highest n. floor 
+
 100     W1   Very fast  32              Raising stairs, 16 height
 127	S1   Very fast  32              Raising stairs, 16 height
 129     WR   Very fast  32              Raise floor to next higher floor
 130     W1   Very fast  32              Raise floor to next higher floor
 131	S1   Very fast  32              Raise floor to next higher floor
 132     SR   Very fast  32              Raise floor to next higher floor
+
+Types 132+70 can be used to create lift-like constructions that use a switch.
+Types 129+98 can be used to walk-over lift. Add a regular lift to generate the
+expected sound.
 
 Section 06: Geometry pass
 =========================
@@ -363,7 +385,8 @@ which is outlined in the blockmap builder chapter.
 -------------------------------------
 
 Many of the extended linedef specials that affects segs and scrolling walls
-are handled at this step.
+are handled at this step. This pass handles effects and transformations that
+can have an impact on several of the other passes.
 
 Section 07: Blockmap builder
 ============================
@@ -426,7 +449,9 @@ Doom 2: All maps were built with DoomBSP
 Final Doom TNT.wad: None were built with DoomBSP
 Final Doom Plutonia.wad: None were built with DoomBSP.
 
-The following pwad is built with DoomBSP:
+The Master Levels are most likely not built with DoomBSP.
+
+The following pwad is probably built with DoomBSP:
 id Map01 idmap01.wad: map01
 
 07:04 'o' -Offset configuration.
@@ -490,6 +515,9 @@ artifact requires a specific setting. Aparently the collission detection
 algorithm performs differently when lindefs are on the exact edge of a grid in
 the blockmap.
 
+This can also be used as a form of special effect or to improve the collission
+detection in central areas in a deathmatch map etc.
+
 07:05 'r' - Remove non-collidable lines from BLOCKMAP.
 ------------------------------------------------------
 
@@ -503,6 +531,8 @@ sector and the line is not a special line.
 
 Unlike the similar algorithm found in the nodes code that removes segs,
 textures do not matter.
+
+TODO: Fix bug with self-reerncing sectors.
 
 07:06 's' - Subset compress BLOCKMAP.
 -------------------------------------
@@ -842,8 +872,8 @@ systems can run this tool.
 The reject pass of the tool utilizes a 64bit integer in a non-time-sensitive
 part of the code to avoid an overflow found in ZenNode.
 
-11:05 Operating systems
------------------------
+11:05 Operating systems supported
+---------------------------------
 
 * Linux *
 
@@ -851,6 +881,9 @@ ZokumBSP was primarily developed on Linux, using gcc, and should hopefully
 work well on most distributions. ZokumBSP was developed on a x86 64bit system,
 and has not yet been tested on a 32 bit system. It may need a newer compiler 
 than ZenNode needed.
+
+Later versions were develped in a Virtualbox VM in order to utilize a better 
+workstation and easy testing with windows-specific tools.
 
 * Windows *
 
@@ -865,7 +898,8 @@ versions of this operating system.
 
 * BSD *
 
-No BSD builds have been tested.
+No BSD builds have been tested. With the rise of VM technology, it is within 
+the project scope to check release builds on BSD variants.
 
 * DOS *
 
@@ -916,7 +950,6 @@ It is nice to see that the untested Hexen functionality seems to work fine.
 
 Lost Luxury
 
-
 Section 13: Usage together with other tools
 ===========================================
 
@@ -955,24 +988,35 @@ slightly more programmer-centric than this document.
 Section 16: Acknowledgements
 ============================
 
+This is in no particular order. Similar entries got grouped together. Please do
+tell me if you don't want to be on this list for some reason, or want a change
+of name etc.
+
 Marc Roussaeu            - ZenNode.
-Anotak                   - Bug fixes and improvments.
+'Anotak'                 - Bug fixes and improvments.
 Brad Spencer             - Web site layout and feedback.
 Helene                   - Being awesome
-Dew                      - Feedback and bug testing.
+'Dew'                    - Feedback and bug testing.
 Anders Johnsen           - Feedback and suggestions.
 Martin Aalen Hunsager    - Feedback and testing.
 Andrew 'Linguica' Stine  - Feedback and information.
-x38_ViTa_38              - Spell checking.
-Xaser                    - Tool output suggestions, bug reports.
+'x38_ViTa_38'            - Spell checking.
+'Xaser'                  - Tool output suggestions, bug reports.
 Eternity Engine          - Adding compatibility fixes and testing.
 #nightmare               - Feedback and support.
 #d****                   - Feedback and information.
 #noteternityenginere...  - Feedback and information.
 Cacowards 2022           - The project won an award!
 
-Section 17: Other node builders
+Section 17: Other relevant tools
 ===============================
+
+ZokumBSP wouln't existed without ZenNode. Other node builders have also been
+used as references for algorithms. These tools could have goals and features
+that cover areas that ZokumBSP does not. Most notable is support for limit-less
+or gl nodes.
+
+You can freely combine these tools with one or more passes from ZokumBSP.
 
 17:01 Regular node builders
 ---------------------------
@@ -1003,3 +1047,12 @@ http://glbsp.sourceforge.net/
 
 * ZDBSP *
 https://zdoom.org/wiki/ZDBSP
+
+17:03 Reject map builders
+-------------------------
+
+* RMB *
+Rmb is an older tool that builds very good reject maps and only reject maps. It
+has support for special effects and some of those options also work in 
+ZokumBSP. It should be noted that the RMB support in ZenNode is partially 
+broken.
