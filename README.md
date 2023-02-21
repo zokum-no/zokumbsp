@@ -1,12 +1,15 @@
 # ZokumBSP 
 
 ## Author
-(c) 2016-2018 Kim Roar Foldøy Hauge, (c) 1994-2004 Marc Rousseau
+(c) 2016-2023 Kim Roar Foldøy Hauge, (c) 1994-2004 Marc Rousseau
 
 ## Description
 
 ZokumBSP is an advanced node/blockmap builder for Doom / Doom 2.
-It should also build Heretic and Hexen maps, but this is untested.
+It should also build Heretic and Hexen maps, but this is not well
+tested, but has been reported to work. Whether it works on Strife, 
+Hackx and Chex Quest is not known.
+
 Based on ZenNode 1.2.0 and available from GitHub.
 
 This is a work in progress and is an experimental node builder.
@@ -46,7 +49,7 @@ http://www.doom2.net/zokum/zokumbsp/
 ## Usage
 
 ```
-ZokumBSP Version: 1.0.x branch (c) 2016-2018 Kim Roar Foldøy Hauge
+ZokumBSP Version: 1.1.x branch (c) 2016-2023 Kim Roar Foldøy Hauge
 Based on: ZenNode Version 1.2.1 (c) 1994-2004 Marc Rousseau
 
 Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}
