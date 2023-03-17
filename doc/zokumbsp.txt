@@ -7,11 +7,19 @@ Author
 Description
 ===========
 
-ZokumBSP is an advanced node/blockmap/reject builder designed for Id Tech 1 games, including Doom, Doom 2, Final Doom, Heretic, Hexen, Strife, and Hacx. This powerful tool, based on ZenNode 1.2.0, is available for download from GitHub as well as in binary release form for select operating systems.
+ZokumBSP is an advanced node/blockmap/reject builder created for Id Tech 1
+games, including Doom, Doom 2, Final Doom, Heretic, Hexen, Strife, and Hacx.
+This powerful tool, based on ZenNode 1.2.0, is available for download from
+GitHub and in binary release form for select operating systems.
 
-As an experimental Doom tool, ZokumBSP may occasionally have bugs when using new features. However, it offers many advantages over other similar tools, allowing for the construction of larger and more intricate maps.
+While ZokumBSP offers many advantages over other similar tools, it may
+occasionally have bugs when using new features, as it is an experimental Doom
+tool. With ZokumBSP, constructing larger and more intricate maps is possible.
 
-ZokumBSP has port-specific handling, but it is mainly developed for vanilla 1.9 executables and Chocolate Doom. Maps created using the tool's advanced options may not function properly in some ports, so it's important to keep this in mind when using the tool.
+Although ZokumBSP has port-specific handling, it is primarily developed for
+vanilla 1.9 executables and Chocolate Doom. Maps created with the tool's
+advanced options may not function properly in some ports, so it's important to
+keep this in mind when using it.
 
 Index
 =====
@@ -37,18 +45,33 @@ Index
 Section 01: Project goals
 =========================
 
-The primary objective of ZokumBSP is to offer a node builder that's fully compatible with ZenNode and the classic version 1.9 Doom 2 executable. In this document, we refer to this version as "classic Doom" or simply "Doom." While we strive to support other source ports in terms of features and limits, it's crucial that they do not interfere with our support for classic Doom.
+The primary objective of ZokumBSP is to offer a node builder that's fully
+compatible with ZenNode and the classic version 1.9 Doom 2 executable. In this
+document, we refer to this version as "classic Doom" or simply "Doom." While we
+strive to support other source ports in terms of features and limits, it's
+crucial that they do not interfere with our support for classic Doom.
 
-Ultimately, our main focus is on empowering creators, and we aim to achieve this by providing a robust and reliable node builder that meets the needs of Doom enthusiasts.
+Ultimately, our main focus is on empowering creators, and we aim to achieve
+this by providing a robust and reliable node builder that meets the needs of
+Doom enthusiasts.
 
 01:01 Non-Doom games
 --------------------
 
-While the primary focus of the project is on supporting Doom, we also aim to include support for Hexen, Heretic, and Strife as nice-to-have features. The existing features of these executables will be preserved, but not tested when new code is added due to the added complexity it would cause.
+While the primary focus of the project is on supporting Doom, we also aim
+to include support for Hexen, Heretic, and Strife as nice-to-have features.
+The existing features of these executables will be preserved, but not tested
+when new code is added due to the added complexity it would cause.
 
-As of 2023, there has been minimal interest in these executables. However, if there is a genuine need for support or bug fixes, we will consider addressing them. However, we do not plan to add specific features that are only usable in these games, as this is outside the current scope of the project.
+As of 2023, there has been minimal interest in these executables. However,
+if there is a genuine need for support or bug fixes, we will consider
+addressing them. However, we do not plan to add specific features that are
+only usable in these games, as this is outside the current scope of the
+project.
 
-It's worth noting that Hexen wads have been successfully produced and tested using a recent version of the tool. We will continue to monitor interest in these games and adjust our plans accordingly.
+It's worth noting that Hexen wads have been successfully produced and tested
+using a recent version of the tool. We will continue to monitor interest in
+these games and adjust our plans accordingly.
 
 
 01:02 Slot in for ZenNode
@@ -191,19 +214,16 @@ new and interesting special effects.
 04:01 Invisible floors / deep water
 -----------------------------------
 
-Adding a sector inside another with sector references on both sidedefs of all
-the involved linedefs in the new sector, will make it act as a height changing
-sector compare to the rendered floor. If a the invisible sector has a lower
-floor level it can be used for a deep water styele effect, where it looks like
-one is wading in deeper water. It should be noted that things like trees,
-monsters, players are drawn completely, ruining the effect so use this
-sparingly in areas where you can see other players or monsters inside that
-area.
-
-For invisible floors, there are no clipping problems, but be aware that stairs
-are hard for monsters to ascend and descend if the height difference is too
-big.
-
+By adding a sector inside another with sector references on both sidedefs of
+all involved linedefs in the new sector, it is possible to create a
+height-changing effect compared to the rendered floor. This technique can be
+used to create a deep water-style effect by placing an invisible sector with a
+lower floor level. However, it should be noted that objects such as trees,
+monsters, and players are drawn completely, which can ruin the effect. It is
+recommended to use this sparingly in areas where other players or monsters can
+be seen. Invisible floors do not have any clipping problems, but it should be
+kept in mind that stairs can be difficult for monsters to ascend and descend if
+the height difference is too great.
 04:02 Do not add to blockmap - 'tag 999'
 ----------------------------------------
 
