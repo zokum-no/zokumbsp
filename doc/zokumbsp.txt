@@ -77,35 +77,90 @@ these games and adjust our plans accordingly.
 01:02 Slot in for ZenNode
 -------------------------
 
-One of the essential goals of ZokumBSP is to function as a seamless replacement for ZenNode. Users should be able to run it with the same parameters as ZenNode and obtain a similar result, with the added benefit of improved runtime performance and better-built structures.
+One of the essential goals of ZokumBSP is to function as a seamless replacement 
+for ZenNode. Users should be able to run it with the same parameters as ZenNode 
+and obtain a similar result, with the added benefit of improved runtime 
+performance and better-built structures.
 
-ZenNode has several bugs and default settings that are problematic. To address these issues, we've made changes and improvements to the tool. As a result, maps built with ZokumBSP may not be identical to those built with ZenNode, but they should be of comparable quality or better.
+ZenNode has several bugs and default settings that are problematic. To address 
+these issues, we've made changes and improvements to the tool. As a result, 
+maps built with ZokumBSP may not be identical to those built with ZenNode, but 
+they should be of comparable quality or better.
 
-We are committed to providing a reliable and efficient node builder that meets the needs of Doom enthusiasts. As such, we will continue to refine and improve ZokumBSP, taking into account user feedback and the evolving needs of the community.
+We are committed to providing a reliable and efficient node builder that meets 
+the needs of Doom enthusiasts. As such, we will continue to refine and improve 
+ZokumBSP, taking into account user feedback and the evolving needs of the 
+community.
 
 01:03 Bigger and more complex maps in classic Doom
 --------------------------------------------------
 
-A central objective of the ZokumBSP project is to empower mappers to create larger and more complex maps than what's possible with other similar tools while still ensuring that they remain playable in classic Doom.
+A central objective of the ZokumBSP project is to empower mappers to create 
+larger and more complex maps than what's possible with other similar tools 
+while still ensuring that they remain playable in classic Doom.
 
-One of the key challenges in building larger and more complex maps is maintaining a playable frame rate. ZokumBSP tackles this problem by optimizing the map's node structure, making it more efficient and enabling it to render more quickly. This approach makes it possible to create sprawling, intricate maps that push the limits of the classic Doom engine without sacrificing playability.
+One of the key challenges in building larger and more complex maps is 
+maintaining a playable frame rate. ZokumBSP tackles this problem by optimizing 
+the map's node structure, making it more efficient and enabling it to render 
+more quickly. This approach makes it possible to create sprawling, intricate 
+maps that push the limits of the classic Doom engine without sacrificing 
+playability.
 
-In addition to performance optimization, ZokumBSP also provides a range of advanced features that make it easier for mappers to create complex maps. These features include improved sector merging, custom node splitting, and better handling of slopes and stairs. With these tools, mappers can create maps that are not only larger and more complex but also more visually appealing and immersive.
+In addition to performance optimization, ZokumBSP also provides a range of 
+advanced features that make it easier for mappers to create complex maps. These 
+features include improved sector merging, custom node splitting, and better 
+handling of slopes and stairs. With these tools, mappers can create maps that 
+are not only larger and more complex but also more visually appealing and 
+immersive.
 
-Ultimately, the goal of ZokumBSP is to offer a powerful and flexible node builder that empowers mappers to unleash their creativity and push the boundaries of classic Doom mapping. By providing a tool that can handle larger and more complex maps without sacrificing performance, we hope to inspire a new generation of mappers to explore the possibilities of this timeless game.
+Ultimately, the goal of ZokumBSP is to offer a powerful and flexible node 
+builder that empowers mappers to unleash their creativity and push the 
+boundaries of classic Doom mapping. By providing a tool that can handle larger 
+and more complex maps without sacrificing performance, we hope to inspire a new
+generation of mappers to explore the possibilities of this timeless game.
 
 01:04 Advanced and novel special effects
 ----------------------------------------
 
-ZokumBSP is a highly versatile node/blockmap/reject builder that offers mappers a range of powerful switches, options, and tweaks. By leveraging these features, mappers can create complex and detailed maps with unique gameplay mechanics and visual effects. One of the key strengths of ZokumBSP is its ability to generate highly optimized data structures that allow for more efficient rendering and better performance.
+ZokumBSP is a highly versatile node/blockmap/reject builder that offers mappers 
+a range of powerful switches, options, and tweaks. By leveraging these 
+features, mappers can create complex and detailed maps with unique gameplay 
+mechanics and visual effects. One of the key strengths of ZokumBSP is its 
+ability to generate highly optimized data structures that allow for more 
+efficient rendering and better performance.
 
-By adding new switches, options, and tweaks, ZokumBSP can enable mappers to create unique special effects that rely on the final data structure output from the tool. This can include custom architecture, detailed lighting setups, and intricate level designs. While ZokumBSP does not provide built-in support for advanced features such as dynamic lighting or 3D floors, mappers can still use the tool to create highly detailed and engaging maps that take advantage of the features offered by their chosen source port.
+By adding new switches, options, and tweaks, ZokumBSP can enable mappers to 
+create unique special effects that rely on the final data structure output from 
+the tool. This can include custom architecture, detailed lighting setups, and 
+intricate level designs. While ZokumBSP does not provide built-in support for 
+advanced features such as dynamic lighting or 3D floors, mappers can still use 
+the tool to create highly detailed and engaging maps that take advantage of the 
+features offered by their chosen source port.
 
-01:05 The name of the tool
+01:05 Documentation guidelines
+------------------------------
+The documentation is formatted to fit within an 80 character wide terminal and
+expects the reader to have a decent understanding of Doom terminology and 
+concepts, or at the very least, the patience to search for terms on the
+doomwiki.org
+
+The doomwiki.org is the only wiki the author updates, so you're adviced to go
+there and disregard other sources as they may be outdated or incorrect.
+
+Some of the documentation has been rewritten and formatted by Chat GPT in order
+to make it easier to read.
+
+01:06 The name of the tool
 --------------------------
 
 The official name is ZokumBSP, but it can be referred to as Zokumbsp or 
 zokumbsp. Those are acceptable variations.
+
+01:07 Why the name ZokumBSP?
+----------------------------
+My handle is 'Zokum' so it made sense to use this in conjunction with the
+acronym BSP in order to quickly convey what the tool does and who makes it in
+case someone has bug reports.
 
 Section 02: Basic usage
 =======================
@@ -113,12 +168,20 @@ Section 02: Basic usage
 02:01 Basic syntax
 ------------------
 
-To build a map for use in Doom, simply use the command "zokumbsp mapfile.wad", where "mapfile.wad" is the name of your map. However, please note that a bug in the tool could potentially corrupt your original file. Therefore, it is strongly recommended to use the "-o output.wad" option to specify a different name for the output file and avoid overwriting your original file.
+To build a map for use in Doom, simply use the command "zokumbsp mapfile.wad", 
+where "mapfile.wad" is the name of your map. However, please note that a bug in 
+the tool could potentially corrupt your original file. Therefore, it is 
+strongly recommended to use the "-o output.wad" option to specify a different 
+name for the output file and avoid overwriting your original file.
 
 02:02 Help screen
 -----------------
 
-To quickly get an overview of ZokumBSP's commands, you can simply run the tool without any arguments to see the help screen. Keep in mind that the help screen contains more lines than a standard 25 line terminal, so it is recommended to use a higher-resolution terminal or a scrollback buffer to ensure all the available information can be seen.
+To quickly get an overview of ZokumBSP's commands, you can simply run the tool 
+without any arguments to see the help screen. Keep in mind that the help screen 
+contains more lines than a standard 25 line terminal, so it is recommended to 
+use a higher-resolution terminal or a scrollback buffer to ensure all the 
+available information can be seen.
 
 02:03 Supported arguments / switches
 ------------------------------------
@@ -145,9 +208,12 @@ to work on Linux with a modern terminal.
 Section 03: Doom v1.9 limits / algorithms
 =========================================
 
-There are several size limitations for a Doom map, but this document will only focus on those relevant to ZokumBSP's node, blockmap, and reject building capabilities.
+There are several size limitations for a Doom map, but this document will only 
+focus on those relevant to ZokumBSP's node, blockmap, and reject building 
+capabilities.
 
-In version 1.0.10, a new text output format was introduced. This format generally appears in the following manner:
+In version 1.0.10, a new text output format was introduced. This format 
+generally appears in the following manner:
 
 MAP07  * Entry         Old         New     %Change      %Limit     Time Elapsed
          Blockmap     1862  =>    1862     100.00%       2.84%             16ms
