@@ -7,18 +7,19 @@ Author
 Description
 ===========
 
-ZokumBSP is an advanced node/blockmap/reject builder for Id tech 1 games such
-as Doom, Doom 2, Final Doom, Heretic, Hexen, Strife, Hacx. It is based on
-ZenNode 1.2.0 and available from Git Hub and as a binary release for select
-operating systems.
+ZokumBSP is an advanced node/blockmap/reject builder created for Id Tech 1
+games, including Doom, Doom 2, Final Doom, Heretic, Hexen, Strife, and Hacx.
+This powerful tool, based on ZenNode 1.2.0, is available for download from
+GitHub and in binary release form for select operating systems.
 
-This is an experimental Doom tool, expect the occasional bug when using new
-features. The tool allows for the construction of bigger and more complex maps
-than ZenNode and many other similar tools.
+While ZokumBSP offers many advantages over other similar tools, it may
+occasionally have bugs when using new features, as it is an experimental Doom
+tool. With ZokumBSP, constructing larger and more intricate maps is possible.
 
-It has port-specific handling, but the main development is for vanilla 1.9
-executables and Chocolate Doom. Chances are that maps built with this tool that
-utilize some of the more advanced options will not work in many ports.
+Although ZokumBSP has port-specific handling, it is primarily developed for
+vanilla 1.9 executables and Chocolate Doom. Maps created with the tool's
+advanced options may not function properly in some ports, so it's important to
+keep this in mind when using it.
 
 Index
 =====
@@ -44,51 +45,61 @@ Index
 Section 01: Project goals
 =========================
 
-The main goal of ZokumBSP was to provide a node builder that is compatible with 
-ZenNode and the classic version 1.9 Doom 2 executable, referred to in this 
-document as classic Doom or just Doom. Support for other source ports, feature 
-and limit wise is within the goal as long as it doesn't interfere with classic
-Doom support. The main goal is to improve ZenNode.
+The primary objective of ZokumBSP is to offer a node builder that's fully
+compatible with ZenNode and the classic version 1.9 Doom 2 executable. In this
+document, we refer to this version as "classic Doom" or simply "Doom." While we
+strive to support other source ports in terms of features and limits, it's
+crucial that they do not interfere with our support for classic Doom.
+
+Ultimately, our main focus is on empowering creators, and we aim to achieve
+this by providing a robust and reliable node builder that meets the needs of
+Doom enthusiasts.
 
 01:01 Non-Doom games
 --------------------
 
-Hexen, Heretic and Strife etc support is within the scope of the project as
-nice-to-have, the features for these executables that already exist in the
-game will be kept, but not tested when new code is added due to the added
-complexity this would cause.
+While the primary focus of the project is on supporting Doom, we also aim
+to include support for Hexen, Heretic, and Strife as nice-to-have features.
+The existing features of these executables will be preserved, but not tested
+when new code is added due to the added complexity it would cause.
 
-As of 2023, interest in these has been minimal, but if there is an actual need
-I could look into fixing bugs. As for adding specific features that are only
-usable in these games, that is not within the current project scope.
+As of 2023, there has been minimal interest in these executables. However,
+if there is a genuine need for support or bug fixes, we will consider
+addressing them. However, we do not plan to add specific features that are
+only usable in these games, as this is outside the current scope of the
+project.
 
-Hexen wads have been produced and founf working with a recent version of the
-tool.
+It's worth noting that Hexen wads have been successfully produced and tested
+using a recent version of the tool. We will continue to monitor interest in
+these games and adjust our plans accordingly.
+
 
 01:02 Slot in for ZenNode
 -------------------------
 
-An important aspect of ZokumBSP is to be a slot-in-replacement for ZenNode.
-One should be able to run it with the exact same paramaters as ZenNode and get
-a comparable result, hopefully with a better runtime performance or a better
-built structure.
+One of the essential goals of ZokumBSP is to function as a seamless replacement for ZenNode. Users should be able to run it with the same parameters as ZenNode and obtain a similar result, with the added benefit of improved runtime performance and better-built structures.
 
-ZenNode has some bugs and defaults that are problematic. Some of that has been
-fixed and changed, so it will not build maps in the exact same way.
+ZenNode has several bugs and default settings that are problematic. To address these issues, we've made changes and improvements to the tool. As a result, maps built with ZokumBSP may not be identical to those built with ZenNode, but they should be of comparable quality or better.
+
+We are committed to providing a reliable and efficient node builder that meets the needs of Doom enthusiasts. As such, we will continue to refine and improve ZokumBSP, taking into account user feedback and the evolving needs of the community.
 
 01:03 Bigger and more complex maps in classic Doom
 --------------------------------------------------
 
-One important goal of the project is to enable mappers to make maps that are
-bigger and more complex than other similar tools can do and still stay
-playable in classic doom. 
+A central objective of the ZokumBSP project is to empower mappers to create larger and more complex maps than what's possible with other similar tools while still ensuring that they remain playable in classic Doom.
+
+One of the key challenges in building larger and more complex maps is maintaining a playable frame rate. ZokumBSP tackles this problem by optimizing the map's node structure, making it more efficient and enabling it to render more quickly. This approach makes it possible to create sprawling, intricate maps that push the limits of the classic Doom engine without sacrificing playability.
+
+In addition to performance optimization, ZokumBSP also provides a range of advanced features that make it easier for mappers to create complex maps. These features include improved sector merging, custom node splitting, and better handling of slopes and stairs. With these tools, mappers can create maps that are not only larger and more complex but also more visually appealing and immersive.
+
+Ultimately, the goal of ZokumBSP is to offer a powerful and flexible node builder that empowers mappers to unleash their creativity and push the boundaries of classic Doom mapping. By providing a tool that can handle larger and more complex maps without sacrificing performance, we hope to inspire a new generation of mappers to explore the possibilities of this timeless game.
 
 01:04 Advanced and novel special effects
 ----------------------------------------
 
-Finally, by adding more switches, options and tweaks, the tool should enable
-mappers to add new special effects that rely on the final data structure output
-from the tool to have certain properties.
+ZokumBSP is a highly versatile node/blockmap/reject builder that offers mappers a range of powerful switches, options, and tweaks. By leveraging these features, mappers can create complex and detailed maps with unique gameplay mechanics and visual effects. One of the key strengths of ZokumBSP is its ability to generate highly optimized data structures that allow for more efficient rendering and better performance.
+
+By adding new switches, options, and tweaks, ZokumBSP can enable mappers to create unique special effects that rely on the final data structure output from the tool. This can include custom architecture, detailed lighting setups, and intricate level designs. While ZokumBSP does not provide built-in support for advanced features such as dynamic lighting or 3D floors, mappers can still use the tool to create highly detailed and engaging maps that take advantage of the features offered by their chosen source port.
 
 01:05 The name of the tool
 --------------------------
@@ -102,22 +113,12 @@ Section 02: Basic usage
 02:01 Basic syntax
 ------------------
 
-The basic usage is just like ZenNode, although some argument parsing bugs has
-been cleaned up to allow for the addition of other parameters.
-
-To build a map for use in Doom, simply invoke: "zokumbsp mapfile.wad" where
-you substitute mapfile.wad with the name of your map. It is however STRONGLY
-recommended to use -o output.wad in case a bug overwrites your original file.
+To build a map for use in Doom, simply use the command "zokumbsp mapfile.wad", where "mapfile.wad" is the name of your map. However, please note that a bug in the tool could potentially corrupt your original file. Therefore, it is strongly recommended to use the "-o output.wad" option to specify a different name for the output file and avoid overwriting your original file.
 
 02:02 Help screen
 -----------------
 
-You can see a help screen with a terse command overview by simply invoking
-ZokumBSP without any arguments.
-
-The help screen has more lines than a standard 25 line terminal, so the use of
-a higher-resolution terminal or a scrollback buffer is recommended to see all
-the available information.
+To quickly get an overview of ZokumBSP's commands, you can simply run the tool without any arguments to see the help screen. Keep in mind that the help screen contains more lines than a standard 25 line terminal, so it is recommended to use a higher-resolution terminal or a scrollback buffer to ensure all the available information can be seen.
 
 02:03 Supported arguments / switches
 ------------------------------------
@@ -144,12 +145,9 @@ to work on Linux with a modern terminal.
 Section 03: Doom v1.9 limits / algorithms
 =========================================
 
-There are a number of limitations size wise for a Doom map, and this document
-won't cover all of them, only the ones that are relevant to a node, blockmap
-and reject builder.
+There are several size limitations for a Doom map, but this document will only focus on those relevant to ZokumBSP's node, blockmap, and reject building capabilities.
 
-In version 1.0.10 a new output format for the text output was created. This
-typically looks like this:
+In version 1.0.10, a new text output format was introduced. This format generally appears in the following manner:
 
 MAP07  * Entry         Old         New     %Change      %Limit     Time Elapsed
          Blockmap     1862  =>    1862     100.00%       2.84%             16ms
@@ -216,19 +214,16 @@ new and interesting special effects.
 04:01 Invisible floors / deep water
 -----------------------------------
 
-Adding a sector inside another with sector references on both sidedefs of all
-the involved linedefs in the new sector, will make it act as a height changing
-sector compare to the rendered floor. If a the invisible sector has a lower
-floor level it can be used for a deep water styele effect, where it looks like
-one is wading in deeper water. It should be noted that things like trees,
-monsters, players are drawn completely, ruining the effect so use this
-sparingly in areas where you can see other players or monsters inside that
-area.
-
-For invisible floors, there are no clipping problems, but be aware that stairs
-are hard for monsters to ascend and descend if the height difference is too
-big.
-
+By adding a sector inside another with sector references on both sidedefs of
+all involved linedefs in the new sector, it is possible to create a
+height-changing effect compared to the rendered floor. This technique can be
+used to create a deep water-style effect by placing an invisible sector with a
+lower floor level. However, it should be noted that objects such as trees,
+monsters, and players are drawn completely, which can ruin the effect. It is
+recommended to use this sparingly in areas where other players or monsters can
+be seen. Invisible floors do not have any clipping problems, but it should be
+kept in mind that stairs can be difficult for monsters to ascend and descend if
+the height difference is too great.
 04:02 Do not add to blockmap - 'tag 999'
 ----------------------------------------
 
