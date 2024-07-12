@@ -1,7 +1,7 @@
 # ZokumBSP 
 
 ## Author
-(c) 2016-2023 Kim Roar Foldøy Hauge, (c) 1994-2004 Marc Rousseau
+(c) 2016-2024 Kim Roar Foldøy Hauge, (c) 1994-2004 Marc Rousseau
 
 ## Description
 
@@ -44,12 +44,12 @@ Primarily 30nm2039.lmp, 30ns6155.lmp and 30famax2.lmp
 
 ## Project web page
 
-http://www.doom2.net/zokum/zokumbsp/
+http://www.doom2.no/zokumbsp/
 
 ## Usage
 
 ```
-ZokumBSP Version: 1.1.x branch (c) 2016-2023 Kim Roar Foldøy Hauge
+ZokumBSP Version: 1.1.x branch (c) 2016-2024 Kim Roar Foldøy Hauge
 Based on: ZenNode Version 1.2.1 (c) 1994-2004 Marc Rousseau
 
 Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}
