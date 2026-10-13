@@ -39,10 +39,43 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <iostream>
+#include <iterator>
+#include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <cctype>
+#include <vector>
+#include <algorithm>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <algorithm>
+#include <charconv>
+#include <cctype>
+
+
 
 #ifndef _MSC_VER
 #include <strings.h>
 #endif
+
+#if defined(_WIN32)
+#include <io.h>
+#define ISATTY _isatty
+#define FILENO _fileno
+#else
+#include <unistd.h>
+#define ISATTY isatty
+#define FILENO fileno
+#endif
+
 
 #if defined ( __OS2__ )
     #include <conio.h>
@@ -51,7 +84,7 @@
     #define INCL_DOS
     #define INCL_SUB
     #include <os2.h>
-#elif defined ( __WIN32__ )
+#elif defined ( _WIN32)
     #include <conio.h>
     #include <io.h>
 #elif defined ( __LINUX__ )
@@ -68,11 +101,12 @@
 #include "logger.hpp"
 #include "wad.hpp"
 #include "level.hpp"
-#include "console.hpp"
-#include "zennode.hpp"
-#include "blockmap.hpp"
-#include "preprocess.hpp"
-#include "endoom.hpp"
+#include "console/console.hpp"
+#include "bsp/zennode.hpp"
+#include "blockmap/blockmap.hpp"
+#include "geometry/preprocess.hpp"
+#include "misc/endoom.hpp"
+#include "console/help.hpp"
 
 DBG_REGISTER ( __FILE__ );
 
@@ -80,7 +114,7 @@ DBG_REGISTER ( __FILE__ );
 #define ZOKVERSION		"1.1.1-alpha1"
 #define ZOKVERSIONSHORT		"1.1.1"
 
-const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2023 Kim Roar Foldøy Hauge";
+const char ZOKBANNER []         = "ZokumBSP Version: " ZOKVERSION " (c) 2016-2024 Kim Roar Foldøy Hauge";
 const char BANNER []            = "Based on: ZenNode Version " ZENVERSION " (c) 1994-2004 Marc Rousseau";
 const char CONFIG_FILENAME []   = "zokumbsp.cfg";
 const int  MAX_LEVELS           = 99;
@@ -129,7 +163,8 @@ long long totalVertices = 0;
 long long oldTotalVertices = 0;
 
 
-void printHelp () {
+/*
+void printHelp (sOptions config) {
 	FUNCTION_ENTRY ( NULL, "printHelp", true );
 
 	fprintf ( stdout, "Usage: zokumbsp {-options} filename[.wad] [level{+level}] {-o|x output[.wad]}\n" );
@@ -201,10 +236,6 @@ void printHelp () {
 	fprintf ( stdout, "%c     b   Favor both of the above equally.\n", (config.Nodes.SplitReduction == 3 ) ? DEFAULT_CHAR : ' ' );
 	fprintf ( stdout, "%c     m   Try all of the above.\n\n", (config.Nodes.MultipleSplitMethods == 1 ) ? DEFAULT_CHAR : ' ' );
 
-/*	fprintf ( stdout, "    s=    Split handling algorithm.\n" );
-	fprintf ( stdout, "%c     z   Ignore rounding problems. N/A\n", ( config.Nodes.SplitHandling == 0 ) ? DEFAULT_CHAR : ' ' );
-	fprintf ( stdout, "%c     a   Avoid slime trail rounding problems. N/A\n", ( config.Nodes.SplitHandling == 1 ) ? DEFAULT_CHAR : ' ' );
-*/
 	fprintf ( stdout, "    t=    Tuning factor, varies from algorithm to algorithm.\n" );
 	fprintf ( stdout, "      100 Default for adaptive tree.\n");
 
@@ -246,6 +277,7 @@ void printHelp () {
 	fprintf ( stdout, "This rebuild nodes only, adaptive tree, give a total summary.\n");
 	fprintf ( stdout, "It reads from file.wad, but only builds map01 and map03.\n");
 }
+*/
 
 bool parseBLOCKMAPArgs ( char *&ptr, bool setting ) {
 	FUNCTION_ENTRY ( NULL, "parseBLOCKMAPArgs", true );
@@ -602,9 +634,10 @@ int parseArgs ( int index, const char *argv [] )
 
 		if ( argv [index][0] != '-' ) break;
 
-		char *localCopy = strdup ( argv [ index ]);
+		char *localCopy = _strdup ( argv [ index ]);
 		char *ptr = localCopy + 1;
-		strupr ( localCopy );
+		// _strupr ( localCopy );
+		_strupr_s(localCopy, strlen(localCopy) + 1);
 
 		bool localError = false;
 		while ( *ptr && ( localError == false )) {
@@ -652,24 +685,32 @@ int parseArgs ( int index, const char *argv [] )
 	return index;
 }
 
+/*
 void ReadConfigFile ( const char *argv [] )
 {
 	FUNCTION_ENTRY ( NULL, "ReadConfigFile", true );
 
-	FILE *configFile = fopen ( CONFIG_FILENAME, "rt" );
+	FILE* configFile = NULL;
+	if (fopen_s(&configFile, CONFIG_FILENAME, "rt") != 0) {
+		// Nothing for now
+	}
 	if ( configFile == NULL ) {
 		char fileName [ 256 ];
-		strcpy ( fileName, argv [0] );
+		strcpy_s ( fileName, argv [0] );
 		char *ptr = &fileName [ strlen ( fileName )];
 		while (( --ptr >= fileName ) && ( *ptr != SEPERATOR ));
 		*++ptr = '\0';
-		strcat ( ptr, CONFIG_FILENAME );
-		configFile = fopen ( fileName, "rt" );
+		strcat_s ( ptr, sizeof(fileName), CONFIG_FILENAME );
+		// configFile = fopen ( fileName, "rt" );
+		if (fopen_s(&configFile, fileName, "rt") != 0) {
+			// handle error
+		}
 	}
 	if ( configFile == NULL ) return;
 
 	char ch = ( char ) fgetc ( configFile );
 	bool errors = false;
+	
 	while ( ! feof ( configFile )) {
 		ungetc ( ch, configFile );
 
@@ -677,7 +718,7 @@ void ReadConfigFile ( const char *argv [] )
 		if (fgets ( lineBuffer, sizeof ( lineBuffer ), configFile ) == NULL) {
 			fprintf(stderr, "Input error\n");
 		}
-		char *basePtr = strupr ( lineBuffer );
+		char *basePtr = _strupr ( lineBuffer );
 		while ( *basePtr == ' ' ) basePtr++;
 		basePtr = strtok ( basePtr, "\n\x1A" );
 
@@ -712,7 +753,151 @@ void ReadConfigFile ( const char *argv [] )
 	fclose ( configFile );
 	if ( errors ) fprintf ( stderr, "\n" );
 }
+*/
 
+void ReadConfigFile(const char* argv[])
+{
+	FUNCTION_ENTRY(NULL, "ReadConfigFile", true);
+
+	FILE* configFile = NULL;
+	if (fopen_s(&configFile, CONFIG_FILENAME, "rt") != 0) {
+		// Nothing for now
+	}
+
+	if (configFile == NULL) {
+		char fileName[256];
+		strcpy_s(fileName, sizeof(fileName), argv[0]);
+
+		char* ptr = &fileName[strlen(fileName)];
+		while ((--ptr >= fileName) && (*ptr != SEPERATOR));
+		*++ptr = '\0';
+
+		strcat_s(ptr, sizeof(fileName) - (ptr - fileName), CONFIG_FILENAME);
+
+		if (fopen_s(&configFile, fileName, "rt") != 0) {
+			// handle error
+		}
+	}
+
+	if (configFile == NULL) return;
+
+	char ch = (char)fgetc(configFile);
+	bool errors = false;
+
+	while (!feof(configFile)) {
+		ungetc(ch, configFile);
+
+		char lineBuffer[256];
+		if (fgets(lineBuffer, sizeof(lineBuffer), configFile) == NULL) {
+			fprintf(stderr, "Input error\n");
+		}
+
+		_strupr_s(lineBuffer, sizeof(lineBuffer));
+
+		char* basePtr = lineBuffer;
+		while (*basePtr == ' ') basePtr++;
+
+		char* context = NULL;
+		basePtr = strtok_s(basePtr, "\n\x1A", &context);
+
+		if (basePtr) {
+			char* ptr = basePtr;
+			bool localError = false;
+			while (*ptr && !localError) {
+				int option = *ptr++;
+				bool setting = true;
+				if ((*ptr == '+') || (*ptr == '-')) {
+					setting = (*ptr++ != '-');
+				}
+				switch (option) {
+				case 'B': localError = parseBLOCKMAPArgs(ptr, setting); break;
+				case 'N': localError = parseNODESArgs(ptr, setting);    break;
+				case 'R': localError = parseREJECTArgs(ptr, setting);   break;
+				case 'T': config.WriteWAD = !setting;                   break;
+				case 'C': config.Color = setting;                       break;
+				case 'V': exit(0);
+				default:  localError = true;
+				}
+			}
+			if (localError) {
+				errors = true;
+				int offset = basePtr - lineBuffer - 1;
+				size_t width = strlen(basePtr) + 1;
+				fprintf(stderr, "Unrecognized configuration option '%*.*s'\n",
+					(int)width, (int)width, lineBuffer + offset);
+			}
+		}
+		ch = (char)fgetc(configFile);
+	}
+
+	fclose(configFile);
+	if (errors) fprintf(stderr, "\n");
+}
+
+int getLevels(int argIndex, const char* argv[], char names[][MAX_LUMP_NAME], wadList* list) {
+	FUNCTION_ENTRY(NULL, "getLevels", true);
+
+	int index = 0, errors = 0;
+
+	char buffer[2048] = { 0 };
+
+	if (argv[argIndex]) {
+		strcpy_s(buffer, sizeof(buffer), argv[argIndex]);
+		_strupr_s(buffer, sizeof(buffer));
+	}
+
+	char* context = NULL;
+	char* ptr = strtok_s(buffer, "+", &context);
+
+	// See if the user requested specific levels
+	if (ptr && WAD::IsMap(ptr)) {
+		argIndex++;
+		while (ptr) {
+			if (WAD::IsMap(ptr)) {
+				if (list->FindWAD(ptr)) {
+					strcpy_s(names[index++], MAX_LUMP_NAME, ptr);
+				}
+				else {
+					fprintf(stderr, "  Could not find '%s'. Errors: %d\n", ptr, errors++);
+				}
+			}
+			else {
+				fprintf(stderr, "  %s is not a valid name for a level. Errors: %d\n", ptr, errors++);
+			}
+			ptr = strtok_s(NULL, "+", &context);
+		}
+	}
+	else {
+		int size = list->DirSize();
+		const wadListDirEntry* dir = list->GetDir(0);
+		for (int i = 0; i < size; i++) {
+			if (dir->wad->IsMap(dir->entry->name)) {
+				// Make sure it's really a level
+				if (strcmp(dir[1].entry->name, "THINGS") == 0) {
+					if (index == MAX_LEVELS) {
+						fprintf(stderr, "ERROR: Too many levels in WAD - ignoring %s! Errors: %d\n",
+							dir->entry->name, errors++);
+					}
+					else {
+						memcpy_s(names[index++], MAX_LUMP_NAME, dir->entry->name, MAX_LUMP_NAME);
+					}
+				}
+			}
+			dir++;
+		}
+	}
+
+	memset(names[index], 0, MAX_LUMP_NAME);
+
+	if (errors) {
+		if (errors) {
+			fprintf(stderr, "\n");
+		}
+	}
+	return argIndex;
+}
+
+/*
 int getLevels ( int argIndex, const char *argv [], char names [][MAX_LUMP_NAME], wadList *list ) {
 	FUNCTION_ENTRY ( NULL, "getLevels", true );
 
@@ -764,27 +949,33 @@ int getLevels ( int argIndex, const char *argv [], char names [][MAX_LUMP_NAME],
 
 	return argIndex;
 }
+*/
 
 bool ReadOptionsRMB ( const char *wadName, sOptionsRMB *options ) {
 	FUNCTION_ENTRY ( NULL, "ReadOptionsRMB", true );
 
 	char fileName [ 256 ];
-	strcpy ( fileName, wadName );
+	strcpy_s ( fileName, wadName );
 	char *ptr = &fileName [ strlen ( fileName )];
 	while ( *--ptr != '.' );
 	*++ptr = '\0';
-	strcat ( ptr, "rej" );
-	while (( ptr > fileName ) && ( *ptr != SEPERATOR )) ptr--;
-	if (( ptr < fileName ) || ( *ptr == SEPERATOR )) ptr++;
-	FILE *optionFile = fopen ( ptr, "rt" );
-	if ( optionFile == NULL ) {
-		optionFile = fopen ( fileName, "rt" );
-		if ( optionFile == NULL ) return false;
+
+	size_t remainingSize = sizeof(fileName) - (ptr - fileName);
+	strcat_s(ptr, remainingSize, "rej");
+
+	while ((ptr > fileName) && (*ptr != SEPERATOR)) ptr--;
+	if ((ptr < fileName) || (*ptr == SEPERATOR)) ptr++;
+
+	FILE* optionFile = NULL;
+	fopen_s(&optionFile, ptr, "rt");
+	if (optionFile == NULL) {
+		fopen_s(&optionFile, fileName, "rt");
+		if (optionFile == NULL) return false;
 	}
 
 	memset ( options, 0, sizeof ( sOptionsRMB ));
 
-	options->wadName = strdup ( wadName );
+	options->wadName = _strdup ( wadName );
 
 	fprintf ( stdout, "Parsing RMB option file %s", fileName );
 
@@ -812,7 +1003,7 @@ bool ReadOptionsRMB ( const char *wadName, sOptionsRMB *options ) {
 
 	return false;
 }
-
+/*
 void EnsureExtension ( char *fileName, const char *ext ) {
 	FUNCTION_ENTRY ( NULL, "EnsureExtension", true );
 
@@ -824,10 +1015,89 @@ void EnsureExtension ( char *fileName, const char *ext ) {
 	}
 
 	size_t length = strlen ( fileName );
-	if ( stricmp ( &fileName [length-4], ext ) != 0 ) {
+	if ( _stricmp ( &fileName [length-4], ext ) != 0 ) {
 		strcat ( fileName, ext );
 	}
 }
+*/
+
+
+/*
+
+void EnsureExtension(char* fileName, const char* ext, size_t maxLen) {
+	FUNCTION_ENTRY(NULL, "EnsureExtension", true);
+
+	// See if the file exists first
+	FILE* file = NULL;
+#ifdef _WIN32
+	fopen_s(&file, fileName, "rb");
+#else
+	file = fopen(fileName, "rb");
+#endif
+	if (file != NULL) {
+		fclose(file);
+		return;
+	}
+
+	size_t length = strlen(fileName);
+	size_t extLen = strlen(ext);
+
+#ifdef _WIN32
+#define stricmp _stricmp
+#define strcat_safe(dst, src, len) strcat_s(dst, len, src)
+#else
+#define strcat_safe(dst, src, len) strcat(dst, src)
+#endif
+
+	// If filename shorter than extension, definitely needs it
+	if (length < extLen || stricmp(&fileName[length - extLen], ext) != 0) {
+		// Only append if enough room
+		if (length + extLen < maxLen) {
+			strcat_safe(fileName, ext, maxLen);
+		}
+		else {
+			// Truncate before appending to fit
+			size_t copyLen = maxLen - extLen - 1;
+			if (length > copyLen) length = copyLen;
+			fileName[length] = '\0';
+			strcat_safe(fileName, ext, maxLen);
+		}
+	}
+}
+*/
+
+void EnsureExtension(std::string& fileName, const std::string& ext) {
+	FUNCTION_ENTRY(NULL, "EnsureExtension", true);
+
+	// If the file exists already, don't modify it
+	FILE* file = nullptr;
+#ifdef _WIN32
+	fopen_s(&file, fileName.c_str(), "rb");
+#else
+	file = fopen(fileName.c_str(), "rb");
+#endif
+	if (file != nullptr) {
+		fclose(file);
+		return;
+	}
+
+	// Case-insensitive compare for existing extension
+#ifdef _WIN32
+	auto icompare = [](const std::string& a, const std::string& b) {
+		return _stricmp(a.c_str(), b.c_str()) == 0;
+		};
+#else
+	auto icompare = [](const std::string& a, const std::string& b) {
+		return strcasecmp(a.c_str(), b.c_str()) == 0;
+		};
+#endif
+
+	if (fileName.size() < ext.size() ||
+		!icompare(fileName.substr(fileName.size() - ext.size()), ext)) {
+		fileName += ext;
+	}
+}
+
 
 const char *TypeName ( eWadType type )
 {
@@ -844,6 +1114,7 @@ const char *TypeName ( eWadType type )
 	return name;
 }
 
+/*
 wadList *getInputFiles ( const char *cmdLine, char *wadFileName )
 {
 	FUNCTION_ENTRY ( NULL, "getInputFiles", true );
@@ -854,7 +1125,7 @@ wadList *getInputFiles ( const char *cmdLine, char *wadFileName )
 	if ( cmdLine == NULL ) return myList;
 
 	char temp [ 256 ];
-	strcpy ( temp, cmdLine );
+	strcpy_s ( temp, cmdLine );
 	char *ptr = strtok ( temp, "+" );
 
 	int errors = 0;
@@ -865,7 +1136,7 @@ wadList *getInputFiles ( const char *cmdLine, char *wadFileName )
 	while ( ptr && *ptr ) {
 		char wadName [ 256 ];
 		strcpy ( wadName, ptr );
-		EnsureExtension ( wadName, ".wad" );
+		EnsureExtension ( wadName, ".wad", strlen(wadName));
 
 		WAD *wad = new WAD ( wadName );
 		if ( wad->Status () != ws_OK ) {
@@ -889,7 +1160,7 @@ wadList *getInputFiles ( const char *cmdLine, char *wadFileName )
 			delete wad;
 		} else {
 			if ( ! myList->IsEmpty ()) {
-				cprintf ( "Merging: %s with %s\r\n", wadName, listNames );
+				printf ( "Merging: %s with %s\r\n", wadName, listNames );
 				*wadFileName++ = '+';
 			}
 			if ( myList->Add ( wad ) == false ) {
@@ -920,13 +1191,120 @@ wadList *getInputFiles ( const char *cmdLine, char *wadFileName )
 	}
 
 	if ( wadOk && (wadFileName [-1] == '+') ) wadFileName [-1] = '\0';
-	if ( myList->wadCount () > 1 ) cprintf ( "\r\n" );
+	if ( myList->wadCount () > 1 ) printf ( "\r\n" );
 	if ( errors ) fprintf ( stderr, "\n" );
 	if ( index != 0 ) fprintf ( stdout, "\n" );
 
 	return myList;
 }
+*/
 
+#include <string>
+#include <vector>
+#include <sstream>
+#include <iostream>
+#include <iterator>
+#include <algorithm>
+#include <string>
+#include <string_view>
+#include <sstream>
+#include <vector>
+#include <memory>
+#include <algorithm>
+#include <iostream>
+#include <cstring>
+
+// Assumes wadList, WAD, ws_* enums, config, etc. are defined elsewhere.
+
+std::unique_ptr<wadList> getInputFiles(const std::string& cmdLine, std::string& outWadList) {
+	FUNCTION_ENTRY(nullptr, "getInputFiles", true);
+
+	outWadList.clear();
+	auto myList = std::make_unique<wadList>();
+
+	if (cmdLine.empty()) return myList;
+
+	std::stringstream ss(cmdLine);
+	std::string token;
+	int errors = 0;
+	int index = 0;
+	bool wadOk = true;
+
+	while (std::getline(ss, token, '+')) {
+		if (token.empty()) continue;
+
+		std::string wadName = token;
+		EnsureExtension(wadName, ".wad");
+
+		auto wad = std::make_unique<WAD>(wadName.c_str());
+		if (wad->Status() != ws_OK) {
+			wadOk = false;
+			switch (wad->Status()) {
+			case ws_INVALID_FILE:
+				std::fprintf(stderr, "The file %s does not exist\n", wadName.c_str());
+				break;
+			case ws_CANT_READ:
+				std::fprintf(stderr, "Can't open the file %s for read access\n", wadName.c_str());
+				break;
+			case ws_INVALID_WAD:
+				std::fprintf(stderr, "%s is not a valid WAD file\n", wadName.c_str());
+				break;
+			default:
+				std::fprintf(stderr, "** Unexpected Error opening %s **\n", wadName.c_str());
+				break;
+			}
+			continue;
+		}
+
+		if (!myList->IsEmpty()) {
+			std::cout << "Merging: " << wadName << " with " << outWadList << "\n";
+			outWadList.push_back('+');
+		}
+
+		// if (!myList->Add(wad.get())) {
+		if (!myList->Add(std::move(wad))) {
+			errors++;
+			if (myList->Type() != wt_UNKNOWN) {
+				std::cerr << "ERROR: " << wadName << " is not a " << TypeName(myList->Type()) << " PWAD.\n";
+			}
+			else {
+				std::cerr << "ERROR: " << wadName << " is not the same type.\n";
+			}
+		}
+		else {
+			if (config.Reject.UseRMB && index < MAX_WADS) {
+				if (ReadOptionsRMB(wadName.c_str(), &rmbOptionTable[index])) {
+					config.Reject.rmb = rmbOptionTable[index].option;
+					index++;
+				}
+			}
+			else if (index == MAX_WADS) {
+				std::cerr << "WARNING: Too many wads specified - RMB options ignored\n";
+				index++;
+			}
+
+			auto pos = wadName.find_last_of(SEPERATOR);
+			std::string baseName = (pos != std::string::npos) ? wadName.substr(pos + 1) : wadName;
+			outWadList += baseName;
+		}
+
+		// myList->Add(wad.release()); // transfer ownership
+		// myList->Add(std::move(wad));
+	}
+
+	if (wadOk && !outWadList.empty() && outWadList.back() == '+') {
+		outWadList.pop_back();
+	}
+
+	if (myList->wadCount() > 1) std::cout << "\n";
+	if (errors) std::cerr << "\n";
+	if (index != 0) std::cout << "\n";
+
+	return myList;
+}
+
+
+/*
 void ReadSection ( FILE *file, int max, bool *array ) {
 	FUNCTION_ENTRY ( NULL, "ReadSection", true );
 
@@ -975,111 +1353,188 @@ void ReadSection ( FILE *file, int max, bool *array ) {
 	}
 	ungetc ( ch, file );
 }
+*/
 
-void ReadCustomFile ( DoomLevel *curLevel, wadList *myList, sBSPOptions *options )
-{
-	FUNCTION_ENTRY ( NULL, "ReadCustomFile", true );
+#include <iostream>
+#include <istream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
 
-	char fileName [ 256 ];
-	const wadListDirEntry *dir = myList->FindWAD ( curLevel->Name (), NULL, NULL );
-	strcpy ( fileName, dir->wad->Name ());
-	char *ptr = &fileName [ strlen ( fileName )];
-	while ( *--ptr != '.' );
-	*++ptr = '\0';
-	strcat ( ptr, "zen" );
-	while (( ptr > fileName ) && ( *ptr != SEPERATOR )) ptr--;
-	if (( ptr < fileName ) || ( *ptr == SEPERATOR )) ptr++;
-	FILE *optionFile = fopen ( ptr, "rt" );
-	if ( optionFile == NULL ) {
-		optionFile = fopen ( fileName, "rt" );
-		if ( optionFile == NULL ) return;
-	}
+void ReadSection(std::istream& file, int max, std::vector<bool>& array) {
+	array.assign(max, false); // Initialize all entries to false
 
-	char ch = ( char ) fgetc ( optionFile );
-	bool foundMap = false;
-	do {
-		while ( ! feof ( optionFile ) && ( ch != '[' )) ch = ( char ) fgetc ( optionFile );
-		char lineBuffer [ 256 ];
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
+	std::string line;
+	while (std::getline(file, line)) {
+		// Trim newline, carriage return, or Ctrl-Z characters
+		line.erase(std::remove_if(line.begin(), line.end(),
+			[](char c) { return c == '\n' || c == '\r' || c == '\x1A'; }),
+			line.end());
 
-		fgets ( lineBuffer, sizeof ( lineBuffer ), optionFile );
+		// Skip leading whitespace
+		auto start = line.begin();
+		while (start != line.end() && std::isspace(static_cast<unsigned char>(*start))) ++start;
+		if (start == line.end() || *start == '[') {
+			// End of section or empty line
+			break;
+		}
 
-#pragma GCC diagnostic pop
+		bool value = true;
+		if (*start == '!') {
+			value = false;
+			++start;
+			while (start != line.end() && std::isspace(static_cast<unsigned char>(*start))) ++start;
+		}
 
-		strtok ( lineBuffer, "\n\x1A]" );
-		if ( WAD::IsMap ( lineBuffer )) {
-			if ( strcmp ( lineBuffer, curLevel->Name ()) == 0 ) {
-				foundMap = true;
-			} else if ( foundMap ) {
-				break;
+		std::string tokenStr(start, line.end());
+		std::istringstream tokenStream(tokenStr);
+		std::string token;
+
+		while (std::getline(tokenStream, token, ',')) {
+			// Trim leading and trailing whitespace
+			token.erase(token.begin(),
+				std::find_if(token.begin(), token.end(), [](unsigned char c) { return !std::isspace(c); }));
+			token.erase(std::find_if(token.rbegin(), token.rend(), [](unsigned char c) { return !std::isspace(c); }).base(),
+				token.end());
+
+			if (token.empty()) continue;
+
+			if (token == "all" || token == "ALL") {
+				std::fill(array.begin(), array.end(), value);
+				continue;
+			}
+
+			int low = -1, high = -1;
+			size_t dashPos = token.find('-');
+			try {
+				if (dashPos != std::string::npos) {
+					low = std::stoi(token.substr(0, dashPos));
+					high = std::stoi(token.substr(dashPos + 1));
+				}
+				else {
+					low = high = std::stoi(token);
+				}
+			}
+			catch (...) {
+				// Invalid token, skip
+				continue;
+			}
+
+			// Bounds check
+			if (low < 0) low = 0;
+			if (high >= max) high = max - 1;
+
+			for (int i = low; i <= high; ++i) {
+				array[i] = value;
 			}
 		}
-		if ( ! foundMap ) {
-			ch = ( char ) fgetc ( optionFile );
+	}
+}
+
+
+
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cctype>
+
+void ReadCustomFile(DoomLevel* curLevel, wadList* myList, sBSPOptions* options) {
+	FUNCTION_ENTRY(nullptr, "ReadCustomFile", true);
+
+	// Get WAD filename
+	const wadListDirEntry* dir = myList->FindWAD(curLevel->Name(), nullptr, nullptr);
+	if (!dir) return;
+
+	std::string fileName = dir->wad->Name();
+	auto dotPos = fileName.rfind('.');
+	if (dotPos != std::string::npos) {
+		fileName.replace(dotPos + 1, fileName.size() - dotPos - 1, "zen");
+	}
+
+	auto sepPos = fileName.find_last_of(SEPERATOR);
+	std::string optionFileName = (sepPos != std::string::npos) ? fileName.substr(sepPos + 1) : fileName;
+
+	std::ifstream optionFile(optionFileName);
+	if (!optionFile.is_open()) {
+		optionFile.open(fileName);
+		if (!optionFile.is_open()) return;
+	}
+
+	std::string line;
+	bool foundMap = false;
+
+	while (std::getline(optionFile, line)) {
+		// Trim whitespace and special characters
+		line.erase(std::remove_if(line.begin(), line.end(),
+			[](char c) { return c == '\n' || c == '\r' || c == '\x1A' || c == ']'; }),
+			line.end());
+		line.erase(line.begin(),
+			std::find_if(line.begin(), line.end(), [](unsigned char c) { return !std::isspace(c); }));
+
+		if (WAD::IsMap(line)) {
+			if (line == curLevel->Name()) {
+				foundMap = true;
+			}
+			else if (foundMap) {
+				break; // done with this map
+			}
 			continue;
 		}
 
+		if (!foundMap) continue;
+
 		int maxIndex = 0;
 		bool isSectorSplit = false;
-		bool *array = NULL;
-		if ( stricmp ( lineBuffer, "ignore-linedefs" ) == 0 ) {
-			maxIndex = curLevel->LineDefCount ();
-			if ( options->ignoreLineDef == NULL ) {
-				options->ignoreLineDef = new bool [ maxIndex ];
-				memset ( options->ignoreLineDef, false, sizeof ( bool ) * maxIndex );
-			}
-			array = options->ignoreLineDef;
-		} else if ( stricmp ( lineBuffer, "dont-split-linedefs" ) == 0 ) {
-			maxIndex = curLevel->LineDefCount ();
-			if ( options->dontSplit == NULL ) {
-				options->dontSplit = new bool [ maxIndex ];
-				memset ( options->dontSplit, false, sizeof ( bool ) * maxIndex );
-			}
-			array = options->dontSplit;
-		} else if ( stricmp ( lineBuffer, "dont-split-sectors" ) == 0 ) {
-			isSectorSplit = true;
-			maxIndex = curLevel->LineDefCount ();
-			if ( options->dontSplit == NULL ) {
-				options->dontSplit = new bool [ maxIndex ];
-				memset ( options->dontSplit, false, sizeof ( bool ) * maxIndex );
-			}
-			maxIndex = curLevel->SectorCount ();
-			array = new bool [ maxIndex ];
-			memset ( array, false, sizeof ( bool ) * maxIndex );
-		} else if ( stricmp ( lineBuffer, "unique-sectors" ) == 0 ) {
-			maxIndex = curLevel->SectorCount ();
-			if ( options->keepUnique == NULL ) {
-				options->keepUnique = new bool [ maxIndex ];
-				memset ( options->keepUnique, false, sizeof ( bool ) * maxIndex );
-			}
-			array = options->keepUnique;
+		std::vector<bool>* arrayPtr = nullptr;
+		std::vector<bool> tempArray;
+
+		if (_stricmp(line.c_str(), "ignore-linedefs") == 0) {
+			maxIndex = curLevel->LineDefCount();
+			if (!options->ignoreLineDef) options->ignoreLineDef = new bool[maxIndex]();
+			arrayPtr = reinterpret_cast<std::vector<bool>*>(options->ignoreLineDef); // For ReadSection
 		}
-		if ( array != NULL ) {
-			ReadSection ( optionFile, maxIndex, array );
-			if ( isSectorSplit == true ) {
-				const wLineDefInternal *lineDef = curLevel->GetLineDefs ();
-				const wSideDef *sideDef = curLevel->GetSideDefs ();
-				for ( int side, i = 0; i < curLevel->LineDefCount (); i++, lineDef++ ) {
-					side = lineDef->sideDef [0];
-					if (( side != NO_SIDEDEF ) && ( array [ sideDef [ side ].sector ])) {
-						options->dontSplit [i] = true;
-					}
-					side = lineDef->sideDef [1];
-					if (( side != NO_SIDEDEF ) && ( array [ sideDef [ side ].sector ])) {
-						options->dontSplit [i] = true;
+		else if (_stricmp(line.c_str(), "dont-split-linedefs") == 0) {
+			maxIndex = curLevel->LineDefCount();
+			if (!options->dontSplit) options->dontSplit = new bool[maxIndex]();
+			arrayPtr = reinterpret_cast<std::vector<bool>*>(options->dontSplit);
+		}
+		else if (_stricmp(line.c_str(), "dont-split-sectors") == 0) {
+			isSectorSplit = true;
+			maxIndex = curLevel->SectorCount();
+			tempArray.assign(maxIndex, false);
+			arrayPtr = &tempArray;
+		}
+		else if (_stricmp(line.c_str(), "unique-sectors") == 0) {
+			maxIndex = curLevel->SectorCount();
+			if (!options->keepUnique) options->keepUnique = new bool[maxIndex]();
+			arrayPtr = reinterpret_cast<std::vector<bool>*>(options->keepUnique);
+		}
+
+		if (arrayPtr) {
+			ReadSection(optionFile, maxIndex, *arrayPtr);
+
+			if (isSectorSplit) {
+				const wLineDefInternal* lineDef = curLevel->GetLineDefs();
+				const wSideDef* sideDef = curLevel->GetSideDefs();
+				for (int i = 0; i < curLevel->LineDefCount(); i++, lineDef++) {
+					for (int s = 0; s < 2; s++) {
+						int side = lineDef->sideDef[s];
+						if (side != NO_SIDEDEF && tempArray[sideDef[side].sector]) {
+							options->dontSplit[i] = true;
+						}
 					}
 				}
-				delete [] array;
 			}
 		}
+	}
+	}
 
-		ch = ( char ) fgetc ( optionFile );
 
-	} while ( ! feof ( optionFile ));
 
-	fclose ( optionFile );
-}
 
 int CheckREJECT ( DoomLevel *curLevel ) {
 	FUNCTION_ENTRY ( NULL, "CheckREJECT", true );
@@ -1109,7 +1564,7 @@ int CheckREJECT ( DoomLevel *curLevel ) {
 
 	return ( int ) ( 10000.0 * count / ( noSectors * noSectors ) + 0.5 );
 }
-void PrintTime ( UINT32 time ) {
+void PrintTime ( std::uint32_t time ) {
 	FUNCTION_ENTRY ( NULL, "PrintTime", false );
 
 	GotoXY ( 63, startY );
@@ -1130,24 +1585,24 @@ void PrintTime ( UINT32 time ) {
 	long ms = time % 1000;
 
 	if (d > 0) {
-		cprintf ( "%3ldd %2ldh %02ldm %02lds\r\n", d, h, m, s);
+		printf ( "%3ldd %2ldh %02ldm %02lds\r\n", d, h, m, s);
 	} else if (h > 9) {
-		cprintf ( "%7ldh %02ldm %02lds\r\n", h, m, s);
+		printf ( "%7ldh %02ldm %02lds\r\n", h, m, s);
 	} else if (h > 0) {
-		cprintf ( "%1ldh %02ldm %02lds %03ldms\r\n", h, m, s, ms);
+		printf ( "%1ldh %02ldm %02lds %03ldms\r\n", h, m, s, ms);
 	} else if (m > 0) {
-		cprintf ( "   %2ldm %02lds %03ldms\r\n", m, s, ms);
+		printf ( "   %2ldm %02lds %03ldms\r\n", m, s, ms);
 	} else if (s > 0) {
-		cprintf ( "       %2lds %03ldms\r\n", s, ms);
+		printf ( "       %2lds %03ldms\r\n", s, ms);
 	} else {
-		cprintf ( "           %3ldms\r\n", ms);
+		printf ( "           %3ldms\r\n", ms);
 	}
 	
 }
 
 
 void PrintColorOff(void) {
-	cprintf ( "%c[0m", 27);
+	printf ( "%c[0m", 27);
 }
 
 void PrintMapHeader(char *map, bool highlight) {
@@ -1171,35 +1626,35 @@ void PrintMapHeader(char *map, bool highlight) {
 	}
 
 	if (config.Color == 1)  {
-		// cprintf ( "%c[37;44;1m", 27);
-		sprintf (add, "%c[%d;%d;%dm", 27, color, bcolor, bright );
-		strcat(output, add);
+		// printf ( "%c[37;44;1m", 27);
+		sprintf_s (add, "%c[%d;%d;%dm", 27, color, bcolor, bright );
+		strcat_s(output, add);
 	} else if (config.Color == 2) {
-		// cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
-		sprintf(add, "\033[48;2;%d;%d;%dm", 4,20,64);
-		strcat(output, add);
+		// printf ("\033[48;2;%d;%d;%dm", 4,20,64);
+		sprintf_s(add, "\033[48;2;%d;%d;%dm", 4,20,64);
+		strcat_s(output, add);
 	}
-	// cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
-	sprintf(add, "%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
-	strcat(output, add);
+	// printf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
+	sprintf_s(add, "%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, map );
+	strcat_s(output, add);
 
 	if (config.Color == 1) {
-		// cprintf ( "%c[0;37;44m", 27);
-		sprintf (add, "%c[0;%d;%d;%dm", 27, color2, bcolor, bright);
-		strcat(output, add);
+		// printf ( "%c[0;37;44m", 27);
+		sprintf_s (add, "%c[0;%d;%d;%dm", 27, color2, bcolor, bright);
+		strcat_s(output, add);
 
 	} else if (config.Color == 2) {
-		// cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
-		sprintf (add, "\033[48;2;%d;%d;%dm", 4,20,64);
-		strcat(output, add);
+		// printf ("\033[48;2;%d;%d;%dm", 4,20,64);
+		sprintf_s (add, "\033[48;2;%d;%d;%dm", 4,20,64);
+		strcat_s(output, add);
 
 	}
 
-	// cprintf(" Lump          Old         New     %%Change      %%Limit     Time Elapsed\n\r");
-	sprintf(add, " Entry         Old         New     %%%%Change      %%%%Limit     Time Elapsed\r\n");
-	strcat(output, add);
+	// printf(" Lump          Old         New     %%Change      %%Limit     Time Elapsed\n\r");
+	sprintf_s(add, " Entry         Old         New     %%%%Change      %%%%Limit     Time Elapsed\r\n");
+	strcat_s(output, add);
 	
-	cprintf (output);
+	printf (output);
 
 	if (config.Color) {
 		PrintColorOff();
@@ -1209,11 +1664,11 @@ void PrintMapHeader(char *map, bool highlight) {
 }
 
 int oldHashes = 0;
-double oldProgress[2] = {-1.0, 1-.0};
+double oldProgress[2] = {-1.0, -1.0};
 
 char *oldLump;
 
-UINT32 oldTime[2];
+std::uint32_t oldTime[2];
 int lastRow = 0;
 
 void ProgressBar(char *lump, double progress, int width, int row) {
@@ -1233,7 +1688,7 @@ void ProgressBar(char *lump, double progress, int width, int row) {
 
 
 		// we only update 4 times per second
-		UINT32 now = CurrentTime ();
+		std::uint32_t now = CurrentTime ();
 	
 		if (now < (oldTime[row] + 200)) {
 			return;
@@ -1262,34 +1717,34 @@ void ProgressBar(char *lump, double progress, int width, int row) {
 
 	GotoXY (0, startY );
 	
-	sprintf(output, "         %-s", lump);
+	sprintf_s(output, "         %-s", lump);
 
 	if (progress < 1.0) {
-		// cprintf(" %5.2f%% ", 100.0 * progress);
-		sprintf(add, "%6.2f%%%% ", 100.0 * progress);
+		// printf(" %5.2f%% ", 100.0 * progress);
+		sprintf_s(add, "%6.2f%%%% ", 100.0 * progress);
 	} else {
-		// cprintf(" %5.1f%% ", 100.0 * progress);
-		sprintf(add, "%6.1f%%%% ", 100.0 * progress);
+		// printf(" %5.1f%% ", 100.0 * progress);
+		sprintf_s(add, "%6.1f%%%% ", 100.0 * progress);
 	}
 
 	// pile on the output into a write buffer
-	strcat(output, add);
+	strcat_s(output, add);
 	
-	sprintf(prog, "");
+	sprintf_s(prog, "");
 
 	if (config.Color) {
-		//cprintf ( "%c[0;37m", 27);
-		sprintf(add, "%c[0;37m", 27);
-		strcat(output, add);
+		//printf ( "%c[0;37m", 27);
+		sprintf_s(add, "%c[0;37m", 27);
+		strcat_s(output, add);
 	}
-	// cprintf("[");
-	sprintf(add, "[");
-	strcat(output, add);
+	// printf("[");
+	sprintf_s(add, "[");
+	strcat_s(output, add);
 
 	if (config.Color) {
-		// cprintf ( "%c[1;30m", 27);
-		sprintf(add, "%c[1;30m", 27);
-		strcat(output, add);
+		// printf ( "%c[1;30m", 27);
+		sprintf_s(add, "%c[1;30m", 27);
+		strcat_s(output, add);
 	}
 
 	if (config.Color == 2) {
@@ -1358,37 +1813,37 @@ void ProgressBar(char *lump, double progress, int width, int row) {
 				r = 0;
 			}
 
-			// cprintf ("\033[38;2;%d;%d;%dm#", r, g, b);
-			sprintf(add, "\033[38;2;%d;%d;%dm#", r, g, b);
-			strcat(output, add);
+			// printf ("\033[38;2;%d;%d;%dm#", r, g, b);
+			sprintf_s(add, "\033[38;2;%d;%d;%dm#", r, g, b);
+			strcat_s(output, add);
 		}
 		if (hashes != width) {
-			// cprintf("%*s", width - hashes, (char *) " ");
-			sprintf(add, "%*s", width - hashes, (char *) " ");
-			strcat(output, add);
+			// printf("%*s", width - hashes, (char *) " ");
+			sprintf_s(add, "%*s", width - hashes, (char *) " ");
+			strcat_s(output, add);
 		}
 
 	} else {
-		sprintf(prog, "%*s", width, (char *)" ");
+		sprintf_s(prog, "%*s", width, (char *)" ");
 
 		for (int i = 0; i != hashes; i++) {
 		        prog[i] = '#';
 		}
-		// cprintf ( "%s", prog);
-		strcat(output, prog);
+		// printf ( "%s", prog);
+		strcat_s(output, prog);
 	}
 
 	if (config.Color) {
-		// cprintf ( "%c[0;37m", 27);
-		sprintf (add, "%c[0;37m", 27);
-		strcat(output, add);
+		// printf ( "%c[0;37m", 27);
+		sprintf_s (add, "%c[0;37m", 27);
+		strcat_s(output, add);
 	}
 
-	// cprintf("]");
-	sprintf(add, "]");
-	strcat(output, add);
+	// printf("]");
+	sprintf_s(add, "]");
+	strcat_s(output, add);
 
-	cprintf(output);
+	printf(output);
 
 	if (config.Color) {
 		PrintColorOff();
@@ -1409,9 +1864,9 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 	oldTime[1] = 0;
 
 	if (nu != -1) {
-		cprintf ( " %-8s  %7d  => %7d", lump, old, nu );
+		printf ( " %-8s  %7d  => %7d", lump, old, nu );
 	} else {
-		cprintf ( " %-8s  %6.2f%%  => %6.2f%%", lump, oldD, nuD );
+		printf ( " %-8s  %6.2f%%  => %6.2f%%", lump, oldD, nuD );
 	}
 
 	double dNew = nu;
@@ -1443,68 +1898,68 @@ void PrintMapLump(char *lump, int old, int nu, int limit, double oldD, double nu
 
 	if(config.Color) {
 		if(change >= 1.25) {
-			sprintf(ansicolor, "1;31");
+			sprintf_s(ansicolor, "1;31");
 		} else if (change >= 1.1) {
-			sprintf(ansicolor, "0;33");
+			sprintf_s(ansicolor, "0;33");
 		} else if (change > 1.0) {
-			sprintf(ansicolor, "1;33");
+			sprintf_s(ansicolor, "1;33");
 		} else if ((nuD == dOld) || (old == nu)) {
-			sprintf(ansicolor, "0;37");
+			sprintf_s(ansicolor, "0;37");
 		} else if (change >= 0.9) {
-			sprintf(ansicolor, "0;32");
+			sprintf_s(ansicolor, "0;32");
 		} else {
-			sprintf(ansicolor, "1;32");
+			sprintf_s(ansicolor, "1;32");
 		}
-		cprintf ("%c[%sm", 27, ansicolor);
+		printf ("%c[%sm", 27, ansicolor);
 
 	}
 	if (old || (oldD > 0.0)) {
-		cprintf("     %6.2f%%", change * 100.0);
+		printf("     %6.2f%%", change * 100.0);
 	} else {
-		cprintf("           -");
+		printf("           -");
 	}
 
 	if(config.Color) {
 		if (limit == 0) {
-			sprintf(ansicolor, "0;37");
+			sprintf_s(ansicolor, "0;37");
 		} else if (	(efficiency) > 1.0) {
-			sprintf(ansicolor, "1;37;41");
+			sprintf_s(ansicolor, "1;37;41");
 		} else if (efficiency >= 0.95) {
-			sprintf(ansicolor, "0;31");
+			sprintf_s(ansicolor, "0;31");
 		} else if ( efficiency >= 0.90) {
-			sprintf(ansicolor, "1;31");
+			sprintf_s(ansicolor, "1;31");
 		} else if ( efficiency >= 0.85) {
-			sprintf(ansicolor, "0;33");
+			sprintf_s(ansicolor, "0;33");
 		} else if ( efficiency >= 0.80) {
-			sprintf(ansicolor, "1;33");
+			sprintf_s(ansicolor, "1;33");
 		} else {
-			sprintf(ansicolor, "0;37");
+			sprintf_s(ansicolor, "0;37");
 		}
-		cprintf ("%c[%sm", 27, ansicolor);
+		printf ("%c[%sm", 27, ansicolor);
 	}
 
 	if (limit) {
-		cprintf("     %6.2f%%", efficiency * 100.0);	
+		printf("     %6.2f%%", efficiency * 100.0);	
 	} else {
-		cprintf("           -");
+		printf("           -");
 	}
 
 	if (config.Color) {
 		PrintColorOff();
 	}
 
-	// cprintf ( "\r\n" );
+	// printf ( "\r\n" );
 }
 
-bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
+bool ProcessLevel ( char *name, wadList *myList, std::uint32_t *elapsed ) {
 	FUNCTION_ENTRY ( NULL, "ProcessLevel", true );
 
-	UINT32 dummyX = 0;
+	std::uint32_t dummyX = 0;
 
 	*elapsed = 0;
 
-	// cprintf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
-	//cprintf ( "\r%-*.*s        Old       New    %%Change    %%Limit   Time Elapsed\n\r", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
+	// printf ( "\r%-*.*s", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
+	//printf ( "\r%-*.*s        Old       New    %%Change    %%Limit   Time Elapsed\n\r", MAX_LUMP_NAME, MAX_LUMP_NAME, name );
 	GetXY ( &startX, &startY );
 
 	PrintMapHeader(name, false );
@@ -1514,8 +1969,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	const wadListDirEntry *dir = myList->FindWAD ( name );
 	DoomLevel *curLevel = new DoomLevel ( name, dir->wad );
 	if ( curLevel->IsValid ( false ) == false ) {
-		cprintf ( "This level is not valid... " );
-		cprintf ( "\r\n" );
+		printf ( "This level is not valid... " );
+		printf ( "\r\n" );
 		delete curLevel;
 		return false;
 	}
@@ -1525,7 +1980,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	startX = 4;
 
 	if ( config.BlockMap.Rebuild || config.Nodes.Rebuild || config.Reject.Rebuild ) {
-		UINT32 preTime = CurrentTime ();
+		std::uint32_t preTime = CurrentTime ();
 
 		int oldSectorCount = curLevel->SectorCount ();
 		// int oldSubSectorCount = curLevel->SubSectorCount ();
@@ -1536,43 +1991,43 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		*elapsed += preTime = CurrentTime () - preTime;
 		// Status ( (char *) "" );
 		// GotoXY ( startX, startY );
-		//cprintf ( "PREPROCESS - ");
+		//printf ( "PREPROCESS - ");
 
 		// CompressSideDefs(curLevel, &config);
 
-		double pct;
+// 		double pct;
 
 		if (config.Statistics.ShowLineDefs) {
 /*			Status ( (char *) "" );
 			GotoXY ( startX, startY );
 
-			cprintf ( "LineDefs: %6d => %6d ", (int) oldLineCount,  curLevel->LineDefCount ());
+			printf ( "LineDefs: %6d => %6d ", (int) oldLineCount,  curLevel->LineDefCount ());
 
 			if ( oldLineCount ) {
-				cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->LineDefCount () / (float) oldLineCount ));
+				printf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->LineDefCount () / (float) oldLineCount ));
 			} else {
-				cprintf ( " - " );
+				printf ( " - " );
 			}
 
 			pct = ((double) curLevel->LineDefCount () / 32768.0) * 100.0;
-			cprintf("   %6.2f%%", pct);
+			printf("   %6.2f%%", pct);
 */
 			PrintMapLump((char * )"Linedefs", oldLineCount, curLevel->LineDefCount (), config.Statistics.MaxSize - 1, 0, 0);
 
 			PrintTime (preTime);
 			showTime = true;
-			// cprintf ( "\r\n" );
+			// printf ( "\r\n" );
 			rows++;
 		}
 		if (config.Statistics.ShowSectors) {
 			/*GotoXY ( startX, startY );
 
-			cprintf ( "Sectors:  %6d => %6d ", (int) oldSectorCount,  curLevel->SectorCount ());
+			printf ( "Sectors:  %6d => %6d ", (int) oldSectorCount,  curLevel->SectorCount ());
 
 			if ( oldSectorCount ) {
-				cprintf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->SectorCount () / (float) oldSectorCount ));
+				printf ( "   %6.2f%%", ( float ) ( 100.0 * curLevel->SectorCount () / (float) oldSectorCount ));
 			} else {
-				cprintf ( " - " );
+				printf ( " - " );
 			}
 
 			pct = ((double) curLevel->SectorCount () / 32768.0) * 100.0;
@@ -1584,13 +2039,13 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 				PrintTime (preTime);
 			}
 
-			// cprintf("   %6.2f%%", pct);
-			cprintf ( "\r\n" );
+			// printf("   %6.2f%%", pct);
+			printf ( "\r\n" );
 			rows++;
 		}
 /*		if (config.Statistics.ShowVertices) {
 			PrintMapLump((char * )"Vertices", oldVertexCount, curLevel->VertexCount (), config.Statistics.MaxSize - 1, 0, 0);
-			cprintf ( "\r\n" );
+			printf ( "\r\n" );
 			rows++;
 		}
 */
@@ -1602,7 +2057,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	if ( config.BlockMap.Rebuild ) {
 
 		int oldSize = curLevel->BlockMapSize ();
-		UINT32 blockTime = CurrentTime ();
+		std::uint32_t blockTime = CurrentTime ();
 		int saved = CreateBLOCKMAP ( curLevel, config.BlockMap );
 		*elapsed += blockTime = CurrentTime () - blockTime;
 		int newSize = curLevel->BlockMapSize ();
@@ -1613,29 +2068,12 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		if ( saved >= 0 ) {
 			PrintMapLump((char * )"Blockmap", oldSize, newSize, 65536, 0, 0);
-
-			/*
-			   cprintf ( "Blockmap: %6d => %6d ", oldSize, newSize );
-			   if ( oldSize ) cprintf ( "   %6.2f%%", ( float ) ( 100.0 * newSize / oldSize ));
-			   else cprintf ( " - " );
-			   cprintf ( "   Compressed: " );
-			   if ( newSize + saved ) cprintf ( "%3.2f%%", ( float ) ( 100.0 * newSize / ( newSize + saved ) ));
-			   else cprintf ( "(****)" );
-			   */
-			/*
-			   double pct = ((double) newSize / 65535.0) * 100.0; 
-
-			   cprintf("   %6.2f%%", pct);
-			   */
 		} else {
-			// PrintMapLumpError("Blockmap", newSize, 65536);
-			cprintf ( "       Blockmap   Failed to create a valid lump\n" );
+			printf ( "       Blockmap   Failed to create a valid lump\n" );
 		}
-
 
 		PrintTime ( blockTime );
 
-		//cprintf ( "\r\n" );
 		GetXY ( &dummyX, &startY );
 		rows++;
 	}
@@ -1650,7 +2088,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	
 		const wSegs *segs = curLevel->GetSegs ();
 
-		for (int i = 0; i != segCount; i++) {
+ 		for (int i = 0; i != segCount; i++) {
 			if (segs[i].offset) {
 				oldSplits++;
 			}
@@ -1680,8 +2118,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		ReadCustomFile ( curLevel, myList, &options );
 
-		UINT32 nodeTime = CurrentTime ();
-		CreateNODES ( curLevel, &options );
+		std::uint32_t nodeTime = CurrentTime ();
+		CreateNodesStructure ( curLevel, &options );
 		*elapsed += nodeTime = CurrentTime () - nodeTime;
 
 		if ( options.ignoreLineDef ) delete [] options.ignoreLineDef;
@@ -1691,7 +2129,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		Status ( (char *) "" );
 		GotoXY ( startX, startY );
 
-		double pct;
+		// double pct;
 
 		totalNodes +=  curLevel->NodeCount ();
 		oldTotalNodes += oldNodeCount;
@@ -1699,57 +2137,57 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		oldTotalSegs += oldSegCount;
 
 		/*
-		   cprintf ( "Nodes: %9d => %6d    ", oldNodeCount,  curLevel->NodeCount ());
+		   printf ( "Nodes: %9d => %6d    ", oldNodeCount,  curLevel->NodeCount ());
 		   if ( oldNodeCount ) {
 		   double pct = ( 100.0 * (curLevel->NodeCount () / (double) oldNodeCount) );
-		   cprintf ( "%6.2f%%", pct);
-		//cprintf ( "%3.1f%%", ( 100.0 * (curLevel->NodeCount () / oldNodeCount) ));
+		   printf ( "%6.2f%%", pct);
+		//printf ( "%3.1f%%", ( 100.0 * (curLevel->NodeCount () / oldNodeCount) ));
 		}
 		else {
-		cprintf ( "     -" );
+		printf ( "     -" );
 		}
 
 		pct = ((double) curLevel->NodeCount() / 32878.0) * 100.0;
-		cprintf("   %6.2f%%", pct);
+		printf("   %6.2f%%", pct);
 
 
-		//cprintf("\r\n");
-		cprintf("\r\n");
+		//printf("\r\n");
+		printf("\r\n");
 		*/
 
 		/*
 		   GotoXY ( startX, startY );
 
-		   cprintf ( "Segs: %10d => %6d ",  oldSegCount, curLevel->SegCount ());
+		   printf ( "Segs: %10d => %6d ",  oldSegCount, curLevel->SegCount ());
 
 		   if ( oldSegCount ) {
 		   pct = ( 100.0 * ( (double) curLevel->SegCount () / (double) oldSegCount) );
-		   cprintf ( "   %6.2f%%", pct);
+		   printf ( "   %6.2f%%", pct);
 		   } else {
-		   cprintf ( "     -" );
+		   printf ( "     -" );
 		   }
 
 		   pct = ((double) curLevel->SegCount() / 32768.0) * 100.0;
-		   cprintf("   %6.2f%%", pct);
+		   printf("   %6.2f%%", pct);
 		   */
 
 		/*
-		   cprintf ( "\r\n   Nodes: %9d => %6d   ", oldNodeCount,  curLevel->NodeCount ());
+		   printf ( "\r\n   Nodes: %9d => %6d   ", oldNodeCount,  curLevel->NodeCount ());
 		   if ( oldNodeCount ) {
 		   pct = ( 100.0 * (curLevel->NodeCount () / (double) oldNodeCount) );
-		   cprintf ( " %6.2f%%", pct);
-		//cprintf ( "%3.1f%%", ( 100.0 * (curLevel->NodeCount () / oldNodeCount) ));
+		   printf ( " %6.2f%%", pct);
+		//printf ( "%3.1f%%", ( 100.0 * (curLevel->NodeCount () / oldNodeCount) ));
 		}
 		else {
-		cprintf ( "     -" );
+		printf ( "     -" );
 		}
 		pct = ((double) curLevel->NodeCount() / 32878.0) * 100.0;
-		cprintf("   %6.2f%%", pct);
+		printf("   %6.2f%%", pct);
 		*/
 
 		// PrintTime ( nodeTime );
 		/*
-		   cprintf ( "\r\n" );
+		   printf ( "\r\n" );
 		   GotoXY ( startX, startY );
 
 		   rows++;
@@ -1757,7 +2195,7 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 		segCount = curLevel->SegCount();
 
 		PrintMapLump( (char *)  "Segs", oldSegCount, segCount, config.Statistics.MaxSize, 0, 0);
-		cprintf ( "\r\n" );
+		printf ( "\r\n" );
 		rows++;
 
 		if (config.Statistics.ShowSplits) {
@@ -1772,30 +2210,30 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			}
 
 			PrintMapLump( (char *)  "Splits",  oldSplits, splits, 0, 0, 0);
-			cprintf ( "\r\n" );
+			printf ( "\r\n" );
 			rows++;
 		}
 		if (config.Statistics.ShowVertices) {
 			PrintMapLump((char * )"Vertices", oldVertexCount, curLevel->VertexCount (), config.Statistics.MaxSize - 1, 0, 0);
-			cprintf ( "\r\n" );
+			printf ( "\r\n" );
 			rows++;
 		}
 
 
 		/*
-		   cprintf ( "Subsecs: %7d => %6d ",  oldSubSectorCount, curLevel->SubSectorCount());
+		   printf ( "Subsecs: %7d => %6d ",  oldSubSectorCount, curLevel->SubSectorCount());
 		   if ( oldSubSectorCount ) {
 		   pct = ( 100.0 * ( (double) curLevel->SubSectorCount () / (double) oldSubSectorCount) );
-		   cprintf ( "   %6.2f%%", pct);
+		   printf ( "   %6.2f%%", pct);
 		   } else {
-		   cprintf ( "     -" );
+		   printf ( "     -" );
 		   }
 		   pct = ((double) curLevel->SubSectorCount() / 32768.0) * 100.0;
-		   cprintf("   %6.2f%%", pct);
+		   printf("   %6.2f%%", pct);
 
 		   PrintTime ( nodeTime );
 
-		   cprintf("\r\n");
+		   printf("\r\n");
 		   GotoXY ( startX, startY );
 		   */
 
@@ -1810,8 +2248,8 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 
 		int oldEfficiency = CheckREJECT ( curLevel );
 
-		UINT32 rejectTime = CurrentTime ();
-		bool special = CreateREJECT ( curLevel, config.Reject, config.BlockMap );
+		std::uint32_t rejectTime = CurrentTime ();
+		bool special = CreateREJECT ( curLevel, config.Reject/*, config.BlockMap*/);
 		*elapsed += rejectTime = CurrentTime () - rejectTime;
 
 		int newEfficiency = CheckREJECT ( curLevel );
@@ -1820,22 +2258,22 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			Status ( (char *) "" );
 			GotoXY ( startX, startY );
 			/*
-			//cprintf ( "Reject:  %3ld.%1ld%% =>%3ld.%1ld%%  Sectors: %5d", newEfficiency / 100, newEfficiency % 100,
+			//printf ( "Reject:  %3ld.%1ld%% =>%3ld.%1ld%%  Sectors: %5d", newEfficiency / 100, newEfficiency % 100,
 			//		oldEfficiency / 100, oldEfficiency % 100, curLevel->SectorCount ());
-			cprintf ( "Reject:  %3ld.%02ld%% =>%3ld.%02ld%%", newEfficiency / 100, newEfficiency % 100, oldEfficiency / 100, oldEfficiency % 100);
+			printf ( "Reject:  %3ld.%02ld%% =>%3ld.%02ld%%", newEfficiency / 100, newEfficiency % 100, oldEfficiency / 100, oldEfficiency % 100);
 
-			cprintf ( "    %6.2f%%         -", ((double) newEfficiency / (double) oldEfficiency) * 100.0);
+			printf ( "    %6.2f%%         -", ((double) newEfficiency / (double) oldEfficiency) * 100.0);
 
-			cprintf ( "\r\n" );
+			printf ( "\r\n" );
 			*/
 			PrintMapLump( (char *)  "Reject", 0, 0, 0, oldEfficiency / 100.0, newEfficiency / 100.0);
 			// GetXY ( &dummyX, &startY );
 			PrintTime ( rejectTime );
 		} else {
-			cprintf ( "         Reject special effects detected, use -rf to force an update." );
-			cprintf ( "\r\n" );
+			printf ( "         Reject special effects detected, use -rf to force an update." );
+			printf ( "\r\n" );
 		}
-		// cprintf ( "\r\n" );
+		// printf ( "\r\n" );
 		// GetXY ( &dummyX, &startY );
 		rows++;
 	}
@@ -1850,19 +2288,19 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			MoveUp ( rows );
 
 			if (config.Color == 1) {
-				// cprintf ( "%c[37;44;1m", 27);
+				// printf ( "%c[37;44;1m", 27);
 				PrintMapHeader(name, true);
 				
 			} else if (config.Color == 2) {
-				cprintf ("\033[48;2;%d;%d;%dm", 4,20,64);
+				printf ("\033[48;2;%d;%d;%dm", 4,20,64);
 			}
 
-			// cprintf("\r");
+			// printf("\r");
 			// GetXY ( &dummyX, &startY );
 			
 			if (config.Color == 0) {
 				GotoXY(7, startY);
-				cprintf("*");
+				printf("*");
 			}
 			MoveDown ( rows );
 			if (config.Color) {
@@ -1870,11 +2308,11 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 			}
 		}
 	} else {
-		cprintf ( "Nothing to do here ... " );
-		cprintf ( "\r\n" );
+		printf ( "Nothing to do here ... " );
+		printf ( "\r\n" );
 	}
 
-	cprintf ( "\r\n" );
+	printf ( "\r\n" );
 
 	int noSectors = curLevel->SectorCount ();
 	int rejectSize = (( noSectors * noSectors ) + 7 ) / 8;
@@ -1889,45 +2327,45 @@ bool ProcessLevel ( char *name, wadList *myList, UINT32 *elapsed ) {
 	return changed;
 }
 
-void PrintStats ( int totalLevels, UINT32 totalTime, int totalUpdates ) {
+void PrintStats ( int totalLevels, std::uint32_t totalTime, int totalUpdates ) {
 	FUNCTION_ENTRY ( NULL, "PrintStats", true );
 
 	if ( totalLevels != 0 ) {
 
-		cprintf ( "%d Level%s processed in ", totalLevels, totalLevels > 1 ? "s" : "" );
+		printf ( "%d Level%s processed in ", totalLevels, totalLevels > 1 ? "s" : "" );
 		if ( totalTime > 60000 ) {
-			UINT32 minutes = totalTime / 60000;
-			UINT32 tempTime = totalTime - minutes * 60000;
-			cprintf ( "%ld minute%s %ld.%03ld second%s - ", minutes, minutes > 1 ? "s" : "", tempTime / 1000, tempTime % 1000, ( tempTime == 1000 ) ? "" : "s" );
+			std::uint32_t minutes = totalTime / 60000;
+			std::uint32_t tempTime = totalTime - minutes * 60000;
+			printf ( "%ld minute%s %ld.%03ld second%s - ", minutes, minutes > 1 ? "s" : "", tempTime / 1000, tempTime % 1000, ( tempTime == 1000 ) ? "" : "s" );
 		} else {
-			cprintf ( "%ld.%03ld second%s - ", totalTime / 1000, totalTime % 1000, ( totalTime == 1000 ) ? "" : "s"  );
+			printf ( "%ld.%03ld second%s - ", totalTime / 1000, totalTime % 1000, ( totalTime == 1000 ) ? "" : "s"  );
 		}
 
 		if ( totalUpdates ) {
-			cprintf ( "%d Level%s need%s updating.\r\n", totalUpdates, totalUpdates > 1 ? "s" : "", config.WriteWAD ? "ed" : "" );
+			printf ( "%d Level%s need%s updating.\r\n", totalUpdates, totalUpdates > 1 ? "s" : "", config.WriteWAD ? "ed" : "" );
 		} else {
-			cprintf ( "No Levels need%s updating.\r\n", config.WriteWAD ? "ed" : "" );
+			printf ( "No Levels need%s updating.\r\n", config.WriteWAD ? "ed" : "" );
 		}
 
 		if ( totalTime == 0 ) {
-			cprintf ( "WOW! Whole bunches of levels/sec!\r\n" );
+			printf ( "WOW! Whole bunches of levels/sec!\r\n" );
 		} else if ( totalTime < 1000 ) {
-			cprintf ( "%f levels/sec\r\n", 1000.0 * totalLevels / totalTime );
+			printf ( "%f levels/sec\r\n", 1000.0 * totalLevels / totalTime );
 		} else if ( totalLevels > 1 ) {
-			cprintf ( "%f secs/level\r\n", totalTime / ( totalLevels * 1000.0 ));
+			printf ( "%f secs/level\r\n", totalTime / ( totalLevels * 1000.0 ));
 		}
 	}
 }
 
 void printTotals(void) {
 
-	double pct;
+	// double pct;
 
 	// summary..
 	/*
 	   GotoXY ( 0, startY );
-	   cprintf ( "=================================================================");
-	   cprintf("\r\n");
+	   printf ( "=================================================================");
+	   printf("\r\n");
 	   */
 
 	PrintMapHeader((char *) "Total:", false);
@@ -1935,73 +2373,141 @@ void printTotals(void) {
 	GotoXY ( startX, startY );
 
 	PrintMapLump( (char *)  "Segs", oldTotalSegs, totalSegs, 0, 0, 0);
-	// cprintf ( "Segs: %10d => %6d ",  oldTotalSegs, totalSegs );
+	// printf ( "Segs: %10d => %6d ",  oldTotalSegs, totalSegs );
 
 /*	if ( oldTotalSegs ) {
 		pct = ( 100.0 * ( (double) totalSegs / (double) oldTotalSegs) );
-		cprintf ( "   %6.2f%%", pct);
+		printf ( "   %6.2f%%", pct);
 	} else {
-		cprintf ( "     -" );
+		printf ( "     -" );
 	}
 */
-	cprintf("\r\n");
+	printf("\r\n");
 	//GotoXY ( startX, startY );
 
 	// nodes to subsecs fix
 	oldTotalNodes++;
 	totalNodes++;
 /*
-	cprintf ( "Subsecs: %7d => %6d    ", oldTotalNodes, totalNodes );
+	printf ( "Subsecs: %7d => %6d    ", oldTotalNodes, totalNodes );
 	if ( oldTotalNodes ) {
 		pct = ( 100.0 * (totalNodes / (double) oldTotalNodes) );
-		cprintf ( "%6.2f%%", pct);
+		printf ( "%6.2f%%", pct);
 	}
 */
 	PrintMapLump( (char *)  "Subsecs", oldTotalNodes, totalNodes, 0, 0, 0);
 
-	cprintf("\r\n");
+	printf("\r\n");
 
 	//GotoXY ( 0, startY );
-	//cprintf ( "=================================================================");
-	//cprintf("\r\n");
+	//printf ( "=================================================================");
+	//printf("\r\n");
 
 }
 
-int getOutputFile ( int index, const char *argv [], char *wadFileName )
+#ifdef _WIN32
+#define strtok_safe(str, delim, ctx) strtok_s(str, delim, ctx)
+#define strcpy_safe(dst, src, len) strcpy_s(dst, len, src)
+#else
+#define strtok_safe(str, delim, ctx) strtok(str, delim)
+#define strcpy_safe(dst, src, len) strcpy(dst, src)
+#endif
+
+/*
+int getOutputFile(int index, const char* argv[], char* wadFileName, size_t wadFileSize)
 {
-	FUNCTION_ENTRY ( NULL, "getOutputFile", true );
+	FUNCTION_ENTRY(NULL, "getOutputFile", true);
 
-	strtok ( wadFileName, "+" );
+#ifdef _WIN32
+	char* ctx = NULL; // strtok_s requires a context pointer
+	strtok_safe(wadFileName, "+", &ctx);
+#else
+	strtok_safe(wadFileName, "+", NULL);
+#endif
 
-	const char *ptr = argv [ index ];
-	if ( ptr && ( *ptr == '-' )) {
-		char ch = ( char ) toupper ( *++ptr );
-		if (( ch == 'O' ) || ( ch == 'X' )) {
+	const char* ptr = argv[index];
+	if (ptr && (*ptr == '-')) {
+		char ch = (char)toupper(*++ptr);
+		if ((ch == 'O') || (ch == 'X')) {
 			index++;
-			if ( *++ptr ) {
-				if ( *ptr++ != ':' ) {
-					fprintf ( stderr, "\nUnrecognized argument '%s'\n", argv [ index ] );
+			if (*++ptr) {
+				if (*ptr++ != ':') {
+					fprintf(stderr, "\nUnrecognized argument '%s'\n", argv[index]);
 					config.Extract = false;
 					return index + 1;
 				}
-			} else {
-				ptr = argv [ index++ ];
 			}
-			if ( ptr ) strcpy ( wadFileName, ptr );
-			if ( ch == 'X' ) {
+			else {
+				ptr = argv[index++];
+			}
+			if (ptr) strcpy_safe(wadFileName, ptr, wadFileSize);
+			if (ch == 'X') {
 				config.Extract = true;
-			} else {
+			}
+			else {
 				config.OutputWad = true;
 			}
 		}
 	}
 
-	EnsureExtension ( wadFileName, ".wad" );
+	EnsureExtension(wadFileName, ".wad", wadFileSize);
+
+	return index;
+}
+*/
+
+int getOutputFile(int index, const char* argv[], std::string& wadFileName) {
+	FUNCTION_ENTRY(nullptr, "getOutputFile", true);
+
+	// Remove anything after the first '+'
+	auto plusPos = wadFileName.find('+');
+	if (plusPos != std::string::npos) {
+		wadFileName.erase(plusPos);
+	}
+
+	const char* arg = argv[index];
+	if (arg && *arg == '-') {
+		std::string option(arg + 1); // skip '-'
+		if (!option.empty()) {
+			char ch = static_cast<char>(std::toupper(option[0]));
+			if (ch == 'O' || ch == 'X') {
+				index++;
+
+				// Handle inline value like "-O:filename" or "-X:filename"
+				if (option.size() > 1) {
+					if (option[1] != ':') {
+						std::cerr << "\nUnrecognized argument '" << arg << "'\n";
+						config.Extract = false;
+						return index + 1;
+					}
+					wadFileName = option.substr(2); // skip "O:" or "X:"
+				}
+				else {
+					// Filename should be in next argument
+					if (argv[index]) {
+						wadFileName = argv[index++];
+					}
+				}
+
+				if (ch == 'X') {
+					config.Extract = true;
+				}
+				else {
+					config.OutputWad = true;
+				}
+			}
+		}
+	}
+
+	// Ensure .wad extension
+	EnsureExtension(wadFileName, ".wad");
 
 	return index;
 }
 
-char *ConvertNumber ( UINT32 value ) {
+
+/*
+char *ConvertNumber ( std::uint32_t value ) {
 	FUNCTION_ENTRY ( NULL, "ConvertNumber", true );
 
 	static char buffer [ 25 ];
@@ -2017,6 +2523,27 @@ char *ConvertNumber ( UINT32 value ) {
 	while ( *ptr == ' ' ) ptr++;
 	return ptr;
 }
+*/
+
+std::string ConvertNumber(uint32_t value) {
+	if (value == 0) return "0";
+
+	std::string result;
+	int count = 0;
+
+	while (value > 0) {
+		if (count && count % 3 == 0) {
+			result.push_back(','); // insert comma
+		}
+		result.push_back('0' + (value % 10));
+		value /= 10;
+		count++;
+	}
+
+	std::reverse(result.begin(), result.end());
+	return result;
+}
+
 
 /*
    long long totalNodes = 0;
@@ -2028,6 +2555,188 @@ char *ConvertNumber ( UINT32 value ) {
    */
 
 
+#include <string>
+#include <vector>
+#include <iostream>
+
+int main(int argc, const char* argv[]) {
+	FUNCTION_ENTRY(NULL, "main", true);
+
+	SaveConsoleSettings();
+	HideCursor();
+
+	printf("%s\r\n", ZOKBANNER);
+	printf("%s\r\n\r\n", BANNER);
+
+	if (!_isatty(_fileno(stdout))) fprintf(stdout, "%s\n\n", BANNER);
+	if (!_isatty(_fileno(stderr))) fprintf(stderr, "%s\n\n", BANNER);
+
+	// Initialize config defaults
+	config.BlockMap = {
+		true,  // Rebuild
+		true,  // Compress
+		true,  // RemoveNonCollidable
+		false, // OffsetEight
+		false, // OffsetZero
+		true,  // OffsetThirtySix
+		false, // OffsetBruteForce
+		0,     // OffsetCommandLineX
+		0,     // OffsetCommandLineY
+		false, // OffsetUser
+		false, // OffsetHeuristic
+		1,     // ZeroHeader
+		false, // BlockMerge
+		false, // SubBlockOptimization
+		false, // IdCompatible
+		false, // HTMLOutput
+		false, // blockBig
+		false  // autoDetectBacksideRemoval
+	};
+
+	config.Geometry.Simplification = 0;
+
+	config.Nodes = {
+		true,                                // Rebuild
+		2,                                   // Method
+		1,                                   // Thoroughness
+		!_isatty(_fileno(stdout)),           // Quiet
+		true,                                // Unique
+		false,                               // ReduceLineDefs
+		true,                                // SegBAMs
+		1,                                   // SplitHandling
+		3,                                   // SplitReduction
+		0,                                   // MultipleSplitMethods
+		1,                                   // Cache
+		TREE_METRIC_BALANCED,                // Metric
+		1,                                   // Width
+		100,                                 // Tuning
+		false                                // vertexPartition
+	};
+
+	config.Reject = {
+		true,  // Rebuild
+		false, // Empty
+		false, // Force
+		true,  // UseGraphs
+		false  // UseRMB
+	};
+
+	config.Statistics = {
+		VANILLA_LIMIT, // MaxSize
+		false, false, false, false, false, false // Show flags
+	};
+
+	config.WriteWAD = true;
+	config.Color = false;
+	config.OutputWad = false;
+
+	if (argc == 1) {
+		PrintHelp(&config);
+		return -1;
+	}
+
+	ReadConfigFile(argv);
+
+	int argIndex = 1;
+	int totalLevels = 0, totalTime = 0, totalUpdates = 0;
+
+	while (KeyPressed()) GetKey();
+
+	do {
+		config.Extract = false;
+		argIndex = parseArgs(argIndex, argv);
+		if (argIndex >= argc) break;
+
+		std::string wadFileName;
+		// wadList* myList = getInputFiles(argv[argIndex++], wadFileName);
+		auto myList = getInputFiles(argv[argIndex++], wadFileName);
+
+		if (!myList->IsEmpty()) {
+			printf("Working on: %s\r\n\n", wadFileName.c_str());
+			TRACE("Processing " << wadFileName);
+
+			char levelNames[MAX_LEVELS + 1][MAX_LUMP_NAME];
+			// argIndex = getLevels(argIndex, argv, levelNames, myList);
+			argIndex = getLevels(argIndex, argv, levelNames, myList.get());
+
+			if (levelNames[0][0] == '\0') {
+				fprintf(stderr, "Unable to find any valid levels in %s\n", wadFileName.c_str());
+				myList.reset();
+				break;
+			}
+
+			int noLevels = 0;
+			int updateCount = myList->wadCount() - 1;
+
+			do {
+				std::uint32_t elapsedTime;
+				if (ProcessLevel(levelNames[noLevels++], myList.get(), &elapsedTime))
+					updateCount++;
+				totalTime += elapsedTime;
+
+				if (KeyPressed() && (GetKey() == 0x1B)) break;
+
+			} while (levelNames[noLevels][0]);
+
+			if (config.Statistics.ShowTotals) {
+				printTotals();
+			}
+
+			config.Extract = false;
+			argIndex = getOutputFile(argIndex, argv, wadFileName); // now takes std::string&
+
+			WAD* end = MakeENDOOMLump(myList.get(), wadFileName.c_str());
+			updateCount++;
+
+			if (updateCount || config.Extract) {
+				if (config.WriteWAD) {
+					printf("\r\n%s to %s...", config.Extract ? "Extracting" : "Saving", wadFileName.c_str());
+					bool ok = config.Extract
+						? myList->Extract(levelNames, wadFileName.c_str())
+						: myList->Save(wadFileName.c_str());
+
+					if (!ok) fprintf(stderr, " Error writing to file!\n");
+					printf("\r\n");
+				}
+				else {
+					/*
+					printf("\r\nChanges would have been written to %s ( %s bytes )\n",
+						wadFileName.c_str(),
+						ConvertNumber(myList->FileSize()));
+						*/
+					std::cout << "\nChanges would have been written to "
+						<< wadFileName
+						<< " (" << ConvertNumber(myList->FileSize()) << " bytes)\n";
+
+				}
+			}
+			else {
+				printf(" no updates........... ! \n");
+			}
+			printf("\r\n");
+
+			if (end) {
+				delete end;
+			}
+
+			updateCount -= myList->wadCount() - 1;
+			totalLevels += noLevels;
+			totalUpdates += updateCount;
+		}
+
+		// delete myList;
+
+	} while (argIndex < argc && argv[argIndex]);
+
+	PrintStats(totalLevels, totalTime, totalUpdates - 1); // Why -1?
+	RestoreConsoleSettings();
+
+	return 0;
+}
+
+
+
+/*
 int main ( int argc, const char *argv [] ) {
 	FUNCTION_ENTRY ( NULL, "main", true );
 
@@ -2035,11 +2744,11 @@ int main ( int argc, const char *argv [] ) {
 	HideCursor ();
 
 
-	cprintf ( "%s\r\n", ZOKBANNER );
-	cprintf ( "%s\r\n\r\n", BANNER );
+	printf ( "%s\r\n", ZOKBANNER );
+	printf ( "%s\r\n\r\n", BANNER );
 
-	if ( ! isatty ( fileno ( stdout ))) fprintf ( stdout, "%s\n\n", BANNER );
-	if ( ! isatty ( fileno ( stderr ))) fprintf ( stderr, "%s\n\n", BANNER );
+	if ( ! _isatty ( _fileno ( stdout ))) fprintf ( stdout, "%s\n\n", BANNER );
+	if ( ! _isatty ( _fileno ( stderr ))) fprintf ( stderr, "%s\n\n", BANNER );
 
 	config.BlockMap.Rebuild     = true;
 	config.BlockMap.Compress    = true;
@@ -2066,7 +2775,7 @@ int main ( int argc, const char *argv [] ) {
 	config.Nodes.Rebuild        = true;
 	config.Nodes.Method         = 2;
 	config.Nodes.Thoroughness   = 1;
-	config.Nodes.Quiet          = isatty ( fileno ( stdout )) ? false : true;
+	config.Nodes.Quiet          = _isatty ( _fileno ( stdout )) ? false : true;
 	config.Nodes.Unique         = true;
 	config.Nodes.ReduceLineDefs = false;
 	config.Nodes.SegBAMs		= true;
@@ -2119,7 +2828,7 @@ int main ( int argc, const char *argv [] ) {
 		wadList *myList = getInputFiles ( argv [argIndex++], wadFileName );
 		if ( myList->IsEmpty () == false ) {
 
-			cprintf ( "Working on: %s\r\n\n", wadFileName );
+			printf ( "Working on: %s\r\n\n", wadFileName );
 
 			TRACE ( "Processing " << wadFileName );
 
@@ -2137,7 +2846,7 @@ int main ( int argc, const char *argv [] ) {
 
 			do {
 
-				UINT32 elapsedTime;
+				std::uint32_t elapsedTime;
 				if ( ProcessLevel ( levelNames [noLevels++], myList, &elapsedTime )) updateCount++;
 				totalTime += elapsedTime;
 				if ( KeyPressed () && ( GetKey () == 0x1B )) break;
@@ -2149,7 +2858,7 @@ int main ( int argc, const char *argv [] ) {
 			}
 
 			config.Extract = false;
-			argIndex = getOutputFile ( argIndex, argv, wadFileName );
+			argIndex = getOutputFile ( argIndex, argv, wadFileName, strlen(wadFileName));
 
 			// generate new ENDOOM goes here
 			// WAD *end = MakeENDOOMLump(myList, "fuxxor");
@@ -2159,7 +2868,7 @@ int main ( int argc, const char *argv [] ) {
 
 			if ( updateCount || config.Extract ) {
 				if ( config.WriteWAD ) {
-					cprintf ( "\r\n%s to %s...", config.Extract ? "Extracting" : "Saving", wadFileName );
+					printf ( "\r\n%s to %s...", config.Extract ? "Extracting" : "Saving", wadFileName );
 					if ( config.Extract ) {
 						if ( myList->Extract ( levelNames, wadFileName ) == false ) {
 							fprintf ( stderr," Error writing to file!\n" );
@@ -2169,14 +2878,14 @@ int main ( int argc, const char *argv [] ) {
 							fprintf ( stderr," Error writing to file!\n" );
 						}
 					}
-					cprintf ( "\r\n" );
+					printf ( "\r\n" );
 				} else {
-					cprintf ( "\r\nChanges would have been written to %s ( %s bytes )\n", wadFileName, ConvertNumber ( myList->FileSize ()));
+					printf ( "\r\nChanges would have been written to %s ( %s bytes )\n", wadFileName, ConvertNumber ( myList->FileSize ()));
 				}
 			} else {
 				printf(" no updates........... ! \n");
 			}
-			cprintf ( "\r\n" );
+			printf ( "\r\n" );
 
 			if (end) {
 				delete end;
@@ -2198,3 +2907,4 @@ int main ( int argc, const char *argv [] ) {
 
 	return 0;
 }
+*/

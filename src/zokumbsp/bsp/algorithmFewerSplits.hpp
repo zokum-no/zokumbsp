@@ -1,0 +1,1 @@
+int AlgorithmFewerSplits(SEG* segs, int noSegs, nodeBuilderData* nbd);

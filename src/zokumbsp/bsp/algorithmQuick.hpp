@@ -1,0 +1,1 @@
+int AlgorithmQuick(SEG* segs, int noSegs, nodeBuilderData* nbd);
