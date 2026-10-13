@@ -31,6 +31,9 @@
     <Filter Include="Source Files\doom">
       <UniqueIdentifier>{262f9e5f-7304-44e4-b766-fed8639eda39}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\geometry">
+      <UniqueIdentifier>{6ebf1209-78f6-4a32-b604-640f9f0e78b0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\common.hpp">
@@ -140,9 +143,6 @@
     <ClCompile Include="src\zokumbsp\bsp\bspgeometry.cpp">
       <Filter>Source Files\bsp</Filter>
     </ClCompile>
-    <ClCompile Include="src\zokumbsp\geometry\preprocess.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\zokumbsp\bsp\algorithmBalancedTree.cpp">
       <Filter>Source Files\bsp</Filter>
     </ClCompile>
@@ -160,6 +160,9 @@
     </ClCompile>
     <ClCompile Include="src\zokumbsp\blockmap\blockmap.cpp">
       <Filter>Source Files\blockmap</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zokumbsp\geometry\geometry.cpp">
+      <Filter>Source Files\geometry</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

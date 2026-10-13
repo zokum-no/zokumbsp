@@ -3,5 +3,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>-t -na=mw=1 C:\Users\kimro\source\repos\Zokumbsp\x64\Debug\doom.wad </LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArgumentsHistory>-t -na=mw=1 C:\Users\kimro\source\repos\Zokumbsp\x64\Debug\doom.wad |</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>
