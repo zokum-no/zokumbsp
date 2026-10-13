@@ -73,7 +73,7 @@
 #define MAJOR_EVENT(x)  DBG_MAJOR_EVENT2 ( l_FnName, l_pThis, ( const char * ) x )
 #define STATUS(x)       DBG_STATUS2 ( l_FnName, l_pThis, ( const char * ) x )
 #define WARNING(x)      DBG_WARNING2 ( l_FnName, l_pThis, ( const char * ) x )
-#define ERROR(x)        DBG_ERROR2 ( l_FnName, l_pThis, ( const char * ) x )
+#define ZOKUMBSP_ERROR(x)        DBG_ERROR2 ( l_FnName, l_pThis, ( const char * ) x )
 #define FATAL(x)        DBG_FATAL2 ( l_FnName, l_pThis, ( const char * ) x )
 
 #if ! defined ( DEBUG )

@@ -38,7 +38,7 @@
 #endif
 
 #if defined ( _MSC_VER )
-    #define UNREFERENCED_PARAMETER(x)	x
+    // #define UNREFERENCED_PARAMETER(x)	x
 #else
     #define UNREFERENCED_PARAMETER(x)
 #endif
@@ -52,8 +52,8 @@ typedef signed short INT16;
 typedef signed int   INT32;
 
 typedef unsigned char  UINT8, UCHAR;
-typedef unsigned short UINT16;
-typedef unsigned int   UINT32;
+// typedef unsigned short UINT16;
+// typedef unsigned int   UINT32;
 
 #if defined ( __GNUC__ )
 
@@ -67,7 +67,7 @@ typedef unsigned int   UINT32;
 
 #endif
 
-#if defined ( __WIN32__ ) || defined ( __AMIGAOS__ )
+#if defined ( _WIN32 ) || defined ( __AMIGAOS__ )
 
     // Undo any previos definitions
     #define BIG_ENDIAN      1234
@@ -104,7 +104,7 @@ template < class T > inline void swap ( T &item1, T &item2 )
 // Platform specific definitions
 //----------------------------------------------------------------------------
 
-#if defined ( __OS2__ ) || defined ( __WIN32__ )
+#if defined ( __OS2__ ) || defined ( _WIN32 )
 
 #define SEPERATOR	'\\'
 #define DEFAULT_CHAR	'*'
