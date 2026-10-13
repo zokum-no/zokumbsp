@@ -4,6 +4,11 @@ ZokumBSP 1.x
 This is the directory tree with all the files needed to build ZokumBSP from
 source. 
 
+As of 2026, a modernization refactoring has been started, and the primary 
+platform is no MS Visual Studio. It should eventually be fixed to build with
+make and friends. For now though, refactoring, fixing bugs and adding 
+features are the main focii.
+
 The code is a fork of the GPLed ZenNode, and is thus also a GPL project with
 the same license as ZenNode 1.2.0.
 
