@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <cstdint>
 
 #ifdef _MSC_VER
 	#define strncasecmp _strnicmp
@@ -70,10 +71,12 @@ wadFilter **WAD::sm_Filter;
 
 static int _init () {
 	if ( sizeof ( wadHeader ) != 12 ) {
-		fprintf ( stderr, "sanity check: sizeof ( %s ) = %ld (expected %d)\n", "wadHeader", sizeof ( wadHeader ), 12 );
+		// fprintf ( stderr, "sanity check: sizeof ( %s ) = %ld (expected %d)\n", "wadHeader", sizeof ( wadHeader ), 12 );
+		fprintf(stderr, "sanity check: sizeof ( %s ) = %zu (expected %d)\n", "wadHeader", sizeof(wadHeader), 12);
 	}
 	if ( sizeof ( wadDirEntry ) != 16 ) {
-		fprintf ( stderr, "sanity check: sizeof ( %s ) = %ld (expected %d)\n", "wadDirEntry", sizeof ( wadDirEntry ), 16 );
+		// fprintf ( stderr, "sanity check: sizeof ( %s ) = %ld (expected %d)\n", "wadDirEntry", sizeof ( wadDirEntry ), 16 );
+		fprintf(stderr, "sanity check: sizeof ( %s ) = %zu (expected %d)\n", "wadDirEntry", sizeof(wadDirEntry), 16);
 	}
 	return 0;
 }
@@ -116,8 +119,8 @@ static int foo = _init ();
 #endif
 
 #if ( BYTE_ORDER == BIG_ENDIAN )
-	UINT32 swap_uint32 ( const unsigned char *ptr ) {
-		UINT32 res = ptr [3];
+	std::uint32_t swap_uint32 ( const unsigned char *ptr ) {
+		std::uint32_t res = ptr [3];
 		res = ( res << 8 ) | ptr [2];
 		res = ( res << 8 ) | ptr [1];
 		res = ( res << 8 ) | ptr [0];
@@ -152,7 +155,7 @@ WAD::WAD ( const char *filename ) :
 	m_FlatStart ( NULL ),
 	m_FlatEnd ( NULL ),
 	m_NewData ( NULL ) {
-		m_Name = ( filename != NULL ) ? strdup ( filename ) : strdup ( "" );
+		m_Name = ( filename != NULL ) ? _strdup ( filename ) : _strdup ( "" );
 
 		memset ( &m_Header, 0, sizeof ( m_Header ));
 
@@ -235,14 +238,14 @@ bool WAD::ReduceDirectory ( int holePos, int entries ) {
 
 void WAD::FindMarkers () {
 	m_MapStart = m_MapEnd = NULL;
-	UINT32 s;
+	std::uint32_t s;
 	for ( s = 0; s < m_Header.dirSize; s++ ) {
 		if ( IsMap ( m_Directory [s].name )) {
 			m_MapStart = &m_Directory [s];
 			break;
 		}
 	}
-	for ( UINT32 e = m_Header.dirSize - 1; e >= s; e-- ) {
+	for (std::uint32_t e = m_Header.dirSize - 1; e >= s; e-- ) {
 		if ( IsMap ( m_Directory [e].name )) {
 			m_MapEnd = &m_Directory [e];
 			break;
@@ -323,7 +326,7 @@ bool WAD::ReadDirectory () {
 
 	m_DirInfo = new wadDirInfo [ m_Header.dirSize ];
 
-	for ( UINT32 i = 0; i < m_Header.dirSize; i++ ) {
+	for (std::uint32_t i = 0; i < m_Header.dirSize; i++ ) {
 		m_DirInfo [i].newData   = NULL;
 		m_DirInfo [i].cacheData = NULL;
 		m_DirInfo [i].type	  = wl_UNCHECKED;
@@ -333,7 +336,7 @@ bool WAD::ReadDirectory () {
 
 	m_Directory = new wadDirEntry [ m_Header.dirSize ];
 
-	for ( UINT32 i = 0; i < m_Header.dirSize; i++ ) {
+	for (std::uint32_t i = 0; i < m_Header.dirSize; i++ ) {
 		ReadDirEntry ( &m_Directory [i] );
 	}
 
@@ -343,7 +346,7 @@ bool WAD::ReadDirectory () {
 }
 
 bool WAD::WriteDirectory ( FILE *file ) {
-	for ( UINT32 i = 0; i < m_Header.dirSize; i++ ) {
+	for (uint32_t i = 0; i < m_Header.dirSize; i++ ) {
 		if ( WriteDirEntry ( file, &m_Directory [i] ) == false ) {
 			return false;
 		}
@@ -352,7 +355,7 @@ bool WAD::WriteDirectory ( FILE *file ) {
 	return true;
 }
 
-UINT32 WAD::IndexOf ( const wadDirEntry *entry ) const {
+std::uint32_t WAD::IndexOf ( const wadDirEntry *entry ) const {
 	return (( entry < m_Directory ) || ( entry > m_Directory + m_Header.dirSize )) ? -1 : entry - m_Directory;
 }
 
@@ -366,42 +369,32 @@ void WAD::SetList ( wadList *_list ) {
  * at all!. Should also support eXm10 etc ala early doom versions.
  */
 
-bool WAD::IsMap ( const char *name ) {
-	if ( name == NULL ) { 
-		return false;
-	}
-	if (( name[0] != 'M' ) && ( name[0] != 'E' )) {
-		return false;
+bool WAD::IsMap(const std::string& name) {
+	if (name.empty()) return false;
+
+	// MAPxx format
+	if (name.rfind("MAP", 0) == 0) { // starts with "MAP"
+		if (name.size() != 5) return false; // must be exactly MAPxx
+		if (!std::isdigit(name[3]) || !std::isdigit(name[4])) return false;
+
+		int level = std::stoi(name.substr(3, 2)); // safe in modern C++
+		return level >= 1 && level <= 99;
 	}
 
-	if ( strncmp ( name, "MAP", 3 ) == 0 ) {
-		if ( isdigit ( name[3] ) == false ) return false;
-		if ( isdigit ( name[4] ) == false ) return false;
-		if ( name[5] != '\0' ) return false;
-		int level;
-		if ( sscanf ( name+3, "%d", &level ) == 0 ) return false;
-		return (( level >= 1 ) && ( level <= 99 )) ? true : false;
+	// ExMy format
+	if (name.size() == 4 && name[0] == 'E' && name[2] == 'M') {
+		char episode = name[1], mission = name[3];
+		return episode >= '1' && episode <= '9' &&
+			mission >= '1' && mission <= '9';
 	}
-	if (( name[0] == 'E' ) && ( name[2] == 'M' )) {
-		int episode = name[1], mission = name[3];
-		if (( episode < '1' ) || ( episode > '9' )) {
-			return false;
-		}
-		if (( mission < '1' ) || ( mission > '9' )) {
-			return false;
-		}
-		if ( name[4] != '\0' ) {
-			return false;
-		}
-		return true;
-	}
+
 	return false;
 }
 
-UINT32 WAD::FileSize () const {
-	UINT32 totalSize = sizeof ( wadHeader );
+std::uint32_t WAD::FileSize () const {
+	std::uint32_t totalSize = sizeof ( wadHeader );
 
-	for ( UINT32 i = 0; i < m_Header.dirSize; i++ ) {
+	for ( std::uint32_t i = 0; i < m_Header.dirSize; i++ ) {
 		totalSize += sizeof ( wadDirEntry ) + m_Directory [i].size;
 	}
 
@@ -423,11 +416,11 @@ bool WAD::AddFilter ( wadFilter *newFilter ) {
 }
 
 bool WAD::HasChanged ( const wadDirEntry *entry ) const {
-	UINT32 index = IndexOf ( entry );
-	return ( index == ( UINT32 ) -1 ) ? false : m_DirInfo [ index ].newData ? true : false;
+	std::uint32_t index = IndexOf ( entry );
+	return ( index == ( std::uint32_t ) -1 ) ? false : m_DirInfo [ index ].newData ? true : false;
 }
 
-void WAD::Seek ( UINT32 offset ) {
+void WAD::Seek ( std::uint32_t offset ) {
 	m_Status = ws_OK;
 	if ( m_File == NULL ) {
 		m_Status = ws_INVALID_FILE;
@@ -436,7 +429,7 @@ void WAD::Seek ( UINT32 offset ) {
 	}
 }
 
-void WAD::ReadBytes ( void *ptr , UINT32 size, UINT32 count ) {
+void WAD::ReadBytes ( void *ptr , std::uint32_t size, std::uint32_t count ) {
 	m_Status = ws_OK;
 	if ( m_File == NULL ) {
 		m_Status = ws_INVALID_FILE;
@@ -445,17 +438,17 @@ void WAD::ReadBytes ( void *ptr , UINT32 size, UINT32 count ) {
 	}
 }
 
-void *WAD::ReadEntry ( const char *name, UINT32 *size, const wadDirEntry *start, const wadDirEntry *end, bool cache ) {
+void *WAD::ReadEntry ( const char *name, std::uint32_t *size, const wadDirEntry *start, const wadDirEntry *end, bool cache ) {
 	return ReadEntry ( FindDir ( name, start, end ), size, cache );
 }
 
-void *WAD::ReadEntry ( const wadDirEntry *entry, UINT32 *size, bool cache ) {
+void *WAD::ReadEntry ( const wadDirEntry *entry, std::uint32_t *size, bool cache ) {
 	char *buffer = NULL;
 	if ( size ) {
 		*size = 0;
 	}
-	UINT32 index = IndexOf ( entry );
-	if ( index != ( UINT32 ) -1 ) {
+	std::uint32_t index = IndexOf ( entry );
+	if ( index != ( std::uint32_t ) -1 ) {
 		buffer = new char [ entry->size + 1 ];
 		if ( size ) {
 			*size = entry->size;
@@ -480,14 +473,14 @@ void *WAD::ReadEntry ( const wadDirEntry *entry, UINT32 *size, bool cache ) {
 	return ( void * ) buffer;
 }
 
-bool WAD::WriteEntry ( const char *name, UINT32 newSize, void *newStuff, bool owner, const wadDirEntry *start, const wadDirEntry *end ) {
+bool WAD::WriteEntry ( const char *name, std::uint32_t newSize, void *newStuff, bool owner, const wadDirEntry *start, const wadDirEntry *end ) {
 	const wadDirEntry *entry = FindDir ( name, start, end );
 	return WriteEntry ( entry, newSize, newStuff, owner );
 }
 
-bool WAD::WriteEntry ( const wadDirEntry *entry, UINT32 newSize, void *newStuff, bool owner ) {
-	UINT32 index = IndexOf ( entry );
-	if ( index == ( UINT32 ) -1 ) {
+bool WAD::WriteEntry ( const wadDirEntry *entry, std::uint32_t newSize, void *newStuff, bool owner ) {
+	std::uint32_t index = IndexOf ( entry );
+	if ( index == ( std::uint32_t ) -1 ) {
 		return false;
 	}
 
@@ -521,7 +514,7 @@ bool WAD::WriteEntry ( const wadDirEntry *entry, UINT32 newSize, void *newStuff,
 
 	m_DirInfo [ index ].newData = temp;
 	m_Directory [ index ].size = newSize;
-	m_Directory [ index ].offset = ( UINT32 ) -1;
+	m_Directory [ index ].offset = ( std::uint32_t ) -1;
 
 	return true;
 }
@@ -531,16 +524,33 @@ void WAD::OpenFile () {
 		fclose ( m_File );
 	}
 	m_File = NULL;
+	/*
+	int handle = _open ( m_Name, O_RDONLY );
+	*/
 
-	int handle = open ( m_Name, O_RDONLY );
+	int handle;
+	errno_t err = _sopen_s(&handle, m_Name, _O_RDONLY, _SH_DENYNO, 0);
+	if (err != 0) {
+		// handle error, e.g.
+		m_Status = ws_INVALID_FILE;
+		return;
+	}
+
 	if ( handle < 0 ) {
 		m_Status = ( errno == ENOENT ) ? ws_INVALID_FILE : ws_CANT_READ;
 		return;
 	} else {
-		close ( handle );
+		_close ( handle );
 	}
-
+	
+	/*
 	if (( m_File = fopen ( m_Name, "rb" )) == NULL ) {
+		m_Status = ws_INVALID_FILE;
+		return;
+	}
+	*/
+
+	if (fopen_s(&m_File, m_Name, "rb") != 0) {
 		m_Status = ws_INVALID_FILE;
 		return;
 	}
@@ -593,7 +603,7 @@ void WAD::CloseFile () {
 	m_bDirChanged = false;
 
 	if ( m_DirInfo != NULL ) {
-		for ( UINT32 i = 0; i < m_Header.dirSize; i++ ) {
+		for ( std::uint32_t i = 0; i < m_Header.dirSize; i++ ) {
 			if ( m_DirInfo [i].newData ) delete [] ( char * ) m_DirInfo [i].newData;
 			m_DirInfo [i].newData = NULL;
 			if ( m_DirInfo [i].cacheData ) delete [] ( char * ) m_DirInfo [i].cacheData;
@@ -619,15 +629,15 @@ void WAD::CloseFile () {
 	memset ( &m_Header, 0, sizeof ( m_Header ));
 }
 
-const wadDirEntry *WAD::GetDir ( UINT32 index ) const {
+const wadDirEntry *WAD::GetDir ( std::uint32_t index ) const {
 	return ( index >= m_Header.dirSize ) ? ( const wadDirEntry * ) NULL : &m_Directory [index];
 }
 
 const wadDirEntry *WAD::FindDir ( const char *name, const wadDirEntry *start, const wadDirEntry *end ) const {
-	UINT32 i = 0, last = m_Header.dirSize - 1;
+	std::uint32_t i = 0, last = m_Header.dirSize - 1;
 	if ( start != NULL ) {
-		UINT32 index = IndexOf ( start );
-		if ( index == ( UINT32 ) -1 ) {
+		std::uint32_t index = IndexOf ( start );
+		if ( index == ( std::uint32_t ) -1 ) {
 			return NULL;
 		}
 		if ( index > i ) {
@@ -635,8 +645,8 @@ const wadDirEntry *WAD::FindDir ( const char *name, const wadDirEntry *start, co
 		}
 	}
 	if ( end != NULL ) {
-		UINT32 index = IndexOf ( end );
-		if ( index == ( UINT32 ) -1 ) {
+		std::uint32_t index = IndexOf ( end );
+		if ( index == ( std::uint32_t ) -1 ) {
 			return NULL;
 		}
 		if ( index < last ) {
@@ -661,7 +671,7 @@ bool WAD::HasChanged () const {
 	}
 
 	bool changed = false;
-	for ( UINT32 i = 0; ! changed && ( i < m_Header.dirSize ); i++ ) {
+	for ( std::uint32_t i = 0; ! changed && ( i < m_Header.dirSize ); i++ ) {
 		if ( m_DirInfo [i].newData ) {
 			changed = true;
 			printf("found new data\n");
@@ -674,9 +684,9 @@ bool WAD::HasChanged () const {
 	return changed;
 }
 
-bool WAD::InsertBefore ( const wLumpName *name, UINT32 newSize, void *newStuff, bool owner, const wadDirEntry *entry ) {
-	UINT32 index = IndexOf ( entry );
-	if ( entry && ( index == ( UINT32 ) -1 )) {
+bool WAD::InsertBefore ( const wLumpName *name, std::uint32_t newSize, void *newStuff, bool owner, const wadDirEntry *entry ) {
+	std::uint32_t index = IndexOf ( entry );
+	if ( entry && ( index == ( std::uint32_t ) -1 )) {
 		return false;
 	}
 
@@ -688,7 +698,7 @@ bool WAD::InsertBefore ( const wLumpName *name, UINT32 newSize, void *newStuff, 
 	}
 
 	wadDirEntry *newDir = &m_Directory [ index ];
-	strncpy ( newDir->name, ( char * ) name, sizeof ( wLumpName ));
+	strncpy_s ( newDir->name, ( char * ) name, sizeof ( wLumpName ));
 
 	bool retVal = WriteEntry ( newDir, newSize, newStuff, owner );
 
@@ -702,9 +712,9 @@ bool WAD::InsertBefore ( const wLumpName *name, UINT32 newSize, void *newStuff, 
 	return retVal;
 }
 
-bool WAD::InsertAfter ( const wLumpName *name, UINT32 newSize, void *newStuff, bool owner, const wadDirEntry *entry ) {
-	UINT32 index = IndexOf ( entry );
-	if ( entry && ( index == ( UINT32 ) -1 )) {
+bool WAD::InsertAfter ( const wLumpName *name, std::uint32_t newSize, void *newStuff, bool owner, const wadDirEntry *entry ) {
+	std::uint32_t index = IndexOf ( entry );
+	if ( entry && ( index == ( std::uint32_t ) -1 )) {
 		return false;
 	}
 
@@ -719,7 +729,7 @@ bool WAD::InsertAfter ( const wLumpName *name, UINT32 newSize, void *newStuff, b
 	}
 
 	wadDirEntry *newDir = &m_Directory [ index ];
-	strncpy ( newDir->name, ( char * ) name, sizeof ( wLumpName ));
+	strncpy_s ( newDir->name, ( char * ) name, sizeof ( wLumpName ));
 
 	bool retVal = WriteEntry ( newDir, newSize, newStuff, owner );
 
@@ -733,8 +743,8 @@ bool WAD::InsertAfter ( const wLumpName *name, UINT32 newSize, void *newStuff, b
 bool WAD::Remove ( const wLumpName *lump, const wadDirEntry *start, const wadDirEntry *end ) {
 	const wadDirEntry *entry = FindDir ( *lump, start, end );
 
-	UINT32 index = IndexOf ( entry );
-	if ( index == ( UINT32 ) -1 ) {
+	std::uint32_t index = IndexOf ( entry );
+	if ( index == ( std::uint32_t ) -1 ) {
 		return false;
 	}
 
@@ -743,8 +753,8 @@ bool WAD::Remove ( const wLumpName *lump, const wadDirEntry *start, const wadDir
 
 /*
 // TBD
-int  InsertBefore ( const wLumpName *, UINT32, void *, bool, const wadDirEntry * = NULL );
-int  InsertAfter ( const wLumpName *, UINT32, void *, bool, const wadDirEntry * = NULL );
+int  InsertBefore ( const wLumpName *, std::uint32_t, void *, bool, const wadDirEntry * = NULL );
+int  InsertAfter ( const wLumpName *, std::uint32_t, void *, bool, const wadDirEntry * = NULL );
 // TBD
 */
 
@@ -765,7 +775,7 @@ bool WAD::SaveFile ( const char *newName ) {
 		if ( HasChanged () == false ) {
 			return true;
 		}
-		sprintf ( tmpPath, "%s.XXXXXX", newPath );
+		sprintf_s ( tmpPath, "%s.XXXXXX", newPath );
 #if defined _WIN32 && !defined __MINGW32__
 		// #ifdef _WIN32 
 		int tmp = _mktemp_s( tmpPath );
@@ -777,11 +787,14 @@ bool WAD::SaveFile ( const char *newName ) {
 			return false;
 		}
 		tempName = tmpPath;
-		tmpFile  = fdopen ( tmp, "wb" );
+		tmpFile  = _fdopen ( tmp, "wb" );
 	}
 
 	if ( tmpFile == NULL ) {
-		tmpFile = fopen ( tempName, "wb" );
+		// tmpFile = fopen ( tempName, "wb" );
+		if (fopen_s(&tmpFile, tempName, "wb") != 0) {
+			// handle error
+		}
 	}
 
 	if ( tmpFile == NULL ) {
@@ -795,8 +808,8 @@ bool WAD::SaveFile ( const char *newName ) {
 	}
 
 	wadDirEntry *dir = m_Directory;
-	for ( UINT32 i = 0; i < m_Header.dirSize; i++ ) {
-		UINT32 offset = ftell ( tmpFile );
+	for ( std::uint32_t i = 0; i < m_Header.dirSize; i++ ) {
+		std::uint32_t offset = ftell ( tmpFile );
 		if ( dir->size ) {
 			if ( m_DirInfo [i].newData ) {
 				if ( fwrite ( m_DirInfo [i].newData, dir->size, 1, tmpFile ) != 1 ) {
@@ -858,10 +871,14 @@ bool WAD::SaveFile ( const char *newName ) {
 			fprintf ( stderr, "\nERROR: WAD::SaveFile - Unable to rename %s to %s.", tempName, m_Name );
 			return false;
 		}
-		m_File = fopen ( m_Name, "rb" );
+		// m_File = fopen ( m_Name, "rb" );
+		if (fopen_s(&m_File, m_Name, "rb") != 0) {
+			m_Status = ws_INVALID_FILE;
+			return false;
+		}
 	}
 
-	for ( UINT32 i = 0; i < m_Header.dirSize; i++ ) {
+	for ( std::uint32_t i = 0; i < m_Header.dirSize; i++ ) {
 		if ( m_DirInfo [i].newData ) {
 			if ( m_DirInfo [i].cacheData ) delete m_DirInfo [i].cacheData;
 			m_DirInfo [i].cacheData = m_DirInfo [i].newData;
@@ -907,10 +924,10 @@ int wadList::wadCount () const {
 	return size;
 }
 
-UINT32 wadList::FileSize () const {
-	UINT32 totalSize = sizeof ( wadHeader );
+std::uint32_t wadList::FileSize () const {
+	std::uint32_t totalSize = sizeof ( wadHeader );
 
-	for ( UINT32 i = 0; i < m_DirSize; i++ ) {
+	for ( std::uint32_t i = 0; i < m_DirSize; i++ ) {
 		totalSize += sizeof ( wadDirEntry ) + m_Directory [i].entry->size;
 	}
 
@@ -963,7 +980,7 @@ bool wadList::Add ( WAD *wad ) {
 			&& ( wad->Format () == PWAD_ID )) {
 		const wadDirEntry *dir = wad->FindDir ( "SECTORS" );
 		if ( dir != NULL ) {
-			UINT32 temp;
+			std::uint32_t temp;
 			wSector *sector = ( wSector * ) wad->ReadEntry ( dir, &temp, true );
 			int noSectors = temp / sizeof ( wSector );
 			char tempName [ MAX_LUMP_NAME + 1 ]; 
@@ -1046,11 +1063,11 @@ bool wadList::Remove ( WAD *wad ) {
 	return found;
 }
 
-UINT32 wadList::IndexOf ( const wadListDirEntry *entry ) const {
+std::uint32_t wadList::IndexOf ( const wadListDirEntry *entry ) const {
 	return (( entry < m_Directory ) || ( entry > m_Directory + m_DirSize )) ? -1 : entry - m_Directory;
 }
 
-int wadList::AddLevel ( UINT32 index, const wadDirEntry *&entry, WAD *wad ) {
+int wadList::AddLevel ( std::uint32_t index, const wadDirEntry *&entry, WAD *wad ) {
 	int size = 0;
 	const wadDirEntry *start = entry + 1;
 	const wadDirEntry *end   = entry + 11;
@@ -1078,7 +1095,7 @@ int wadList::AddLevel ( UINT32 index, const wadDirEntry *&entry, WAD *wad ) {
 		for ( int i = 0; i < size; i++ ) {
 			/* TBD proper replacement of level lumps
 			   const wadListDirEntry *entry = FindWAD ( entry[1].name, index, index + 10 );
-			   UINT32 index = IndexOf ( entry );
+				std::uint32_t index = IndexOf ( entry );
 			   */ /*
 			m_Directory [ index ].wad   = wad;
 			m_Directory [ index ].entry = ++entry;
@@ -1102,18 +1119,18 @@ void wadList::AddDirectory ( WAD *wad, bool check ) {
 	}
 
 	const wadDirEntry *newDir = wad->GetDir ( 0 );
-	UINT32 count = wad->DirSize ();
+	std::uint32_t count = wad->DirSize ();
 	while ( count ) {
 		const wadListDirEntry *entry = check ? FindWAD ( newDir->name ) : NULL;
 		if ( entry != NULL ) {
-			UINT32 index = IndexOf ( entry );
+			std::uint32_t index = IndexOf ( entry );
 			m_Directory [ index ].wad = wad;
 			m_Directory [ index ].entry = newDir;
 			if ( WAD::IsMap ( newDir->name )) {
 				count -= AddLevel ( index + 1, newDir, wad );
 			}
 		} else {
-			UINT32 index = m_DirSize++;
+			std::uint32_t index = m_DirSize++;
 			m_Directory [ index ].wad = wad;
 			m_Directory [ index ].entry = newDir;
 			if ( WAD::IsMap ( newDir->name )) {
@@ -1125,7 +1142,7 @@ void wadList::AddDirectory ( WAD *wad, bool check ) {
 	}
 }
 
-const wadListDirEntry *wadList::GetDir ( UINT32 index ) const {
+const wadListDirEntry *wadList::GetDir ( std::uint32_t index ) const {
 	return ( index >= m_DirSize ) ? ( const wadListDirEntry * ) NULL : &m_Directory [index];
 }
 
@@ -1233,7 +1250,7 @@ bool wadList::Save ( const char *newName ) {
 
 		wadListDirEntry *srcDir = m_Directory;
 		wadDirEntry *dir = new wadDirEntry [ m_DirSize ];
-		for ( UINT32 i = 0; i < m_DirSize; i++ ) {
+		for ( std::uint32_t i = 0; i < m_DirSize; i++ ) {
 			dir[i] = *srcDir->entry;
 			long offset = ftell ( tmpFile );
 			char *ptr = ( char * ) srcDir->wad->ReadEntry ( srcDir->entry, NULL );
@@ -1255,11 +1272,11 @@ bool wadList::Save ( const char *newName ) {
 
 		WAD *wad = ptr->wad;
 
-		* ( UINT32 * ) m_Header.type = wad->Format ();
+		* ( std::uint32_t * ) m_Header.type = wad->Format ();
 		m_Header.dirSize  = m_DirSize;
 		m_Header.dirStart = ftell ( tmpFile );
 
-		if (( UINT32 ) fwrite ( dir, sizeof ( wadDirEntry ), m_DirSize, tmpFile ) != m_DirSize ) {
+		if ((std::uint32_t ) fwrite ( dir, sizeof ( wadDirEntry ), m_DirSize, tmpFile ) != m_DirSize ) {
 			errors = true;
 			fprintf ( stderr, "\nERROR: wadList::Save - Error writing directory." );
 		}
@@ -1299,7 +1316,7 @@ bool wadList::Save ( const char *newName ) {
 }
 
 bool wadList::Extract ( const wLumpName *res, const char *m_Name ) {
-	UINT32 size;
+	std::uint32_t size;
 	const wadListDirEntry *dir;
 
 	WAD *newWad = new WAD ( NULL );

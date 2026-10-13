@@ -185,8 +185,8 @@ struct wBlockMap {
 struct wBlockMap32 {
     INT32       xOrigin;
     INT32       yOrigin;
-    UINT32      noColumns;
-    UINT32      noRows;
+    std::uint32_t      noColumns;
+    std::uint32_t      noRows;
 //    UINT16    data [];
 };
 
@@ -215,7 +215,7 @@ class DoomLevel {
 		int     byteOrder;
 		int     elementSize;
 		int     elementCount;
-		UINT32  dataSize;
+		std::uint32_t  dataSize;
 		void   *rawData;
 
 		sLevelLump ();
@@ -226,7 +226,7 @@ class DoomLevel {
 
 	bool        m_IsHexen;
 	const char *m_Title;
-	const char *m_Music;
+	char *m_Music;
 	int         m_Cluster;
 
 	wThingInternal     *m_ThingData;
