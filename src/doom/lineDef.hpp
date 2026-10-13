@@ -145,12 +145,12 @@ enum LD_LINE_EFFECTS {
 			
 struct sLineDefDesc {
     INT16       Type;
-    UINT8       Class;
+    std::uint8_t       Class;
     const char *Trigger;
-    UINT8       Speed;
-    UINT8       Duration;
-    UINT8       Action;
-    UINT32      Effects;
+    std::uint8_t       Speed;
+    std::uint8_t       Duration;
+    std::uint8_t       Action;
+    std::uint32_t      Effects;
 
     const char *GetClass ();
     const char *GetDescription ();

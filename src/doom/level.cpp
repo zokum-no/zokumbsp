@@ -564,7 +564,7 @@ void DoomLevel::TrimVertices ()
         used [ segs [i].start ] = 1;
         used [ segs [i].end ]   = 1;
     }
-
+    /*
     const wVertex *oldVertices = GetVertices ();
     wVertex *newVertices = new wVertex [ VertexCount () ];
 
@@ -573,6 +573,19 @@ void DoomLevel::TrimVertices ()
         if ( used [i] == 1 ) {
             newVertices [count] = oldVertices [i];
             used [i]            = count++;
+        }
+    }
+    */
+
+    const wVertex* oldVertices = GetVertices();
+    wVertex* newVertices = new wVertex[VertexCount()];
+
+    int count = 0;
+    for (int i = 0; i < VertexCount(); i++) {
+        if (used[i] == 1) {
+            newVertices[count] = oldVertices[i];
+            used[i] = count;
+            count++;
         }
     }
 
@@ -593,10 +606,10 @@ void DoomLevel::PackVertices ()
     memset ( used, 0, sizeof ( int ) * VertexCount ());
 
     int count = 0;
-    UINT32 *vert = ( UINT32 * ) m_Vertex.rawData;
+    std::uint32_t *vert = ( std::uint32_t * ) m_Vertex.rawData;
 
     for ( int i = 0, j; i < VertexCount (); i++ ) {
-        UINT32 currentVert = vert [i];
+        std::uint32_t currentVert = vert [i];
         for ( j = 0; j < i; j++ ) {
             if ( vert [j] == currentVert ) break;
         }
@@ -1086,22 +1099,23 @@ bool DoomLevel::LoadHexenInfo ()
     if ( dir == NULL ) return false;
 
     int level;
-    int matches = sscanf ( m_Name, "MAP%02d", &level );
+    int matches = sscanf_s ( m_Name, "MAP%02d", &level );
 
-    UINT32 Size;
+    std::uint32_t Size;
     char *buffer = ( char * ) m_Wad->ReadEntry ( dir, &Size, true );
     char *ptr = buffer;
 
     if ( m_Title != NULL ) free (( char * ) m_Title );
     m_Title = NULL;
 
+    /*
     do {
         if (( ptr = strstr ( ptr, "\nmap " )) == NULL ) break;
 	// printf("\nSTART%sSTOP (%c) (%d)\n", ptr, ptr[5], level);
         if ( matches && (atoi ( &ptr[5] ) == level )) {
             while ( *ptr++ != '"' );
             strtok ( ptr, "\"" );
-            m_Title = strdup ( ptr );
+            m_Title = _strdup ( ptr );
             ptr += strlen ( ptr ) + 1;
             char *clstr = strstr ( ptr, "\ncluster " );
             char *next = strstr ( ptr, "\n\r" );
@@ -1113,6 +1127,30 @@ bool DoomLevel::LoadHexenInfo ()
             ptr++;
         }
     } while ( ptr && *ptr );
+    */
+    do {
+        if ((ptr = strstr(ptr, "\nmap ")) == NULL) break;
+        // printf("\nSTART%sSTOP (%c) (%d)\n", ptr, ptr[5], level);
+
+        if (matches && (atoi(&ptr[5]) == level)) {
+            while (*ptr++ != '"');  // Move ptr to the first quote
+            char* context = nullptr;
+            strtok_s(ptr, "\"", &context);  // Skip first token (before title)
+            m_Title = _strdup(ptr);         // ptr now points to title string
+            ptr += strlen(ptr) + 1;         // Advance past the title string
+
+            char* clstr = strstr(ptr, "\ncluster ");
+            char* next = strstr(ptr, "\n\r");
+            if (clstr && (clstr < next)) {
+                m_Cluster = atoi(clstr + 9);
+            }
+            break;
+        }
+        else {
+            ptr++;
+        }
+    } while (ptr && *ptr);
+
 
     delete [] buffer;
 
@@ -1133,18 +1171,40 @@ bool DoomLevel::LoadHexenInfo ()
 
     buffer = ( char * ) m_Wad->ReadEntry ( dir, &Size, true );
     ptr = buffer;
-
+    /*
     do {
         if (( ptr = strstr ( ptr, "\n$MAP" )) == NULL ) break;
         if ( atoi ( &ptr[5] ) == level ) {
             ptr += 25;
             strtok ( ptr, "\r" );
-            m_Music = strupr ( strdup ( ptr ));
+            m_Music = strupr ( _strdup ( ptr ));
             break;
         } else {
             ptr++;
         }
     } while ( ptr && *ptr );
+    */
+    do {
+        if ((ptr = strstr(ptr, "\n$MAP")) == NULL) break;
+
+        if (atoi(&ptr[5]) == level) {
+            ptr += 25;  // Skip to the music name (assuming fixed offset)
+
+            char* context = nullptr;
+            char* token = strtok_s(ptr, "\r", &context);  // Split at carriage return
+
+            if (token) {
+                m_Music = _strdup(token);     // Copy token safely
+                _strupr_s(m_Music, strlen(m_Music + 1));             // Convert to uppercase in-place
+            }
+            break;
+        }
+        else {
+            ptr++;
+        }
+    } while (ptr && *ptr);
+
+
 
     delete [] buffer;
 
