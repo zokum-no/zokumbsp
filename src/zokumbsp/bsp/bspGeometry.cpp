@@ -12,6 +12,9 @@
 #include "logger.hpp"
 #include "bspgeometry.hpp"
 
+//----------------------------------------------------------------------------
+// Computes the BAM angle of a line. A BAM angle is a numbner from 0 to 65536.
+//----------------------------------------------------------------------------
 unsigned int ComputeAngle(int dx, int dy) {
 	double w;
 
@@ -22,15 +25,16 @@ unsigned int ComputeAngle(int dx, int dy) {
 	return (unsigned)w;
 }
 
+//----------------------------------------------------------------------------
+// This determines the BAM (binary angle measure) for a given SEG and it takes
+// 4 different linedef types into account for modifying the angle.
+//----------------------------------------------------------------------------
 BAM HandleAngle(const wLineDefInternal* lineDef, long dx, long dy) {
 	BAM angle;
 	/*
 	 * These 4 new linedef types allow for arbitrary rotation of the ways walls are rendered compared to
 	 * the base linedef. Check docs for more info.
 	 */
-
-	 // 		double a2;
-
 	if (lineDef->type == 1081) { // linedef special to force angle to degrees
 		angle = (BAM)((lineDef->tag * BAM360) / 360);
 	}
@@ -61,13 +65,13 @@ const wSideDef* HandleSegRender(const wSideDef* sideDef) {
 	}
 	return sideDef;
 }
+
 //----------------------------------------------------------------------------
 //  Determine if the given SEG is co-linear (ie: they lie on the same line)
 //    with the currently selected partition.
 // 
 //  It checks if the cross product of the two vectors is zero, which means they are parallel and thus co-linear.
 //----------------------------------------------------------------------------
-
 bool CoLinear(const SEG* seg, int x, int y, int dx, int dy, unsigned angle) {
 	if ((angle & ANGLE_MASK) != (seg->Dataangle & ANGLE_MASK))
 		return false;
@@ -82,6 +86,12 @@ bool CoLinear(const SEG* seg, int x, int y, int dx, int dy, unsigned angle) {
 		dy * (seg->start.x - x);
 }
 
+//----------------------------------------------------------------------------
+// The actual method for determining which side of the partition line a SEG is 
+// on. It calculates the position of the SEG's start and end vertices relative 
+// to the partition line defined by the current BSP node. It returns 
+// SIDE_LEFT, SIDE_RIGHT, or SIDE_SPLIT based on the computed values.
+//----------------------------------------------------------------------------
 int _WhichSide(SEG* seg, sBSPOptions* options, DoomLevel* level) {
 	FUNCTION_ENTRY(NULL, "_WhichSide", true);
 
@@ -179,6 +189,9 @@ xx:
 		((y2 >= 0.0) ? SIDE_LEFT : SIDE_SPLIT);
 }
 
+//----------------------------------------------------------------------------
+// Determins if a seg is in front of, back of or crossingf a partition line.
+//----------------------------------------------------------------------------
 int WhichSide(SEG* seg, sBSPOptions* options, DoomLevel* level) {
 	FUNCTION_ENTRY(NULL, "WhichSide", true);
 
@@ -219,6 +232,11 @@ int WhichSide(SEG* seg, sBSPOptions* options, DoomLevel* level) {
 	return side;
 }
 
+//----------------------------------------------------------------------------
+// Determine if a group of segs form a convex area, which means they can form 
+// a single sub sector. A concave group of sub sectors must would be split 
+// into two or more sub sectors.
+//----------------------------------------------------------------------------
 bool IsConvex(SEG* segs, int noSegs, nodeBuilderData* nbd) {
 
 	SEG* testSeg = segs;
@@ -266,9 +284,8 @@ bool IsConvex(SEG* segs, int noSegs, nodeBuilderData* nbd) {
 
 //----------------------------------------------------------------------------
 //  Calculate the set of variables used frequently that are based on the
-//    currently selected SEG to be used as a partition line.
+//    currently selected SEG, or vertex pair, to be used as a partition line.
 //----------------------------------------------------------------------------
-
 void ComputeStaticVariables(SEG* list, int offset) {
 	SEG* pSeg = &list[offset];
 
