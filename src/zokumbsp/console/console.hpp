@@ -31,7 +31,7 @@
 #ifndef CONSOLE_HPP_
 #define CONSOLE_HPP_
 
-#if defined ( __OS2__ ) || defined ( __WIN32__ )
+#if defined ( __WIN32__ )
 
 #if defined ( __GNUC__ ) || defined ( __INTEL_COMPILER )
 #define cprintf _cprintf
@@ -76,4 +76,3 @@ void ShowDone ();
 void ShowProgress ();
 
 #endif
-

@@ -1,75 +1,29 @@
-#include <ctype.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
 #include <string>
-#include <vector>
-#include <sstream>
-#include <iostream>
-#include <iterator>
-#include <algorithm>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <cctype>
-#include <vector>
-#include <algorithm>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <sstream>
-#include <algorithm>
-#include <charconv>
-#include <cctype>
-
-
 
 #ifndef _MSC_VER
 #include <strings.h>
 #endif
 
 #if defined(_WIN32)
-#include <io.h>
-#define ISATTY _isatty
-#define FILENO _fileno
+	#include <io.h>
+	#define ISATTY _isatty
+	#define FILENO _fileno
 #else
-#include <unistd.h>
-#define ISATTY isatty
-#define FILENO fileno
+	#include <unistd.h>
+	#define ISATTY isatty
+	#define FILENO fileno
 #endif
 
-
-#if defined ( __OS2__ )
-#include <conio.h>
-#include <dos.h>
-#include <io.h>
-#define INCL_DOS
-#define INCL_SUB
-#include <os2.h>
-#elif defined ( _WIN32)
-#include <conio.h>
-#include <io.h>
-#elif defined ( __LINUX__ )
+#if defined ( __LINUX__ )
 #include <unistd.h>
 #else
 // #error This platform is not supported
 #endif
 
-#if defined ( __BORLANDC__ )
-#include <dir.h>
-#endif
-
 #include "common.hpp"
 #include "logger.hpp"
-#include "wad.hpp"
-#include "level.hpp"
-#include "console.hpp"
 #include "../bsp/zennode.hpp"
-#include "../blockmap/blockmap.hpp"
-#include "../geometry/preprocess.hpp"
-#include "../misc/endoom.hpp"
 
 int SOURCE_PORT_LIMIT = 65536;
 
@@ -145,10 +99,6 @@ void PrintHelp(sOptions *config) {
 	fprintf(stdout, "%c     b   Favor both of the above equally.\n", (config->Nodes.SplitReduction == 3) ? DEFAULT_CHAR : ' ');
 	fprintf(stdout, "%c     m   Try all of the above.\n\n", (config->Nodes.MultipleSplitMethods == 1) ? DEFAULT_CHAR : ' ');
 
-	/*	fprintf ( stdout, "    s=    Split handling algorithm.\n" );
-		fprintf ( stdout, "%c     z   Ignore rounding problems. N/A\n", ( config->Nodes.SplitHandling == 0 ) ? DEFAULT_CHAR : ' ' );
-		fprintf ( stdout, "%c     a   Avoid slime trail rounding problems. N/A\n", ( config->Nodes.SplitHandling == 1 ) ? DEFAULT_CHAR : ' ' );
-	*/
 	fprintf(stdout, "    t=    Tuning factor, varies from algorithm to algorithm.\n");
 	fprintf(stdout, "      100 Default for adaptive tree.\n");
 
