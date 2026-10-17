@@ -30,7 +30,6 @@
 
 #define MAX_SCORES 400
 
-#include <math.h>
 #include <vector>
 
 #ifndef ZENNODE_HPP_
@@ -113,9 +112,6 @@ typedef long double REAL;		// Must have at least 50 significant bits
 struct sVertex {
 	double x;
 	double y;
-	//float x;
-	//float y;
-	// double l;
 };
 
 #define SEG_ALIAS_FLIP	0x01
@@ -129,26 +125,6 @@ struct sVertex {
 
 #define SEG_SPLIT_START 0x100
 #define SEG_SPLIT_END   0x200
-
-/*
-struct __attribute__((__packed__)) SEG {
-//struct SEG {
-//	UINT16 Datastart;
-//	UINT16 Dataend;
-	UINT16 Dataangle;
-	UINT16 DatalineDef;
-	
-	UINT16          Sector;
-	UINT16 		flags;	
-//	INT16 		vertexCoords[2][2];
-
-	float 		startL;
-	float		endL;
-
-	sVertex         start;
-	sVertex         end;
-};
-*/
 
 #if defined(_MSC_VER)
 #define PACKED_STRUCT_BEGIN __pragma(pack(push, 1))
@@ -164,15 +140,11 @@ struct __attribute__((__packed__)) SEG {
 
 PACKED_STRUCT_BEGIN
 struct PACKED SEG {
-	// UINT16 Datastart;
-	// UINT16 Dataend;
 	UINT16 Dataangle;
 	UINT16 DatalineDef;
 
 	UINT16 Sector;
 	UINT16 flags;
-
-	// INT16 vertexCoords[2][2];
 
 	float startL;
 	float endL;
@@ -181,7 +153,6 @@ struct PACKED SEG {
 	sVertex end;
 };
 PACKED_STRUCT_END
-
 
 
 struct subSector {
@@ -203,7 +174,6 @@ struct BSPNode {
 struct NODE {
     INT16       x, y;                   // starting point
     INT16       dx, dy;                 // offset to ending point
-    // wBound      side[2];
     UINT16      child[2];               // Node or SSector (if high bit is set)
 };
 
@@ -455,49 +425,24 @@ bool ParseOptionRMB ( int, const char *, sRejectOptionRMB * );
 
 #if ( defined ( __GNUC__ ) && ( __GNUC__ < 3 )) || defined ( __INTEL_COMPILER ) || defined ( __BORLANDC__ )
 
-#if defined ( X86 )
+	#if defined ( X86 )
 
-__inline long lrint ( double flt )
-{
-	int intgr;
-
-	__asm__ __volatile__ ("fistpl %0" : "=m" (intgr) : "t" (flt) : "st");
-
-	return intgr;
-}
-
-#else
-__inline long lrint ( double flt )
-{
-	//        return ( long ) ( flt + 0.5 * sgn ( flt ));
-	return ( long ) ( flt + 0.5 );
-}
-
-#endif
-
-#elif defined ( _MSC_VER )
-
-/*
-__inline long lrint ( double flt )
-{
-	int intgr;
-
-	_asm
+	__inline long lrint ( double flt )
 	{
-		fld   flt
-			fistp intgr
-	};
+		int intgr;
 
-	return intgr;
-}
-*/
+		__asm__ __volatile__ ("fistpl %0" : "=m" (intgr) : "t" (flt) : "st");
 
-/*__inline long lrint(double flt) {
-	return (long)round(flt);
-}
-*/
+		return intgr;
+	}
 
+	#else
+	__inline long lrint ( double flt )
+	{
+		return ( long ) ( flt + 0.5 );
+	}
 
+	#endif
 #endif
 
 struct sOptions {
@@ -521,6 +466,5 @@ extern bool CreateREJECT ( DoomLevel *level, const sRejectOptions &options/*, co
 extern void HTMLOutput(wBlockMap *map, sBlockMap *blockMap, sBlockList *blockList, const sBlockMapOptions &options, int blockSize, int savings, int totalSize);
 void ProgressBar(char *, double, int, int);
 void InitBSPState();
-
 
 #endif
