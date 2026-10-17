@@ -328,11 +328,11 @@ int PartitionLineLastResort(SEG* segs, int noSegs, vertexSpace* vs, int vertices
 					}
 
 					if (convexMode) {
-						curScore->metric1 = ((0xffff - ssCount) / (sCount + 1)) + sqrt(bsp.DX * bsp.DX + bsp.DY * bsp.DY);;
+						curScore->metric1 = (long)  ((0xffff - ssCount) / (sCount + 1)) + sqrt(bsp.DX * bsp.DX + bsp.DY * bsp.DY);;
 					}
 					else {
 						// printf("ssc: %d\n", ssCount);
-						curScore->metric1 = ((0xffff /*- ssCount*/) / (sCount + 1)) - abs(rCount - lCount);
+						curScore->metric1 = (long)  ((0xffff /*- ssCount*/) / (sCount + 1)) - abs(rCount - lCount);
 					}
 
 					if ((!ssCount) && (!sCount)) {
@@ -672,8 +672,8 @@ int GenerateVertexSpace(vertexSpace* vs, SEG* segs, int noSegs) {
 				v++;
 			}
 			if (!dupe) {
-				vs[vertices].x = segs[i].end.x;
-				vs[vertices].y = segs[i].end.y;
+				vs[vertices].x = (int) segs[i].end.x;
+				vs[vertices].y = (int) segs[i].end.y;
 				vs[vertices].flags = 0;
 				vertices++;
 			}

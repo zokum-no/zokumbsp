@@ -15,7 +15,7 @@
 //----------------------------------------------------------------------------
 // Computes the BAM angle of a line. A BAM angle is a numbner from 0 to 65536.
 //----------------------------------------------------------------------------
-unsigned int ComputeAngle(int dx, int dy) {
+unsigned int ComputeAngle(double dx, double dy) {
 	double w;
 
 	w = (atan2((double)dy, (double)dx) * (double)(65536 / (M_PI * 2)));
