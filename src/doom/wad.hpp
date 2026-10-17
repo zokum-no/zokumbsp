@@ -103,7 +103,10 @@ enum eWadType {
     wt_DOOM,
     wt_DOOM2,
     wt_HERETIC,
-    wt_HEXEN
+    wt_HEXEN,
+    wt_STRIFE,
+    wt_HACX,
+	wt_CHEXQUEST,
 };
 
 enum eWadStyle {
