@@ -34,81 +34,93 @@
     <Filter Include="Source Files\geometry">
       <UniqueIdentifier>{6ebf1209-78f6-4a32-b604-640f9f0e78b0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\bsp">
+      <UniqueIdentifier>{29fc6900-1ae3-4038-bece-8e98160481cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\blockmap">
+      <UniqueIdentifier>{6942600f-e960-439f-a02e-8c24f0029921}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\console">
+      <UniqueIdentifier>{06fec76a-0a7f-48c4-9e40-41c8e1b5dc95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\doom">
+      <UniqueIdentifier>{8aaca5da-51fe-40ef-a585-83542d5d1cbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\geometry">
+      <UniqueIdentifier>{f6eeebd5-0838-415b-ba80-5b1e804f98bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\misc">
+      <UniqueIdentifier>{91febfdc-2b22-4b88-9253-309794c98ef6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\common\common.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\logger.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\doom\lineDef.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\doom\thing.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\constants.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\help.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\misc\quicksort.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\misc\endoom.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\console\help.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\blockmap\blockmap.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\zokumbsp\bsp\algorithmBalancedTree.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\bsp</Filter>
     </ClInclude>
     <ClInclude Include="src\zokumbsp\bsp\algorithmFewerSplits.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\bsp\algorithmVertexSpace.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\bsp\bspcommon.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\bsp\bspgeometry.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\bsp\zennode.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\geometry\geometry.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\zokumbsp\geometry\preprocess.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\bsp</Filter>
     </ClInclude>
     <ClInclude Include="src\zokumbsp\bsp\algorithmQuick.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\bsp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\bsp\algorithmVertexSpace.hpp">
+      <Filter>Header Files\bsp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\bsp\bspcommon.hpp">
+      <Filter>Header Files\bsp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\bsp\bspgeometry.hpp">
+      <Filter>Header Files\bsp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\bsp\zennode.hpp">
+      <Filter>Header Files\bsp</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\blockmap\blockmap.hpp">
+      <Filter>Header Files\blockmap</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\console\help.hpp">
+      <Filter>Header Files\console</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\common.hpp">
+      <Filter>Header Files\doom</Filter>
     </ClInclude>
     <ClInclude Include="src\zokumbsp\console\console.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\console</Filter>
     </ClInclude>
-    <ClInclude Include="src\doom\wad.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\common\logger.hpp">
+      <Filter>Header Files\doom</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\constants.hpp">
+      <Filter>Header Files\doom</Filter>
+    </ClInclude>
+    <ClInclude Include="src\doom\lineDef.hpp">
+      <Filter>Header Files\doom</Filter>
     </ClInclude>
     <ClInclude Include="src\doom\level.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\doom</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\misc\endoom.hpp">
+      <Filter>Header Files\doom</Filter>
+    </ClInclude>
+    <ClInclude Include="src\doom\thing.hpp">
+      <Filter>Header Files\doom</Filter>
+    </ClInclude>
+    <ClInclude Include="src\doom\wad.hpp">
+      <Filter>Header Files\doom</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\geometry\geometry.hpp">
+      <Filter>Header Files\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\misc\quicksort.hpp">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\zokumbsp\geometry\preprocess.hpp">
+      <Filter>Header Files\geometry</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\zokumbsp\zenmain.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\zokumbsp\zennode.cpp">
-      <Filter>Source Files\bsp</Filter>
     </ClCompile>
     <ClCompile Include="src\zokumbsp\reject\zenreject.cpp">
       <Filter>Source Files\reject</Filter>
@@ -163,6 +175,12 @@
     </ClCompile>
     <ClCompile Include="src\zokumbsp\geometry\geometry.cpp">
       <Filter>Source Files\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zokumbsp\console\commandline.cpp">
+      <Filter>Source Files\console</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zokumbsp\bsp\zennode.cpp">
+      <Filter>Source Files\bsp</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

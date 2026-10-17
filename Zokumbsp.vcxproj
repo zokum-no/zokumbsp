@@ -150,7 +150,6 @@
     <ClInclude Include="src\zokumbsp\console\help.hpp" />
     <ClInclude Include="src\zokumbsp\geometry\geometry.hpp" />
     <ClInclude Include="src\zokumbsp\geometry\preprocess.hpp" />
-    <ClInclude Include="src\zokumbsp\help.hpp" />
     <ClInclude Include="src\zokumbsp\misc\endoom.hpp" />
     <ClInclude Include="src\zokumbsp\misc\quicksort.hpp" />
   </ItemGroup>
@@ -165,6 +164,8 @@
     <ClCompile Include="src\zokumbsp\bsp\algorithmVertexSpace.cpp" />
     <ClCompile Include="src\zokumbsp\bsp\bspCommon.cpp" />
     <ClCompile Include="src\zokumbsp\bsp\bspGeometry.cpp" />
+    <ClCompile Include="src\zokumbsp\bsp\zennode.cpp" />
+    <ClCompile Include="src\zokumbsp\console\commandline.cpp" />
     <ClCompile Include="src\zokumbsp\console\console.cpp" />
     <ClCompile Include="src\zokumbsp\console\help.cpp" />
     <ClCompile Include="src\zokumbsp\geometry\geometry.cpp" />
@@ -174,7 +175,6 @@
     <ClCompile Include="src\zokumbsp\reject\zenreject.cpp" />
     <ClCompile Include="src\zokumbsp\reject\zenrmb.cpp" />
     <ClCompile Include="src\zokumbsp\zenmain.cpp" />
-    <ClCompile Include="src\zokumbsp\zennode.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

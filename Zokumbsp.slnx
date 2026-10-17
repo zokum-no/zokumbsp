@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Zokumbsp.vcxproj" />
+  <Project Path="Zokumbsp.vcxproj" Id="e7e2a1c8-25f0-4712-b731-8343051200c6" />
 </Solution>
