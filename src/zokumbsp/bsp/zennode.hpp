@@ -185,42 +185,39 @@ struct vertexPair {
 };
 
 struct sBSPOptions {
-	int       algorithm;
+	int     algorithm;
 	int 	thoroughness;
-	bool      showProgress;
-	bool	segBAMs;
-	bool      reduceLineDefs;		// global flag for invisible linedefs
-	bool     *ignoreLineDef;		// linedefs that can be left out
-	bool     *dontSplit;		// linedefs that can't be split
-	bool     *keepUnique;		// unique sector requirements
-	int	SplitHandling;
-	int	SplitReduction;
+	int		SplitHandling;
+	int		SplitReduction;
 	int     MultipleSplitMethods;
 	int     Cache;
-	int	Metric;
-	int	Width;
+	int		Metric;
+	int		Width;
 	int 	Tuning;
 
+	bool    showProgress;
+	bool	segBAMs;
+	bool    reduceLineDefs;		// global flag for invisible linedefs
+	bool    *ignoreLineDef;		// linedefs that can be left out
+	bool    *dontSplit;		// linedefs that can't be split
+	bool	*keepUnique;		// unique sector requirements
 	bool 	vertexPartition;
 };
 
 struct nodeBuilderData {
 	sBSPOptions *options;
 	DoomLevel *level;
-	int width;
-	// int *wideSegs;
 	std::vector<int> wideSegs;
 
+	int width;
 	int segGoal;
 	int subSectorGoal;
 	int localMaxWidth;
 	int scoresFound;
 	int goodScoresFound;
-
 	int vertices;
 
 	SEG pSeg;
-
 };
 
 struct pool {
@@ -257,7 +254,6 @@ struct sScoreInfo {
 	int lsCount;
 
 	bool vertex;
-
 };
 
 struct BSPData {
@@ -380,12 +376,12 @@ struct sSegPcikTree;
 // Node build specific decision tree
 struct sSegPickTree {
 	SEG		*segs; 		// Pointer to n amount of segs, NULL-terminated
-	sSegPickTree 	*picks;		// pointer to the result of the various picks
-	double		*score;		// the 'score' of the various picks
-	int 		*splits;	// how many segs does this solution split
-	int 		algorithm; 	// Which algorithm did we use to pick these segs
-	int 		bestSeg;   	// Which element is the currently best one, this may not be the first one!
-	int		subSplits;	
+	sSegPickTree	*picks;		// pointer to the result of the various picks
+	double			*score;		// the 'score' of the various picks
+	int			 	*splits;	// how many segs does this solution split
+	int			 	algorithm; 	// Which algorithm did we use to pick these segs
+	int 			bestSeg;   	// Which element is the currently best one, this may not be the first one!
+	int				subSplits;	
 	sSegPickTree	*parent; 	
 };
 
